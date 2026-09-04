@@ -1,0 +1,12 @@
+# Maven
+target/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# NetBeans - configuración local
+nb-configuration.xml
+
+# Logs
+*.log
