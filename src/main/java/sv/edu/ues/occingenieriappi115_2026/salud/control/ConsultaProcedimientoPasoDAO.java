@@ -1,4 +1,4 @@
-package sv.edu.ues.occingenieriappi115_2026.salud.dao;
+package sv.edu.ues.occingenieriappi115_2026.salud.control;
 
 import jakarta.ejb.LocalBean;
 import jakarta.ejb.Stateless;
