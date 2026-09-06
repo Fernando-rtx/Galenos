@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core">
+
+    <h:head>
+        <title>Tipo de Examen</title>
+    </h:head>
+
+    <h:body>
+
+        <h1>Tipos de Examen</h1>
+
+        <h:messages />
+
+        <h:form id="listadoForm">
+            <h:commandButton value="Nuevo"
+                             action="#{tipoExamenModel.nuevo}"
+                             immediate="true" />
+
+            <h:dataTable value="#{tipoExamenModel.registros}"
+                         var="item"
+                         border="1">
+                <h:column>
+                    <f:facet name="header">Id</f:facet>
+                    #{item.idTipoExamen}
+                </h:column>
+
+                <h:column>
+                    <f:facet name="header">Nombre</f:facet>
+                    #{item.nombre}
+                </h:column>
+
+                <h:column>
+                    <f:facet name="header">Activo</f:facet>
+                    #{item.activo}
+                </h:column>
+
+                <h:column>
+                    <f:facet name="header">Observaciones</f:facet>
+                    #{item.observaciones}
+                </h:column>
+
+                <h:column>
+                    <f:facet name="header">Acciones</f:facet>
+                    <h:commandButton value="Seleccionar"
+                                     action="#{tipoExamenModel.seleccionar(item)}"
+                                     immediate="true" />
+                </h:column>
+            </h:dataTable>
+        </h:form>
+
+        <h:form id="edicionForm"
+                rendered="#{tipoExamenModel.estado != 'NINGUNO'}">
+            <h2>Tipo de Examen</h2>
+
+            <table>
+                <tr>
+                    <td>Id</td>
+                    <td>#{tipoExamenModel.registro.idTipoExamen}</td>
+                </tr>
+                <tr>
+                    <td>Nombre</td>
+                    <td>
+                        <h:inputText id="nombre"
+                                     value="#{tipoExamenModel.registro.nombre}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Activo</td>
+                    <td>
+                        <h:selectBooleanCheckbox id="activo"
+                                                 value="#{tipoExamenModel.registro.activo}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Observaciones</td>
+                    <td>
+                        <h:inputText id="observaciones"
+                                     value="#{tipoExamenModel.registro.observaciones}" />
+                    </td>
+                </tr>
+            </table>
+
+            <h:commandButton value="Guardar"
+                             action="#{tipoExamenModel.guardar}" />
+            <h:commandButton value="Cancelar"
+                             action="#{tipoExamenModel.cancelar}"
+                             immediate="true" />
+        </h:form>
+
+    </h:body>
+
+</html>
