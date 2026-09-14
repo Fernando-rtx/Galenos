@@ -28,7 +28,23 @@ import java.util.UUID;
 @Entity
 @Table(name = "procedimiento_paso")
 @NamedQueries({
-    @NamedQuery(name = "ProcedimientoPaso.findAll", query = "SELECT p FROM ProcedimientoPaso p")})
+    @NamedQuery(
+            name = "ProcedimientoPaso.findAll",
+            query = "SELECT p FROM ProcedimientoPaso p"
+    ),
+    @NamedQuery(
+            name = "ProcedimientoPaso.findByIdProcedimiento",
+            query = "SELECT p "
+            + "FROM ProcedimientoPaso p "
+            + "WHERE p.idProcedimiento.idProcedimiento = :idProcedimiento "
+            + "ORDER BY p.nombre"
+    ),
+    @NamedQuery(
+            name = "ProcedimientoPaso.countByIdProcedimiento",
+            query = "SELECT COUNT(p.idProcedimientoPaso) "
+            + "FROM ProcedimientoPaso p "
+            + "WHERE p.idProcedimiento.idProcedimiento = :idProcedimiento"
+    )})
 public class ProcedimientoPaso implements Serializable {
 
     private static final long serialVersionUID = 1L;

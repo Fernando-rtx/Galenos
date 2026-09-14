@@ -29,7 +29,30 @@ import java.util.UUID;
 @Entity
 @Table(name = "examen_tipo_examen")
 @NamedQueries({
-    @NamedQuery(name = "ExamenTipoExamen.findAll", query = "SELECT e FROM ExamenTipoExamen e")})
+    @NamedQuery(
+            name = "ExamenTipoExamen.findAll",
+            query = "SELECT e FROM ExamenTipoExamen e"
+    ),
+    @NamedQuery(
+            name = "ExamenTipoExamen.findByIdExamen",
+            query = "SELECT e "
+            + "FROM ExamenTipoExamen e "
+            + "WHERE e.idExamen.idExamen = :idExamen "
+            + "ORDER BY e.idTipoExamen.nombre"
+    ),
+    @NamedQuery(
+            name = "ExamenTipoExamen.countByIdExamen",
+            query = "SELECT COUNT(e.idExamenTipoExamen) "
+            + "FROM ExamenTipoExamen e "
+            + "WHERE e.idExamen.idExamen = :idExamen"
+    ),
+    @NamedQuery(
+            name = "ExamenTipoExamen.countByIdExamenAndIdTipoExamen",
+            query = "SELECT COUNT(e.idExamenTipoExamen) "
+            + "FROM ExamenTipoExamen e "
+            + "WHERE e.idExamen.idExamen = :idExamen "
+            + "AND e.idTipoExamen.idTipoExamen = :idTipoExamen"
+    )})
 public class ExamenTipoExamen implements Serializable {
 
     private static final long serialVersionUID = 1L;
