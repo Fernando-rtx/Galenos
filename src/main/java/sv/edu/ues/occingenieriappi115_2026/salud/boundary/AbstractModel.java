@@ -3,6 +3,11 @@ package sv.edu.ues.occingenieriappi115_2026.salud.boundary;
 import jakarta.annotation.PostConstruct;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.model.FilterMeta;
+import org.primefaces.model.LazyDataModel;
+import org.primefaces.model.SortMeta;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.DAOInterface;
 
 /**
@@ -26,9 +31,14 @@ public abstract class AbstractModel<T> implements Serializable {
     protected T registro;
 
     /**
-     * Registros que alimentan la pagina o tabla de listado.
+     * Modelo lazy que alimenta las tablas PrimeFaces sin cargar todos los datos.
      */
-    protected List<T> registros;
+    protected LazyDataModel<T> modelo;
+
+    /**
+     * Cantidad de filas solicitadas por pagina.
+     */
+    private int cantidadRegistros = 50;
 
     /**
      * Estado CRUD actual de la pantalla: sin operacion, creando o modificando.
@@ -39,7 +49,7 @@ public abstract class AbstractModel<T> implements Serializable {
      * Inicializa el modelo cuando el contenedor crea el bean.
      *
      * <p>El flujo queda en la clase base porque es comun a las pantallas CRUD:
-     * dejar el modelo sin operacion activa, cargar listas auxiliares y cargar
+     * dejar el modelo sin operacion activa, cargar listas auxiliares y preparar
      * el listado principal.</p>
      */
     @PostConstruct
@@ -50,22 +60,48 @@ public abstract class AbstractModel<T> implements Serializable {
     }
 
     /**
-     * Carga el listado principal usando las firmas reales de DAOInterface.
-     *
-     * <p>DAOInterface no expone un metodo findAll. Por eso se consulta primero
-     * el total y luego se solicita ese rango completo. No se fija un tamano de
-     * pagina porque ese valor no esta confirmado todavia en el patron de
-     * clase.</p>
+     * Prepara el modelo lazy usando las firmas reales de DAOInterface.
      */
     public void inicializarRegistros() {
-        long total = getDAO().contar();
+        modelo = new LazyDataModel<>() {
 
-        if (total <= 0) {
-            registros = List.of();
-            return;
-        }
+            private static final long serialVersionUID = 1L;
 
-        registros = getDAO().findRange(0, (int) total);
+            @Override
+            public int count(Map<String, FilterMeta> filterBy) {
+                return AbstractModel.this.contar();
+            }
+
+            @Override
+            public List<T> load(
+                    int first,
+                    int pageSize,
+                    Map<String, SortMeta> sortBy,
+                    Map<String, FilterMeta> filterBy) {
+
+                int total = count(filterBy);
+                setRowCount(total);
+
+                if (total <= 0) {
+                    return List.of();
+                }
+
+                return getDAO().findRange(first, pageSize);
+            }
+
+            @Override
+            public String getRowKey(T object) {
+                return AbstractModel.this.getRowKey(object);
+            }
+
+            @Override
+            public T getRowData(String rowKey) {
+                return AbstractModel.this.getRowData(rowKey);
+            }
+        };
+
+        modelo.setPageSize(cantidadRegistros);
+        modelo.setRowCount(contar());
     }
 
     /**
@@ -97,6 +133,19 @@ public abstract class AbstractModel<T> implements Serializable {
 
         this.registro = registro;
         estado = ESTADO_CRUD.MODIFICAR;
+    }
+
+    /**
+     * Selecciona un registro desde el evento rowSelect de PrimeFaces.
+     *
+     * @param event evento de seleccion de fila.
+     */
+    public void seleccionarRegistro(SelectEvent<T> event) {
+        if (event == null) {
+            return;
+        }
+
+        seleccionar(event.getObject());
     }
 
     /**
@@ -142,6 +191,36 @@ public abstract class AbstractModel<T> implements Serializable {
     }
 
     /**
+     * Devuelve la llave de fila que PrimeFaces usara para identificar registros.
+     *
+     * @param object registro de la tabla.
+     * @return llave como texto o null si no hay registro/PK.
+     */
+    public String getRowKey(T object) {
+        Object id = getIdByRegistro(object);
+
+        if (id == null) {
+            return null;
+        }
+
+        return id.toString();
+    }
+
+    /**
+     * Recupera un registro directamente desde la PK representada por rowKey.
+     *
+     * @param rowKey llave textual enviada por PrimeFaces.
+     * @return registro encontrado o null si rowKey esta vacio.
+     */
+    public T getRowData(String rowKey) {
+        if (rowKey == null || rowKey.isBlank()) {
+            return null;
+        }
+
+        return getRegistroById(getIdByRowKey(rowKey));
+    }
+
+    /**
      * Cada modelo hijo debe proporcionar el DAO concreto mediante el contrato
      * generico DAOInterface, sin acoplar esta clase a implementaciones
      * especificas.
@@ -149,6 +228,39 @@ public abstract class AbstractModel<T> implements Serializable {
      * @return DAO que administra la entidad T.
      */
     protected abstract DAOInterface<T> getDAO();
+
+    /**
+     * Obtiene la llave primaria real de un registro.
+     *
+     * @param registro entidad administrada.
+     * @return identificador real del registro.
+     */
+    protected abstract Object getIdByRegistro(T registro);
+
+    /**
+     * Convierte el rowKey textual al tipo real de la llave primaria.
+     *
+     * @param rowKey llave textual generada por PrimeFaces.
+     * @return identificador con el tipo usado por JPA.
+     */
+    protected abstract Object getIdByRowKey(String rowKey);
+
+    /**
+     * Busca un registro por su llave primaria real.
+     *
+     * @param id identificador convertido desde rowKey.
+     * @return entidad encontrada.
+     */
+    protected T getRegistroById(Object id) {
+        return getDAO().findById(id);
+    }
+
+    /**
+     * Nombre legible del modelo para vistas y componentes genericos.
+     *
+     * @return nombre visible de la entidad administrada.
+     */
+    public abstract String getNombreModelo();
 
     /**
      * Cada modelo hijo debe crear una instancia vacia de su entidad concreta.
@@ -168,12 +280,20 @@ public abstract class AbstractModel<T> implements Serializable {
         this.registro = registro;
     }
 
-    public List<T> getRegistros() {
-        return registros;
+    public LazyDataModel<T> getModelo() {
+        return modelo;
     }
 
-    public void setRegistros(List<T> registros) {
-        this.registros = registros;
+    public void setModelo(LazyDataModel<T> modelo) {
+        this.modelo = modelo;
+    }
+
+    public int getCantidadRegistros() {
+        return cantidadRegistros;
+    }
+
+    public void setCantidadRegistros(int cantidadRegistros) {
+        this.cantidadRegistros = cantidadRegistros;
     }
 
     public ESTADO_CRUD getEstado() {

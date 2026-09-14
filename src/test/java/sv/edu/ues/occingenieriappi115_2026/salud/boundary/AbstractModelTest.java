@@ -1,15 +1,20 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.boundary;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.model.FilterMeta;
+import org.primefaces.model.SortMeta;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.DAOInterface;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -58,19 +63,33 @@ public class AbstractModelTest {
         public void inicializarListas() {
             listasInicializadas = true;
         }
+
+        @Override
+        protected Object getIdByRegistro(TestEntity registro) {
+            if (registro == null) {
+                return null;
+            }
+
+            return registro.id;
+        }
+
+        @Override
+        protected Object getIdByRowKey(String rowKey) {
+            return UUID.fromString(rowKey);
+        }
+
+        @Override
+        public String getNombreModelo() {
+            return "Entidad de prueba";
+        }
     }
 
     @Test
-    public void testInicializarPreparaEstadoListasYRegistros() {
+    public void testInicializarPreparaEstadoListasYModeloLazy() {
         @SuppressWarnings("unchecked")
         DAOInterface<TestEntity> dao = Mockito.mock(DAOInterface.class);
-        List<TestEntity> registros = List.of(
-                new TestEntity(UUID.randomUUID()),
-                new TestEntity(UUID.randomUUID())
-        );
 
         Mockito.when(dao.contar()).thenReturn(2L);
-        Mockito.when(dao.findRange(0, 2)).thenReturn(registros);
 
         TestModel cut = new TestModel(dao);
 
@@ -78,26 +97,40 @@ public class AbstractModelTest {
 
         assertEquals(ESTADO_CRUD.NINGUNO, cut.getEstado());
         assertNull(cut.getRegistro());
-        assertEquals(registros, cut.getRegistros());
+        assertNotNull(cut.getModelo());
+        assertEquals(2, cut.getModelo().getRowCount());
         assertTrue(cut.listasInicializadas);
         Mockito.verify(dao).contar();
-        Mockito.verify(dao).findRange(0, 2);
+        Mockito.verify(dao, Mockito.never())
+                .findRange(Mockito.anyInt(), Mockito.anyInt());
     }
 
     @Test
-    public void testInicializarRegistrosSinDatosNoConsultaRangoVacio() {
+    public void testLazyLoadUsaDAOFindRange() {
         @SuppressWarnings("unchecked")
         DAOInterface<TestEntity> dao = Mockito.mock(DAOInterface.class);
+        List<TestEntity> registros = List.of(
+                new TestEntity(UUID.randomUUID()),
+                new TestEntity(UUID.randomUUID())
+        );
 
-        Mockito.when(dao.contar()).thenReturn(0L);
+        Mockito.when(dao.contar()).thenReturn(20L);
+        Mockito.when(dao.findRange(5, 2)).thenReturn(registros);
 
         TestModel cut = new TestModel(dao);
-
         cut.inicializarRegistros();
 
-        assertEquals(List.of(), cut.getRegistros());
-        Mockito.verify(dao).contar();
-        Mockito.verify(dao, Mockito.never()).findRange(Mockito.anyInt(), Mockito.anyInt());
+        List<TestEntity> resultado = cut.getModelo().load(
+                5,
+                2,
+                Map.<String, SortMeta>of(),
+                Map.<String, FilterMeta>of()
+        );
+
+        assertEquals(registros, resultado);
+        assertEquals(20, cut.getModelo().getRowCount());
+        Mockito.verify(dao, Mockito.times(2)).contar();
+        Mockito.verify(dao).findRange(5, 2);
     }
 
     @Test
@@ -131,10 +164,8 @@ public class AbstractModelTest {
         DAOInterface<TestEntity> dao = Mockito.mock(DAOInterface.class);
         TestModel cut = new TestModel(dao);
         TestEntity registro = new TestEntity(UUID.randomUUID());
-        List<TestEntity> registros = List.of(registro);
 
         Mockito.when(dao.contar()).thenReturn(1L);
-        Mockito.when(dao.findRange(0, 1)).thenReturn(registros);
 
         cut.setRegistro(registro);
         cut.setEstado(ESTADO_CRUD.CREAR);
@@ -143,9 +174,8 @@ public class AbstractModelTest {
 
         Mockito.verify(dao).crear(registro);
         Mockito.verify(dao).contar();
-        Mockito.verify(dao).findRange(0, 1);
         assertEquals(ESTADO_CRUD.NINGUNO, cut.getEstado());
-        assertEquals(registros, cut.getRegistros());
+        assertNotNull(cut.getModelo());
     }
 
     @Test
@@ -155,11 +185,9 @@ public class AbstractModelTest {
         TestModel cut = new TestModel(dao);
         TestEntity registro = new TestEntity(UUID.randomUUID());
         TestEntity modificado = new TestEntity(registro.id);
-        List<TestEntity> registros = List.of(modificado);
 
         Mockito.when(dao.modificar(registro)).thenReturn(modificado);
         Mockito.when(dao.contar()).thenReturn(1L);
-        Mockito.when(dao.findRange(0, 1)).thenReturn(registros);
 
         cut.setRegistro(registro);
         cut.setEstado(ESTADO_CRUD.MODIFICAR);
@@ -168,10 +196,9 @@ public class AbstractModelTest {
 
         Mockito.verify(dao).modificar(registro);
         Mockito.verify(dao).contar();
-        Mockito.verify(dao).findRange(0, 1);
         assertSame(modificado, cut.getRegistro());
         assertEquals(ESTADO_CRUD.NINGUNO, cut.getEstado());
-        assertEquals(registros, cut.getRegistros());
+        assertNotNull(cut.getModelo());
     }
 
     @Test
@@ -214,5 +241,87 @@ public class AbstractModelTest {
 
         assertEquals(7, cut.contar());
         Mockito.verify(dao).contar();
+    }
+
+    @Test
+    public void testCantidadRegistrosPorDefectoYSetter() {
+        @SuppressWarnings("unchecked")
+        DAOInterface<TestEntity> dao = Mockito.mock(DAOInterface.class);
+        TestModel cut = new TestModel(dao);
+
+        assertEquals(50, cut.getCantidadRegistros());
+
+        cut.setCantidadRegistros(25);
+
+        assertEquals(25, cut.getCantidadRegistros());
+    }
+
+    @Test
+    public void testLazyCountUsaDAOContar() {
+        @SuppressWarnings("unchecked")
+        DAOInterface<TestEntity> dao = Mockito.mock(DAOInterface.class);
+        Mockito.when(dao.contar()).thenReturn(9L);
+
+        TestModel cut = new TestModel(dao);
+        cut.inicializarRegistros();
+
+        int resultado = cut.getModelo().count(Map.of());
+
+        assertEquals(9, resultado);
+        Mockito.verify(dao, Mockito.times(2)).contar();
+    }
+
+    @Test
+    public void testRowKeyUsaIdDelRegistro() {
+        @SuppressWarnings("unchecked")
+        DAOInterface<TestEntity> dao = Mockito.mock(DAOInterface.class);
+        TestModel cut = new TestModel(dao);
+        UUID id = UUID.randomUUID();
+        TestEntity registro = new TestEntity(id);
+
+        assertEquals(id.toString(), cut.getRowKey(registro));
+    }
+
+    @Test
+    public void testRowDataBuscaPorId() {
+        @SuppressWarnings("unchecked")
+        DAOInterface<TestEntity> dao = Mockito.mock(DAOInterface.class);
+        TestModel cut = new TestModel(dao);
+        UUID id = UUID.randomUUID();
+        TestEntity esperado = new TestEntity(id);
+
+        Mockito.when(dao.findById(id)).thenReturn(esperado);
+
+        assertSame(esperado, cut.getRowData(id.toString()));
+        Mockito.verify(dao).findById(id);
+    }
+
+    @Test
+    public void testRowDataRowKeyInvalido() {
+        @SuppressWarnings("unchecked")
+        DAOInterface<TestEntity> dao = Mockito.mock(DAOInterface.class);
+        TestModel cut = new TestModel(dao);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> cut.getRowData("no-es-uuid")
+        );
+    }
+
+    @Test
+    public void testSeleccionarRegistroDesdeSelectEvent() {
+        @SuppressWarnings("unchecked")
+        DAOInterface<TestEntity> dao = Mockito.mock(DAOInterface.class);
+        TestModel cut = new TestModel(dao);
+        TestEntity registro = new TestEntity(UUID.randomUUID());
+
+        @SuppressWarnings("unchecked")
+        SelectEvent<TestEntity> event = Mockito.mock(SelectEvent.class);
+        Mockito.when(event.getObject()).thenReturn(registro);
+
+        cut.seleccionarRegistro(event);
+
+        assertSame(registro, cut.getRegistro());
+        assertEquals(ESTADO_CRUD.MODIFICAR, cut.getEstado());
     }
 }

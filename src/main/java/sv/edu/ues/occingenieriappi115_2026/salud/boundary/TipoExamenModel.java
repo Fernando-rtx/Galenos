@@ -30,4 +30,23 @@ public class TipoExamenModel extends AbstractModel<TipoExamen>
         nuevo.setIdTipoExamen(UUID.randomUUID());
         return nuevo;
     }
+
+    @Override
+    protected Object getIdByRegistro(TipoExamen registro) {
+        if (registro == null) {
+            return null;
+        }
+
+        return registro.getIdTipoExamen();
+    }
+
+    @Override
+    protected Object getIdByRowKey(String rowKey) {
+        return UUID.fromString(rowKey);
+    }
+
+    @Override
+    public String getNombreModelo() {
+        return "Tipo de examen";
+    }
 }
