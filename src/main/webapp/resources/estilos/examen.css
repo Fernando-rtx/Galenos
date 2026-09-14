@@ -1,0 +1,595 @@
+.examen-shell {
+    margin: 0 auto;
+    width: min(1240px, 100%);
+}
+
+.examen-card {
+    background: #ffffff;
+    border: 1px solid #dfeaf1;
+    border-radius: 8px;
+    box-shadow:
+        0 2px 4px rgba(26, 77, 110, 0.02),
+        0 12px 35px rgba(26, 77, 110, 0.07);
+    overflow: hidden;
+}
+
+.examen-topbar {
+    background: #1683b6;
+    height: 5px;
+}
+
+.examen-content {
+    padding: 30px 32px 32px;
+}
+
+.examen-header {
+    align-items: center;
+    display: flex;
+    gap: 28px;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+
+.examen-header-info {
+    min-width: 0;
+}
+
+.examen-brand {
+    align-items: center;
+    color: #1683b6;
+    display: flex;
+    font-size: 0.74rem;
+    font-weight: 700;
+    gap: 8px;
+    letter-spacing: 0;
+    margin-bottom: 9px;
+    text-transform: uppercase;
+}
+
+.examen-brand-icon {
+    align-items: center;
+    background: #eaf6fb;
+    border-radius: 8px;
+    color: #1683b6;
+    display: inline-flex;
+    font-size: 0.78rem;
+    height: 26px;
+    justify-content: center;
+    width: 26px;
+}
+
+.examen-title {
+    color: #153b55;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    margin: 0;
+}
+
+.examen-subtitle {
+    color: #718797;
+    font-size: 0.96rem;
+    line-height: 1.5;
+    margin: 7px 0 0;
+}
+
+.examen-divider {
+    background: #e8eff4;
+    height: 1px;
+    margin: 0 -32px 25px;
+}
+
+.examen-master-detail {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+}
+
+.examen-panel {
+    min-width: 0;
+}
+
+.examen-panel-master {
+    min-width: 0;
+}
+
+.examen-panel-detail {
+    border-left: 1px solid #e5eef4;
+    padding-left: 24px;
+}
+
+.examen-table-heading,
+.examen-detail-heading {
+    align-items: flex-start;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.examen-table-title {
+    align-items: center;
+    color: #34566c;
+    display: flex;
+    font-size: 0.88rem;
+    font-weight: 600;
+    gap: 9px;
+}
+
+.examen-table-title i {
+    color: #1683b6;
+}
+
+.examen-detail-subtitle {
+    color: #78909f;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    margin: 6px 0 0;
+}
+
+.examen-detail-actions {
+    align-items: flex-end;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.examen-selected-pill {
+    background: #eef8f3;
+    border: 1px solid #cbe9d9;
+    border-radius: 999px;
+    color: #236b47;
+    flex: 0 1 auto;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.3;
+    max-width: 210px;
+    overflow: hidden;
+    padding: 7px 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.examen-table,
+.examen-detail-table,
+.examen-types-table {
+    border: 1px solid #e3edf3;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.examen-table .ui-datatable-tablewrapper,
+.examen-detail-table .ui-datatable-tablewrapper,
+.examen-types-table .ui-datatable-tablewrapper {
+    border-radius: 8px;
+}
+
+.examen-table .ui-datatable-thead > tr > th,
+.examen-detail-table .ui-datatable-thead > tr > th,
+.examen-types-table .ui-datatable-thead > tr > th {
+    background: #f4f9fc;
+    border: 0;
+    border-bottom: 1px solid #dfeaf1;
+    color: #466478;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    padding: 15px 16px;
+    text-transform: uppercase;
+}
+
+.examen-table .ui-datatable-data > tr,
+.examen-detail-table .ui-datatable-data > tr,
+.examen-types-table .ui-datatable-data > tr {
+    background: #ffffff;
+    transition: background 0.15s ease;
+}
+
+.examen-table .ui-datatable-data > tr:hover,
+.examen-detail-table .ui-datatable-data > tr:hover,
+.examen-types-table .ui-datatable-data > tr:hover {
+    background: #f7fbfd;
+}
+
+.examen-table .ui-datatable-data > tr.ui-state-highlight,
+.examen-types-table .ui-datatable-data > tr.ui-state-highlight {
+    background: #eaf6fb;
+    color: #263746;
+}
+
+.examen-table .ui-datatable-data > tr > td,
+.examen-detail-table .ui-datatable-data > tr > td,
+.examen-types-table .ui-datatable-data > tr > td {
+    border: 0;
+    border-bottom: 1px solid #edf2f5;
+    color: #405767;
+    font-size: 0.91rem;
+    padding: 16px;
+    vertical-align: middle;
+}
+
+.examen-table .ui-datatable-data > tr:last-child > td,
+.examen-detail-table .ui-datatable-data > tr:last-child > td,
+.examen-types-table .ui-datatable-data > tr:last-child > td {
+    border-bottom: 0;
+}
+
+.examen-table .ui-column-filter,
+.examen-types-table .ui-column-filter {
+    background: #ffffff;
+    border: 1px solid #d7e4ec;
+    border-radius: 8px;
+    color: #334e60;
+    margin-top: 9px;
+    padding: 8px 10px;
+    width: 100%;
+}
+
+.examen-table .ui-column-filter:focus,
+.examen-types-table .ui-column-filter:focus {
+    border-color: #49a5ce;
+    box-shadow: 0 0 0 3px rgba(22, 131, 182, 0.10);
+    outline: none;
+}
+
+.examen-table .ui-paginator,
+.examen-detail-table .ui-paginator,
+.examen-types-table .ui-paginator {
+    background: #ffffff;
+    border: 0;
+    border-top: 1px solid #e6eef3;
+    padding: 13px;
+}
+
+.examen-table .ui-paginator .ui-paginator-page,
+.examen-detail-table .ui-paginator .ui-paginator-page,
+.examen-types-table .ui-paginator .ui-paginator-page {
+    border-radius: 7px;
+}
+
+.examen-table .ui-paginator .ui-state-active,
+.examen-detail-table .ui-paginator .ui-state-active,
+.examen-types-table .ui-paginator .ui-state-active {
+    background: #1683b6;
+    border-color: #1683b6;
+}
+
+.examen-name,
+.examen-type-name {
+    color: #264b62;
+    font-weight: 600;
+}
+
+.examen-observaciones-cell {
+    color: #667d8d;
+    line-height: 1.5;
+}
+
+.examen-empty-note {
+    color: #a1b0ba;
+    font-style: italic;
+}
+
+.examen-action-cell {
+    text-align: center;
+    width: 118px;
+}
+
+.examen-action-cell .ui-button {
+    margin: 0 3px;
+}
+
+.examen-edit-button.ui-button,
+.examen-delete-button.ui-button {
+    border-radius: 8px;
+    box-shadow: none;
+    height: 36px;
+    width: 36px;
+}
+
+.examen-edit-button.ui-button {
+    background: #edf7fb;
+    border: 1px solid #d9edf5;
+    color: #1683b6;
+}
+
+.examen-edit-button.ui-button:hover {
+    background: #dff2f9;
+    border-color: #bfe3f1;
+    color: #106f9c;
+}
+
+.examen-delete-button.ui-button {
+    background: #fff4f2;
+    border: 1px solid #f4d2cc;
+    color: #bb4435;
+}
+
+.examen-delete-button.ui-button:hover {
+    background: #ffe7e2;
+    border-color: #edb7ac;
+    color: #9d3328;
+}
+
+.examen-detail-empty {
+    align-items: center;
+    background: #f8fbfc;
+    border: 1px dashed #cbdce6;
+    border-radius: 8px;
+    color: #6c8290;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    min-height: 196px;
+    padding: 24px;
+    text-align: center;
+}
+
+.examen-detail-empty i {
+    color: #1683b6;
+    font-size: 1.15rem;
+}
+
+.examen-associate-button.ui-button {
+    white-space: nowrap;
+}
+
+.examen-association-dialog.ui-dialog {
+    max-height: 96vh;
+    max-width: 96vw;
+}
+
+.examen-dialog.ui-dialog,
+.examen-confirm-dialog.ui-dialog {
+    border: 0;
+    border-radius: 8px;
+    box-shadow: 0 24px 70px rgba(20, 57, 80, 0.20);
+    overflow: hidden;
+}
+
+.examen-dialog .ui-dialog-titlebar,
+.examen-confirm-dialog .ui-dialog-titlebar {
+    background: #ffffff;
+    border: 0;
+    border-bottom: 1px solid #e6eef3;
+    padding: 21px 24px;
+}
+
+.examen-dialog .ui-dialog-title,
+.examen-confirm-dialog .ui-dialog-title {
+    color: #173f59;
+    font-size: 1.12rem;
+    font-weight: 700;
+}
+
+.examen-dialog .ui-dialog-content,
+.examen-confirm-dialog .ui-dialog-content {
+    background: #ffffff;
+    padding: 24px;
+}
+
+.examen-association-dialog .ui-dialog-content {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(96vh - 76px);
+    overflow: hidden;
+    padding-bottom: 0;
+}
+
+.examen-association-content,
+.examen-association-layout {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.examen-association-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.examen-dialog-intro {
+    align-items: flex-start;
+    background: #f3f9fc;
+    border: 1px solid #deedf4;
+    border-radius: 8px;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding: 13px 15px;
+}
+
+.examen-dialog-intro-icon {
+    align-items: center;
+    background: #e2f3fa;
+    border-radius: 8px;
+    color: #1683b6;
+    display: flex;
+    flex-shrink: 0;
+    height: 32px;
+    justify-content: center;
+    width: 32px;
+}
+
+.examen-dialog-intro strong {
+    color: #31566d;
+    display: block;
+    font-size: 0.88rem;
+    margin-bottom: 3px;
+}
+
+.examen-dialog-intro span {
+    color: #78909f;
+    font-size: 0.81rem;
+    line-height: 1.4;
+}
+
+.examen-selected-context {
+    background: #f8fbfc;
+    border: 1px solid #e4edf2;
+    border-radius: 8px;
+    display: grid;
+    gap: 4px;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+}
+
+.examen-selected-context span {
+    color: #78909f;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.examen-selected-context strong {
+    color: #264b62;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.examen-dialog-form {
+    display: grid;
+    gap: 20px;
+}
+
+.examen-form-field {
+    display: grid;
+    gap: 8px;
+}
+
+.examen-form-label {
+    color: #405d70;
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.examen-form-helper {
+    color: #93a4af;
+    font-size: 0.75rem;
+}
+
+.examen-dialog .ui-inputfield {
+    background: #ffffff;
+    border: 1px solid #d6e3eb;
+    border-radius: 8px;
+    box-shadow: none;
+    color: #263f50;
+    padding: 11px 12px;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+    width: 100%;
+}
+
+.examen-dialog .ui-inputfield:hover {
+    border-color: #abcbdc;
+}
+
+.examen-dialog .ui-inputfield:focus {
+    border-color: #39a0cc;
+    box-shadow: 0 0 0 3px rgba(22, 131, 182, 0.10);
+    outline: none;
+}
+
+.examen-toggle-field {
+    align-items: center;
+    background: #f8fbfc;
+    border: 1px solid #e4edf2;
+    border-radius: 8px;
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+    padding: 14px 16px;
+}
+
+.examen-toggle-info strong {
+    color: #405d70;
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.examen-toggle-info span {
+    color: #91a1ac;
+    display: block;
+    font-size: 0.75rem;
+    margin-top: 3px;
+}
+
+.examen-dialog-actions {
+    background: #fbfcfd;
+    border-top: 1px solid #edf2f5;
+    margin: 24px -24px -24px;
+    padding: 18px 24px;
+}
+
+.examen-association-dialog .examen-dialog-actions {
+    flex: 0 0 auto;
+    margin: 18px -24px 0;
+}
+
+@media (max-width: 980px) {
+    .examen-master-detail {
+        grid-template-columns: 1fr;
+    }
+
+    .examen-panel-detail {
+        border-left: 0;
+        border-top: 1px solid #e5eef4;
+        padding-left: 0;
+        padding-top: 24px;
+    }
+}
+
+@media (max-width: 720px) {
+    .examen-content {
+        padding: 22px 18px;
+    }
+
+    .examen-divider {
+        margin-left: -18px;
+        margin-right: -18px;
+    }
+
+    .examen-header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .examen-title {
+        font-size: 1.65rem;
+    }
+
+    .examen-table-heading,
+    .examen-detail-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .examen-selected-pill {
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .examen-detail-actions {
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .examen-associate-button.ui-button {
+        width: 100%;
+    }
+
+    .examen-action-cell {
+        width: auto;
+    }
+
+    .examen-toggle-field {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

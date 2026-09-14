@@ -1,0 +1,511 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
+
+    <ui:define name="titulo">
+        #{msg['examen.titulo']} | #{msg['app.nombre']}
+    </ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet
+            library="estilos"
+            name="examen.css" />
+    </ui:define>
+
+    <ui:define name="contenido">
+        <div class="examen-shell">
+            <section class="examen-card">
+                <div class="examen-topbar"></div>
+
+                <div class="examen-content">
+                    <div class="examen-header">
+                        <div class="examen-header-info">
+                            <div class="examen-brand">
+                                <span class="examen-brand-icon">
+                                    <i class="pi pi-heart-fill"></i>
+                                </span>
+                                #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                            </div>
+
+                            <h1 class="examen-title">
+                                #{msg['examen.titulo']}
+                            </h1>
+
+                            <p class="examen-subtitle">
+                                #{msg['examen.subtitulo']}
+                            </p>
+                        </div>
+
+                        <crud:botones-top
+                            model="#{examenModel}"
+                            actualizar="messages examenesTable detallePanel edicionDialog"
+                            oncompleteNuevo="PF('examenDialog').show()" />
+                    </div>
+
+                    <div class="examen-divider"></div>
+
+                    <p:messages
+                        id="messages"
+                        showDetail="true"
+                        closable="true" />
+
+                    <div class="examen-master-detail">
+                        <section class="examen-panel examen-panel-master">
+                            <div class="examen-table-heading">
+                                <div class="examen-table-title">
+                                    <i class="pi pi-list"></i>
+                                    #{msg['examen.catalogo']}
+                                </div>
+                            </div>
+
+                            <p:dataTable
+                                id="examenesTable"
+                                value="#{examenModel.modelo}"
+                                var="item"
+                                lazy="true"
+                                paginator="true"
+                                rows="#{examenModel.cantidadRegistros}"
+                                reflow="true"
+                                selectionMode="single"
+                                selection="#{examenModel.examenSeleccionado}"
+                                rowKey="#{examenModel.getRowKey(item)}"
+                                emptyMessage="#{msg['examen.sinRegistros']}"
+                                styleClass="examen-table">
+
+                                <p:ajax
+                                    event="rowSelect"
+                                    listener="#{examenModel.seleccionarExamen}"
+                                    update="detallePanel" />
+
+                                <p:column
+                                    headerText="#{msg['examen.nombre']}"
+                                    filterBy="#{item.nombre}"
+                                    filterMatchMode="contains"
+                                    filterPlaceholder="#{msg['examen.buscar']}">
+
+                                    <h:outputText
+                                        value="#{item.nombre}"
+                                        styleClass="examen-name" />
+                                </p:column>
+
+                                <p:column headerText="#{msg['examen.estado']}">
+                                    <p:tag
+                                        styleClass="clinical-status"
+                                        value="#{item.activo eq true
+                                                 ? msg['examen.activo']
+                                                 : msg['examen.inactivo']}"
+                                        severity="#{item.activo eq true
+                                                    ? 'success'
+                                                    : 'secondary'}" />
+                                </p:column>
+
+                                <p:column
+                                    headerText="#{msg['examen.observaciones']}"
+                                    styleClass="examen-observaciones-cell">
+
+                                    <h:outputText
+                                        value="#{empty item.observaciones
+                                                 ? msg['examen.sinObservaciones']
+                                                 : item.observaciones}"
+                                        styleClass="#{empty item.observaciones
+                                                      ? 'examen-empty-note'
+                                                      : ''}" />
+                                </p:column>
+
+                                <p:column
+                                    headerText="#{msg['examen.acciones']}"
+                                    styleClass="examen-action-cell">
+
+                                    <p:commandButton
+                                        icon="pi pi-pencil"
+                                        title="#{msg['crud.editar']}"
+                                        styleClass="examen-edit-button"
+                                        action="#{examenModel.seleccionar(item)}"
+                                        process="@this"
+                                        update="examenesTable detallePanel edicionDialog"
+                                        oncomplete="PF('examenDialog').show()" />
+
+                                    <p:commandButton
+                                        icon="pi pi-trash"
+                                        title="#{msg['crud.eliminar']}"
+                                        styleClass="examen-delete-button"
+                                        action="#{examenModel.eliminar(item)}"
+                                        process="@this"
+                                        update="messages examenesTable detallePanel edicionDialog">
+
+                                        <p:confirm
+                                            header="#{msg['crud.confirmar']}"
+                                            message="#{msg['examen.confirmarEliminar']}"
+                                            icon="pi pi-exclamation-triangle" />
+                                    </p:commandButton>
+                                </p:column>
+                            </p:dataTable>
+                        </section>
+
+                        <section class="examen-panel examen-panel-detail">
+                            <p:outputPanel
+                                id="detallePanel"
+                                layout="block">
+
+                                <div class="examen-detail-heading">
+                                    <div>
+                                        <div class="examen-table-title">
+                                            <i class="pi pi-tags"></i>
+                                            #{msg['examen.detalle']}
+                                        </div>
+
+                                        <p class="examen-detail-subtitle">
+                                            #{msg['examen.detalleSubtitulo']}
+                                        </p>
+                                    </div>
+
+                                    <div class="examen-detail-actions">
+                                        <h:panelGroup
+                                            rendered="#{examenModel.examenSeleccionado ne null}"
+                                            layout="block"
+                                            styleClass="examen-selected-pill">
+
+                                            #{examenModel.examenSeleccionado.nombre}
+                                        </h:panelGroup>
+
+                                        <p:commandButton
+                                            value="#{msg['examen.asociarTipo']}"
+                                            icon="pi pi-plus"
+                                            action="#{examenModel.prepararAsociacion}"
+                                            process="@this"
+                                            update="asociacionDialog"
+                                            disabled="#{examenModel.examenSeleccionado eq null}"
+                                            oncomplete="PF('asociacionDialog').show()"
+                                            styleClass="clinical-primary examen-associate-button" />
+                                    </div>
+                                </div>
+
+                                <h:panelGroup
+                                    rendered="#{examenModel.examenSeleccionado eq null}"
+                                    layout="block"
+                                    styleClass="examen-detail-empty">
+
+                                    <i class="pi pi-info-circle"></i>
+                                    <span>
+                                        #{msg['examen.sinSeleccion']}
+                                    </span>
+                                </h:panelGroup>
+
+                                <p:dataTable
+                                    id="tiposDetalleTable"
+                                    rendered="#{examenModel.examenSeleccionado ne null}"
+                                    value="#{examenModel.modeloDetalle}"
+                                    var="detalle"
+                                    lazy="true"
+                                    paginator="true"
+                                    rows="#{examenModel.cantidadRegistrosDetalle}"
+                                    reflow="true"
+                                    rowKey="#{examenModel.getRowKeyDetalle(detalle)}"
+                                    emptyMessage="#{msg['examen.sinDetalle']}"
+                                    styleClass="examen-detail-table">
+
+                                    <p:column
+                                        headerText="#{msg['examen.tipoExamen']}">
+
+                                        <h:outputText
+                                            value="#{detalle.idTipoExamen ne null
+                                                     and not empty detalle.idTipoExamen.nombre
+                                                     ? detalle.idTipoExamen.nombre
+                                                     : msg['examen.tipoSinNombre']}"
+                                            styleClass="examen-type-name" />
+                                    </p:column>
+
+                                    <p:column
+                                        headerText="#{msg['examen.estado']}">
+
+                                        <p:tag
+                                            styleClass="clinical-status"
+                                            value="#{detalle.idTipoExamen ne null
+                                                     and detalle.idTipoExamen.activo eq true
+                                                     ? msg['examen.activo']
+                                                     : msg['examen.inactivo']}"
+                                            severity="#{detalle.idTipoExamen ne null
+                                                        and detalle.idTipoExamen.activo eq true
+                                                        ? 'success'
+                                                        : 'secondary'}" />
+                                    </p:column>
+
+                                    <p:column
+                                        headerText="#{msg['examen.observaciones']}"
+                                        styleClass="examen-observaciones-cell">
+
+                                        <h:outputText
+                                            value="#{empty detalle.observaciones
+                                                     ? msg['examen.sinObservaciones']
+                                                     : detalle.observaciones}"
+                                            styleClass="#{empty detalle.observaciones
+                                                          ? 'examen-empty-note'
+                                                          : ''}" />
+                                    </p:column>
+
+                                    <p:column
+                                        headerText="#{msg['examen.acciones']}"
+                                        styleClass="examen-action-cell">
+
+                                        <p:commandButton
+                                            icon="pi pi-times"
+                                            title="#{msg['crud.quitar']}"
+                                            styleClass="examen-delete-button"
+                                            action="#{examenModel.quitarAsociacion(detalle)}"
+                                            process="@this"
+                                            update="messages detallePanel">
+
+                                            <p:confirm
+                                                header="#{msg['crud.confirmar']}"
+                                                message="#{msg['examen.confirmarQuitarAsociacion']}"
+                                                icon="pi pi-exclamation-triangle" />
+                                        </p:commandButton>
+                                    </p:column>
+                                </p:dataTable>
+                            </p:outputPanel>
+                        </section>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <p:dialog
+            id="edicionDialog"
+            widgetVar="examenDialog"
+            header="#{examenModel.estado eq 'CREAR'
+                      ? msg['examen.nuevo']
+                      : msg['examen.editar']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="560"
+            styleClass="examen-dialog">
+
+            <p:outputPanel
+                id="edicionContenido"
+                layout="block">
+
+                <h:panelGroup rendered="#{examenModel.registro ne null}">
+                    <div class="examen-dialog-intro">
+                        <div class="examen-dialog-intro-icon">
+                            <i class="pi pi-file-edit"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                #{msg['examen.informacion']}
+                            </strong>
+
+                            <span>
+                                #{msg['examen.completar']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="examen-dialog-form">
+                        <div class="examen-form-field">
+                            <p:outputLabel
+                                for="nombre"
+                                value="#{msg['examen.nombre']}"
+                                styleClass="examen-form-label" />
+
+                            <p:inputText
+                                id="nombre"
+                                value="#{examenModel.registro.nombre}"
+                                placeholder="#{msg['examen.nombrePlaceholder']}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}" />
+
+                            <span class="examen-form-helper">
+                                #{msg['examen.nombreAyuda']}
+                            </span>
+                        </div>
+
+                        <div class="examen-form-field">
+                            <p:outputLabel
+                                for="observaciones"
+                                value="#{msg['examen.observaciones']}"
+                                styleClass="examen-form-label" />
+
+                            <p:inputTextarea
+                                id="observaciones"
+                                value="#{examenModel.registro.observaciones}"
+                                rows="5"
+                                autoResize="false"
+                                placeholder="#{msg['examen.observacionesPlaceholder']}" />
+                        </div>
+
+                        <div class="examen-toggle-field">
+                            <div class="examen-toggle-info">
+                                <strong>
+                                    #{msg['examen.activo']}
+                                </strong>
+
+                                <span>
+                                    #{msg['examen.usarSistema']}
+                                </span>
+                            </div>
+
+                            <p:toggleSwitch
+                                id="activo"
+                                value="#{examenModel.registro.activo}" />
+                        </div>
+                    </div>
+
+                    <div class="examen-dialog-actions">
+                        <crud:botones-bottom
+                            model="#{examenModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages examenesTable detallePanel edicionDialog"
+                            oncompleteCancelar="PF('examenDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('examenDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+
+        <p:dialog
+            id="asociacionDialog"
+            widgetVar="asociacionDialog"
+            header="#{msg['examen.asociarTipoTitulo']}"
+            modal="true"
+            responsive="true"
+            fitViewport="true"
+            resizable="false"
+            width="680"
+            styleClass="examen-dialog examen-association-dialog">
+
+            <p:outputPanel
+                id="asociacionContenido"
+                layout="block"
+                styleClass="examen-association-content">
+
+                <h:panelGroup
+                    rendered="#{examenModel.examenSeleccionado ne null}"
+                    layout="block"
+                    styleClass="examen-association-layout">
+
+                    <div class="examen-association-scroll">
+                        <div class="examen-dialog-intro">
+                            <div class="examen-dialog-intro-icon">
+                                <i class="pi pi-link"></i>
+                            </div>
+
+                            <div>
+                                <strong>
+                                    #{msg['examen.asociarTipo']}
+                                </strong>
+
+                                <span>
+                                    #{msg['examen.asociarInstruccion']}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="examen-selected-context">
+                            <span>
+                                #{msg['examen.examenSeleccionado']}
+                            </span>
+
+                            <strong>
+                                #{examenModel.examenSeleccionado.nombre}
+                            </strong>
+                        </div>
+
+                        <div class="examen-table-heading">
+                            <div class="examen-table-title">
+                                <i class="pi pi-list-check"></i>
+                                #{msg['examen.tiposDisponibles']}
+                            </div>
+                        </div>
+
+                        <p:dataTable
+                            id="tiposDisponiblesTable"
+                            value="#{examenModel.modeloTiposExamen}"
+                            var="tipo"
+                            lazy="true"
+                            paginator="true"
+                            rows="#{examenModel.cantidadRegistrosTiposExamen}"
+                            reflow="true"
+                            selectionMode="single"
+                            selection="#{examenModel.tipoExamenSeleccionado}"
+                            rowKey="#{examenModel.getRowKeyTipoExamen(tipo)}"
+                            emptyMessage="#{msg['examen.sinTiposDisponibles']}"
+                            styleClass="examen-types-table">
+
+                            <p:column
+                                headerText="#{msg['examen.tipoExamen']}"
+                                filterBy="#{tipo.nombre}"
+                                filterMatchMode="contains"
+                                filterPlaceholder="#{msg['examen.buscarTipo']}">
+
+                                <h:outputText
+                                    value="#{empty tipo.nombre
+                                             ? msg['examen.tipoSinNombre']
+                                             : tipo.nombre}"
+                                    styleClass="examen-type-name" />
+                            </p:column>
+
+                            <p:column headerText="#{msg['examen.estado']}">
+                                <p:tag
+                                    styleClass="clinical-status"
+                                    value="#{tipo.activo eq true
+                                             ? msg['examen.activo']
+                                             : msg['examen.inactivo']}"
+                                    severity="#{tipo.activo eq true
+                                                ? 'success'
+                                                : 'secondary'}" />
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+
+                    <div class="examen-dialog-actions">
+                        <p:commandButton
+                            value="#{msg['crud.cancelar']}"
+                            type="button"
+                            icon="pi pi-times"
+                            onclick="PF('asociacionDialog').hide()"
+                            styleClass="cancel-button" />
+
+                        <p:commandButton
+                            id="confirmarAsociacionButton"
+                            value="#{msg['crud.asociar']}"
+                            icon="pi pi-check"
+                            action="#{examenModel.asociarTipoExamen}"
+                            process="@this tiposDisponiblesTable"
+                            update="messages detallePanel asociacionDialog"
+                            oncomplete="PF('asociacionDialog').hide()"
+                            styleClass="clinical-primary" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+
+        <p:confirmDialog
+            global="true"
+            responsive="true"
+            showEffect="fade"
+            hideEffect="fade"
+            styleClass="examen-confirm-dialog">
+
+            <p:commandButton
+                value="#{msg['crud.si']}"
+                type="button"
+                icon="pi pi-check"
+                styleClass="ui-confirmdialog-yes clinical-primary" />
+
+            <p:commandButton
+                value="#{msg['crud.no']}"
+                type="button"
+                icon="pi pi-times"
+                styleClass="ui-confirmdialog-no cancel-button" />
+        </p:confirmDialog>
+    </ui:define>
+</ui:composition>
