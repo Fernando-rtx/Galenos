@@ -17,6 +17,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
         <jakartaee>11.0.0</jakartaee>
+        <primefaces.version>15.0.8</primefaces.version>
 
         <!-- Testing -->
         <junit.version>6.1.3</junit.version>
@@ -31,6 +32,15 @@
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
             <version>${jakartaee}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- PrimeFaces para Jakarta Faces -->
+        <dependency>
+            <groupId>org.primefaces</groupId>
+            <artifactId>primefaces</artifactId>
+            <version>${primefaces.version}</version>
+            <classifier>jakarta</classifier>
             <scope>provided</scope>
         </dependency>
 
