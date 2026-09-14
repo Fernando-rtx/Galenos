@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:cc="jakarta.faces.composite"
+      xmlns:p="primefaces">
+
+    <cc:interface>
+        <cc:attribute name="model" required="true" />
+        <cc:attribute name="actualizar" required="false" default="@form" />
+        <cc:attribute name="oncompleteNuevo" required="false" default="" />
+        <cc:attribute name="oncompleteCancelar" required="false" default="" />
+    </cc:interface>
+
+    <cc:implementation>
+        <div class="crud-actions-top">
+            <p:commandButton
+                value="#{msg['crud.nuevo']}"
+                icon="pi pi-plus"
+                action="#{cc.attrs.model.nuevo}"
+                process="@this"
+                update="#{cc.attrs.actualizar}"
+                rendered="#{cc.attrs.model.estado eq 'NINGUNO'}"
+                oncomplete="#{cc.attrs.oncompleteNuevo}"
+                styleClass="clinical-primary" />
+
+            <p:commandButton
+                value="#{msg['crud.cancelar']}"
+                icon="pi pi-times"
+                action="#{cc.attrs.model.cancelar}"
+                process="@this"
+                update="#{cc.attrs.actualizar}"
+                immediate="true"
+                rendered="#{cc.attrs.model.estado ne 'NINGUNO'}"
+                oncomplete="#{cc.attrs.oncompleteCancelar}"
+                styleClass="cancel-button" />
+        </div>
+    </cc:implementation>
+</html>
