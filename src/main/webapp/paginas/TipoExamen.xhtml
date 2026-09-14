@@ -1,96 +1,234 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html"
-      xmlns:f="jakarta.faces.core">
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
 
-    <h:head>
-        <title>Tipo de Examen</title>
-    </h:head>
+    <ui:define name="titulo">
+        #{msg['tipoExamen.titulo']} | #{msg['app.nombre']}
+        </ui:define>
+        <ui:define name="head">
+            <h:outputStylesheet
+                library="estilos"
+                name="tipo-examen.css"/>
+        </ui:define>
+        <ui:define name="contenido">
+            <main class="page-shell">
+                <section class="clinical-card">
+                    <div class="clinical-topbar"></div>
 
-    <h:body>
+                    <div class="card-content">
+                        <div class="page-header">
+                            <div class="header-info">
+                                <div class="clinical-brand">
+                                    <span class="clinical-brand-icon">
+                                        <i class="pi pi-heart-fill"></i>
+                                    </span>
+                                    #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                                </div>
 
-        <h1>Tipos de Examen</h1>
+                                <h1 class="page-title">
+                                    #{msg['tipoExamen.titulo']}
+                                </h1>
 
-        <h:messages />
+                                <p class="page-subtitle">
+                                    #{msg['tipoExamen.subtitulo']}
+                                </p>
+                            </div>
 
-        <h:form id="listadoForm">
-            <h:commandButton value="Nuevo"
-                             action="#{tipoExamenModel.nuevo}"
-                             immediate="true" />
+                            <crud:botones-top
+                                model="#{tipoExamenModel}"
+                                actualizar="messages tiposTable edicionDialog"
+                                oncompleteNuevo="PF('tipoExamenDialog').show()" />
+                        </div>
 
-            <h:dataTable value="#{tipoExamenModel.registros}"
-                         var="item"
-                         border="1">
-                <h:column>
-                    <f:facet name="header">Id</f:facet>
-                    #{item.idTipoExamen}
-                </h:column>
+                        <div class="section-divider"></div>
 
-                <h:column>
-                    <f:facet name="header">Nombre</f:facet>
-                    #{item.nombre}
-                </h:column>
+                        <p:messages
+                            id="messages"
+                            showDetail="true"
+                            closable="true" />
 
-                <h:column>
-                    <f:facet name="header">Activo</f:facet>
-                    #{item.activo}
-                </h:column>
+                        <div class="table-section">
+                            <div class="table-heading">
+                                <div class="table-title">
+                                    <i class="pi pi-list"></i>
+                                    #{msg['tipoExamen.catalogo']}
+                                </div>
+                            </div>
 
-                <h:column>
-                    <f:facet name="header">Observaciones</f:facet>
-                    #{item.observaciones}
-                </h:column>
+                            <p:dataTable
+                                id="tiposTable"
+                                value="#{tipoExamenModel.modelo}"
+                                var="item"
+                                lazy="true"
+                                paginator="true"
+                                rows="#{tipoExamenModel.cantidadRegistros}"
+                                reflow="true"
+                                selectionMode="single"
+                                selection="#{tipoExamenModel.registro}"
+                                rowKey="#{tipoExamenModel.getRowKey(item)}"
+                                emptyMessage="#{msg['tipoExamen.sinRegistros']}"
+                                styleClass="tipo-table">
 
-                <h:column>
-                    <f:facet name="header">Acciones</f:facet>
-                    <h:commandButton value="Seleccionar"
-                                     action="#{tipoExamenModel.seleccionar(item)}"
-                                     immediate="true" />
-                </h:column>
-            </h:dataTable>
-        </h:form>
+                                <p:ajax
+                                    event="rowSelect"
+                                    listener="#{tipoExamenModel.seleccionarRegistro}"
+                                    update="edicionDialog"
+                                    oncomplete="PF('tipoExamenDialog').show()" />
 
-        <h:form id="edicionForm"
-                rendered="#{tipoExamenModel.estado != 'NINGUNO'}">
-            <h2>Tipo de Examen</h2>
+                                <p:column
+                                    headerText="#{msg['tipoExamen.nombre']}"
+                                    filterBy="#{item.nombre}"
+                                    filterMatchMode="contains"
+                                    filterPlaceholder="#{msg['tipoExamen.buscar']}">
 
-            <table>
-                <tr>
-                    <td>Id</td>
-                    <td>#{tipoExamenModel.registro.idTipoExamen}</td>
-                </tr>
-                <tr>
-                    <td>Nombre</td>
-                    <td>
-                        <h:inputText id="nombre"
-                                     value="#{tipoExamenModel.registro.nombre}" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>Activo</td>
-                    <td>
-                        <h:selectBooleanCheckbox id="activo"
-                                                 value="#{tipoExamenModel.registro.activo}" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>Observaciones</td>
-                    <td>
-                        <h:inputText id="observaciones"
-                                     value="#{tipoExamenModel.registro.observaciones}" />
-                    </td>
-                </tr>
-            </table>
+                                    <h:outputText
+                                        value="#{item.nombre}"
+                                        styleClass="exam-name" />
+                                </p:column>
 
-            <h:commandButton value="Guardar"
-                             action="#{tipoExamenModel.guardar}" />
-            <h:commandButton value="Cancelar"
-                             action="#{tipoExamenModel.cancelar}"
-                             immediate="true" />
-        </h:form>
+                                <p:column headerText="#{msg['tipoExamen.estado']}">
+                                    <p:tag
+                                        styleClass="clinical-status"
+                                        value="#{item.activo eq true
+                                                 ? msg['tipoExamen.activo']
+                                                 : msg['tipoExamen.inactivo']}"
+                                        severity="#{item.activo eq true
+                                                    ? 'success'
+                                                    : 'secondary'}" />
+                                </p:column>
 
-    </h:body>
+                                <p:column
+                                    headerText="#{msg['tipoExamen.observaciones']}"
+                                    styleClass="observaciones-cell">
 
-</html>
+                                    <h:outputText
+                                        value="#{empty item.observaciones
+                                                 ? msg['tipoExamen.sinObservaciones']
+                                                 : item.observaciones}"
+                                        styleClass="#{empty item.observaciones
+                                                      ? 'empty-note'
+                                                      : ''}" />
+                                </p:column>
+
+                                <p:column
+                                    headerText="#{msg['tipoExamen.acciones']}"
+                                    styleClass="action-cell">
+
+                                    <p:commandButton
+                                        icon="pi pi-pencil"
+                                        title="#{msg['crud.editar']}"
+                                        styleClass="edit-button"
+                                        action="#{tipoExamenModel.seleccionar(item)}"
+                                        process="@this"
+                                        update="edicionDialog"
+                                        oncomplete="PF('tipoExamenDialog').show()" />
+                                </p:column>
+                            </p:dataTable>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <p:dialog
+                id="edicionDialog"
+                widgetVar="tipoExamenDialog"
+                header="#{tipoExamenModel.estado eq 'CREAR'
+                          ? msg['tipoExamen.nuevo']
+                          : msg['tipoExamen.editar']}"
+                modal="true"
+                responsive="true"
+                resizable="false"
+                width="560"
+                styleClass="clinical-dialog">
+
+                <p:outputPanel
+                    id="edicionContenido"
+                    layout="block">
+
+                    <h:panelGroup rendered="#{tipoExamenModel.registro ne null}">
+                        <div class="dialog-intro">
+                            <div class="dialog-intro-icon">
+                                <i class="pi pi-file-edit"></i>
+                            </div>
+
+                            <div>
+                                <strong>
+                                    #{msg['tipoExamen.informacion']}
+                                </strong>
+
+                                <span>
+                                    #{msg['tipoExamen.completar']}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="dialog-form">
+                            <div class="form-field">
+                                <p:outputLabel
+                                    for="nombre"
+                                    value="#{msg['tipoExamen.nombre']}"
+                                    styleClass="form-label" />
+
+                                <p:inputText
+                                    id="nombre"
+                                    value="#{tipoExamenModel.registro.nombre}"
+                                    placeholder="#{msg['tipoExamen.nombrePlaceholder']}"
+                                    required="true"
+                                    requiredMessage="#{msg['mensajes.error']}" />
+
+                                <span class="form-helper">
+                                    #{msg['tipoExamen.nombreAyuda']}
+                                </span>
+                            </div>
+
+                            <div class="form-field">
+                                <p:outputLabel
+                                    for="observaciones"
+                                    value="#{msg['tipoExamen.observaciones']}"
+                                    styleClass="form-label" />
+
+                                <p:inputTextarea
+                                    id="observaciones"
+                                    value="#{tipoExamenModel.registro.observaciones}"
+                                    rows="5"
+                                    autoResize="false"
+                                    placeholder="#{msg['tipoExamen.observacionesPlaceholder']}" />
+                            </div>
+
+                            <div class="toggle-field">
+                                <div class="toggle-info">
+                                    <strong>
+                                        #{msg['tipoExamen.activo']}
+                                    </strong>
+
+                                    <span>
+                                        #{msg['tipoExamen.usarSistema']}
+                                    </span>
+                                </div>
+
+                                <p:toggleSwitch
+                                    id="activo"
+                                    value="#{tipoExamenModel.registro.activo}" />
+                            </div>
+                        </div>
+
+                        <div class="dialog-actions">
+                            <crud:botones-bottom
+                                model="#{tipoExamenModel}"
+                                procesar="@this edicionContenido"
+                                actualizar="messages tiposTable edicionDialog"
+                                oncompleteCancelar="PF('tipoExamenDialog').hide()"
+                                oncompleteGuardar="if (!args.validationFailed) PF('tipoExamenDialog').hide()" />
+                        </div>
+                    </h:panelGroup>
+                </p:outputPanel>
+            </p:dialog>
+        </ui:define>
+</ui:composition>
