@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 class TipoExamenModelTest {
 
@@ -54,11 +55,14 @@ class TipoExamenModelTest {
         TipoExamenDAO dao = mock(TipoExamenDAO.class);
         TipoExamenModel model = new TipoExamenModel(dao);
         TipoExamen tipoExamen = new TipoExamen();
+        TipoExamen actualizado = new TipoExamen();
         model.seleccionar(tipoExamen);
+        when(dao.actualizar(tipoExamen)).thenReturn(actualizado);
 
         model.guardar();
 
         verify(dao).actualizar(tipoExamen);
+        assertSame(actualizado, model.getSeleccionado());
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
 

@@ -44,7 +44,7 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
         }
         switch (getEstado()) {
             case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> getDao().actualizar(seleccionado);
+            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
             case LISTADO -> {
             }
         }
