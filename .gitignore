@@ -3,3 +3,10 @@ target/
 nb-configuration.xml
 faces-config.NavData
 *.log
+
+# Open Liberty local configuration and generated state
+src/main/liberty/config/server.env
+src/main/liberty/config/logs/
+src/main/liberty/config/workarea/
+src/main/liberty/config/apps/
+src/main/liberty/config/dropins/
