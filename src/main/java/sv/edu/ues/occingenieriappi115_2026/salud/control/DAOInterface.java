@@ -11,9 +11,16 @@ public interface DAOInterface<T> {
 
     List<T> obtenerTodos();
 
+    List<T> obtenerPagina(int primero, int tamano, List<FiltroDAO> filtros,
+            List<OrdenDAO> ordenamientos);
+
     T actualizar(T entidad);
 
     boolean eliminar(UUID id);
 
     long contar();
+
+    long contar(List<FiltroDAO> filtros);
+
+    UUID obtenerId(T entidad);
 }
