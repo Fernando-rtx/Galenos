@@ -1,0 +1,5 @@
+target/
+.DS_Store
+nb-configuration.xml
+faces-config.NavData
+*.log
