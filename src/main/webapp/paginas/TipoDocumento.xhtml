@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
+
+    <ui:define name="titulo">
+        #{msg['tipoDocumento.titulo']} | #{msg['app.nombre']}
+    </ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet
+            library="estilos"
+            name="tipo-documento.css"/>
+    </ui:define>
+
+    <ui:define name="contenido">
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+
+                <div class="card-content">
+                    <div class="page-header">
+                        <div class="header-info">
+                            <div class="clinical-brand">
+                                <span class="clinical-brand-icon">
+                                    <i class="pi pi-heart-fill"></i>
+                                </span>
+                                #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                            </div>
+
+                            <h1 class="page-title">
+                                #{msg['tipoDocumento.titulo']}
+                            </h1>
+
+                            <p class="page-subtitle">
+                                #{msg['tipoDocumento.subtitulo']}
+                            </p>
+                        </div>
+
+                        <crud:botones-top
+                            model="#{tipoDocumentoModel}"
+                            actualizar="messages documentosTable edicionDialog"
+                            oncompleteNuevo="PF('tipoDocumentoDialog').show()" />
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <p:messages
+                        id="messages"
+                        showDetail="true"
+                        closable="true" />
+
+                    <div class="table-section">
+                        <div class="table-heading">
+                            <div class="table-title">
+                                <i class="pi pi-list"></i>
+                                #{msg['tipoDocumento.catalogo']}
+                            </div>
+                        </div>
+
+                        <p:dataTable
+                            id="documentosTable"
+                            value="#{tipoDocumentoModel}"
+                            var="item"
+                            lazy="true"
+                            paginator="true"
+                            rows="10"
+                            reflow="true"
+                            selectionMode="single"
+                            selection="#{tipoDocumentoModel.seleccionado}"
+                            rowKey="#{tipoDocumentoModel.getRowKey(item)}"
+                            emptyMessage="#{msg['tipoDocumento.sinRegistros']}"
+                            styleClass="tipo-table">
+
+                            <p:ajax
+                                event="rowSelect"
+                                listener="#{tipoDocumentoModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('tipoDocumentoDialog').show()" />
+
+                            <p:column
+                                headerText="#{msg['tipoDocumento.nombre']}"
+                                filterBy="#{item.nombre}"
+                                filterMatchMode="contains"
+                                filterPlaceholder="#{msg['tipoDocumento.buscar']}">
+
+                                <h:outputText
+                                    value="#{item.nombre}"
+                                    styleClass="exam-name" />
+                            </p:column>
+
+                            <p:column headerText="#{msg['tipoDocumento.estado']}">
+                                <p:tag
+                                    styleClass="clinical-status"
+                                    value="#{item.activo eq true
+                                             ? msg['tipoDocumento.activo']
+                                             : msg['tipoDocumento.inactivo']}"
+                                    severity="#{item.activo eq true
+                                                ? 'success'
+                                                : 'secondary'}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['tipoDocumento.indicaciones']}"
+                                styleClass="observaciones-cell">
+
+                                <h:outputText
+                                    value="#{empty item.indicaciones
+                                             ? msg['tipoDocumento.sinObservaciones']
+                                             : item.indicaciones}"
+                                    styleClass="#{empty item.indicaciones
+                                                  ? 'empty-note'
+                                                  : ''}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['tipoDocumento.acciones']}"
+                                styleClass="action-cell">
+
+                                <p:commandButton
+                                    icon="pi pi-pencil"
+                                    title="#{msg['crud.editar']}"
+                                    styleClass="edit-button"
+                                    action="#{tipoDocumentoModel.seleccionar(item)}"
+                                    process="@this"
+                                    update="edicionDialog"
+                                    oncomplete="PF('tipoDocumentoDialog').show()" />
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <p:dialog
+            id="edicionDialog"
+            widgetVar="tipoDocumentoDialog"
+            header="#{tipoDocumentoModel.estado eq 'CREAR'
+                      ? msg['tipoDocumento.nuevo']
+                      : msg['tipoDocumento.editar']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="560"
+            styleClass="clinical-dialog">
+
+            <p:outputPanel
+                id="edicionContenido"
+                layout="block">
+
+                <h:panelGroup rendered="#{tipoDocumentoModel.seleccionado ne null}">
+                    <div class="dialog-intro">
+                        <div class="dialog-intro-icon">
+                            <i class="pi pi-file-edit"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                #{msg['tipoDocumento.informacion']}
+                            </strong>
+
+                            <span>
+                                #{msg['tipoDocumento.completar']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="nombre"
+                                value="#{msg['tipoDocumento.nombre']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="nombre"
+                                value="#{tipoDocumentoModel.seleccionado.nombre}"
+                                placeholder="#{msg['tipoDocumento.nombrePlaceholder']}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}" />
+
+                            <span class="form-helper">
+                                #{msg['tipoDocumento.nombreAyuda']}
+                            </span>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="indicaciones"
+                                value="#{msg['tipoDocumento.indicaciones']}"
+                                styleClass="form-label" />
+
+                            <p:inputTextarea
+                                id="indicaciones"
+                                value="#{tipoDocumentoModel.seleccionado.indicaciones}"
+                                rows="5"
+                                autoResize="false"
+                                placeholder="#{msg['tipoDocumento.indicacionesPlaceholder']}" />
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="expresionRegular"
+                                value="#{msg['tipoDocumento.expresionRegular']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="expresionRegular"
+                                value="#{tipoDocumentoModel.seleccionado.expresionRegular}"
+                                placeholder="#{msg['tipoDocumento.expresionRegularPlaceholder']}" />
+                        </div>
+
+                        <div class="toggle-field">
+                            <div class="toggle-info">
+                                <strong>
+                                    #{msg['tipoDocumento.activo']}
+                                </strong>
+
+                                <span>
+                                    #{msg['tipoDocumento.usarSistema']}
+                                </span>
+                            </div>
+
+                            <p:toggleSwitch
+                                id="activo"
+                                value="#{tipoDocumentoModel.seleccionado.activo}" />
+                        </div>
+                    </div>
+
+                    <div class="dialog-actions">
+                        <crud:botones-bottom
+                            model="#{tipoDocumentoModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages documentosTable edicionDialog"
+                            oncompleteCancelar="PF('tipoDocumentoDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('tipoDocumentoDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>
