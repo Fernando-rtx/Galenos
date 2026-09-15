@@ -28,7 +28,38 @@ import java.util.Date;
 @Entity
 @Table(name = "procedimiento_paso_examen")
 @NamedQueries({
-    @NamedQuery(name = "ProcedimientoPasoExamen.findAll", query = "SELECT procedimientoPasoExamen FROM ProcedimientoPasoExamen procedimientoPasoExamen")})
+    @NamedQuery(
+            name = "ProcedimientoPasoExamen.findAll",
+            query = "SELECT p FROM ProcedimientoPasoExamen p"
+    ),
+    @NamedQuery(
+            name = "ProcedimientoPasoExamen.findByIdProcedimientoPaso",
+            query = "SELECT p "
+            + "FROM ProcedimientoPasoExamen p "
+            + "WHERE p.idProcedimientoPaso.idProcedimientoPaso "
+            + "= :idProcedimientoPaso "
+            + "ORDER BY p.idExamen.nombre"
+    ),
+    @NamedQuery(
+            name = "ProcedimientoPasoExamen.countByIdProcedimientoPaso",
+            query = "SELECT COUNT(p.idProcedimientoPasoExamen) "
+            + "FROM ProcedimientoPasoExamen p "
+            + "WHERE p.idProcedimientoPaso.idProcedimientoPaso "
+            + "= :idProcedimientoPaso"
+    ),
+    @NamedQuery(
+            name = "ProcedimientoPasoExamen.findByIdExamen",
+            query = "SELECT p "
+            + "FROM ProcedimientoPasoExamen p "
+            + "WHERE p.idExamen.idExamen = :idExamen "
+            + "ORDER BY p.idProcedimientoPaso.nombre"
+    ),
+    @NamedQuery(
+            name = "ProcedimientoPasoExamen.countByIdExamen",
+            query = "SELECT COUNT(p.idProcedimientoPasoExamen) "
+            + "FROM ProcedimientoPasoExamen p "
+            + "WHERE p.idExamen.idExamen = :idExamen"
+    )})
 public class ProcedimientoPasoExamen implements Serializable {
 
     private static final long serialVersionUID = 1L;
