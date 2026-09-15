@@ -12,7 +12,8 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.metamodel.Attribute;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.SingularAttribute;
-import jakarta.transaction.Transactional;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     }
 
     @Override
-    @Transactional
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public T guardar(T entidad) {
         Objects.requireNonNull(entidad, "La entidad a guardar es requerida");
         asignarUuidSiNoExiste(entidad);
@@ -41,14 +42,14 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     }
 
     @Override
-    @Transactional(Transactional.TxType.SUPPORTS)
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public T buscarPorId(UUID id) {
         Objects.requireNonNull(id, "El UUID de busqueda es requerido");
         return getEntityManager().find(entityClass, id);
     }
 
     @Override
-    @Transactional(Transactional.TxType.SUPPORTS)
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<T> obtenerTodos() {
         CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<T> query = builder.createQuery(entityClass);
@@ -59,7 +60,7 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     }
 
     @Override
-    @Transactional(Transactional.TxType.SUPPORTS)
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<T> obtenerPagina(int primero, int tamano, List<FiltroDAO> filtros,
             List<OrdenDAO> ordenamientos) {
         if (primero < 0 || tamano <= 0) {
@@ -78,7 +79,7 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     }
 
     @Override
-    @Transactional
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public T actualizar(T entidad) {
         Objects.requireNonNull(entidad, "La entidad a actualizar es requerida");
         validarUuidExistente(entidad);
@@ -86,7 +87,7 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     }
 
     @Override
-    @Transactional
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public boolean eliminar(UUID id) {
         T entidad = buscarPorId(id);
         if (entidad == null) {
@@ -98,7 +99,7 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     }
 
     @Override
-    @Transactional(Transactional.TxType.SUPPORTS)
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public long contar() {
         CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Long> query = builder.createQuery(Long.class);
@@ -109,7 +110,7 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     }
 
     @Override
-    @Transactional(Transactional.TxType.SUPPORTS)
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public long contar(List<FiltroDAO> filtros) {
         CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Long> query = builder.createQuery(Long.class);
