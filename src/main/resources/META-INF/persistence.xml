@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="3.2" xmlns="https://jakarta.ee/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd">
+  <persistence-unit name="GalenoPU" transaction-type="JTA">
+    <jta-data-source>jdbc/pgdb</jta-data-source>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.MedioContacto</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.ConsultaProcedimientoPaso</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.Persona</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.ExamenResultado</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.ExamenTipoExamen</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.Examen</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.OrdenExamen</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoMedioContacto</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPaso</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.Clinica</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoExamen</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPasoSecuencia</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoDocumento</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.PersonaRol</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.Documento</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.Rol</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPasoExamen</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.Consulta</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.ConsultaProcedimiento</class>
+    <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.Procedimiento</class>
+    <properties>
+      <property name="jakarta.persistence.schema-generation.database.action" value="none"/>
+    </properties>
+  </persistence-unit>
+</persistence>
