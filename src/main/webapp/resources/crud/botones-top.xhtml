@@ -19,7 +19,7 @@
                 action="#{cc.attrs.model.nuevo}"
                 process="@this"
                 update="#{cc.attrs.actualizar}"
-                rendered="#{cc.attrs.model.estado eq 'NINGUNO'}"
+                rendered="#{cc.attrs.model.estado eq 'LISTADO'}"
                 oncomplete="#{cc.attrs.oncompleteNuevo}"
                 styleClass="clinical-primary" />
 
@@ -30,7 +30,7 @@
                 process="@this"
                 update="#{cc.attrs.actualizar}"
                 immediate="true"
-                rendered="#{cc.attrs.model.estado ne 'NINGUNO'}"
+                rendered="#{cc.attrs.model.estado ne 'LISTADO'}"
                 oncomplete="#{cc.attrs.oncompleteCancelar}"
                 styleClass="cancel-button" />
         </div>
