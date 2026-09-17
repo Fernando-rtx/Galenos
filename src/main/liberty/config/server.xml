@@ -4,12 +4,19 @@
         <feature>jakartaee-11.0</feature>
     </featureManager>
 
+    <basicRegistry id="basic" realm="BasicRealm">
+        <user name="dev" password="dev"/>
+    </basicRegistry>
+
     <variable name="HTTP_PORT" defaultValue="9080"/>
     <variable name="HTTPS_PORT" defaultValue="9443"/>
+
     <variable name="POSTGRESQL_DB_HOST" defaultValue="localhost"/>
     <variable name="POSTGRESQL_DB_PORT" defaultValue="5432"/>
     <variable name="POSTGRESQL_DB_NAME" defaultValue="universidad"/>
-    <variable name="POSTGRESQL_JDBC_DRIVER_DIR" defaultValue="${server.config.dir}/jdbc"/>
+
+    <variable name="POSTGRESQL_JDBC_DRIVER_DIR"
+              defaultValue="${server.config.dir}/jdbc"/>
 
     <httpEndpoint id="defaultHttpEndpoint"
                   host="*"
@@ -20,26 +27,36 @@
                     name="GalenosSV"
                     location="GalenosSV.war"
                     contextRoot="/GalenosSV">
+
         <classloader commonLibraryRef="PrimeFacesLib"/>
+
     </webApplication>
 
     <library id="PostgreSQLJdbcLib">
+
         <fileset dir="${POSTGRESQL_JDBC_DRIVER_DIR}"
                  includes="postgresql-42.7.4.jar"/>
+
     </library>
 
     <library id="PrimeFacesLib">
+
         <fileset dir="${server.config.dir}/../../../../../primefaces"
                  includes="primefaces-15.0.17-jakarta.jar"/>
+
     </library>
 
     <dataSource id="pgdb" jndiName="jdbc/pgdb">
+
         <jdbcDriver libraryRef="PostgreSQLJdbcLib"/>
-        <properties.postgresql serverName="${POSTGRESQL_DB_HOST}"
-                               portNumber="${POSTGRESQL_DB_PORT}"
-                               databaseName="${POSTGRESQL_DB_NAME}"/>
-        <containerAuthData user="${POSTGRESQL_DB_USER}"
-                           password="${POSTGRESQL_DB_PASSWORD}"/>
+
+        <properties.postgresql
+                serverName="${POSTGRESQL_DB_HOST}"
+                portNumber="${POSTGRESQL_DB_PORT}"
+                databaseName="${POSTGRESQL_DB_NAME}"
+                user="${POSTGRESQL_DB_USER}"
+                password="${POSTGRESQL_DB_PASSWORD}"/>
+
     </dataSource>
 
 </server>
