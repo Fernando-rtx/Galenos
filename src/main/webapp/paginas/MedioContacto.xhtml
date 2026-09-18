@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:crud="jakarta.faces.composite/crud"
+                xmlns:f="jakarta.faces.core"
+                xmlns:h="jakarta.faces.html"
+                xmlns:p="primefaces"
+                xmlns:ui="jakarta.faces.facelets"
+                template="/WEB-INF/plantillas/general.xhtml">
+    <f:metadata>
+        <f:viewParam name="idPersona"
+                     value="#{medioContactoModel.idPersonaContexto}" />
+    </f:metadata>
+    <ui:define name="titulo">#{msg['medioContacto.titulo']} | #{msg['app.nombre']}</ui:define>
+    <ui:define name="head">
+        <h:outputStylesheet library="estilos"
+                            name="medio-contacto.css" />
+    </ui:define>
+    <ui:define name="contenido">
+        <!-- Encabezado y navegación contextual -->
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+                <div class="card-content">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">#{msg['medioContacto.titulo']}</h1>
+                            <p class="page-subtitle">#{msg['medioContacto.subtitulo']}</p>
+                        </div>
+                        <div class="context-actions">
+                            <h:link outcome="/paginas/Persona"
+                                    value="#{msg['comun.volverPersona']}"
+                                    styleClass="context-link"
+                                    rendered="#{medioContactoModel.conPersonaContexto}">
+                                <f:param name="idPersona"
+                                         value="#{medioContactoModel.idPersonaContexto}" />
+                            </h:link>
+                            <h:link outcome="/paginas/Persona"
+                                    value="#{msg['comun.volverPersona']}"
+                                    styleClass="context-link"
+                                    rendered="#{not medioContactoModel.conPersonaContexto}" />
+                            <crud:botones-top model="#{medioContactoModel}"
+                                              actualizar="messages contactoTable edicionDialog"
+                                              oncompleteNuevo="PF('contactoDialog').show()" />
+                        </div>
+                    </div>
+                    <h:panelGroup layout="block"
+                                  styleClass="context-person"
+                                  rendered="#{medioContactoModel.conPersonaContexto}">
+                                  #{msg['comun.personaContexto']}:
+                                  #{medioContactoModel.personaContexto.nombres}
+                                  #{medioContactoModel.personaContexto.apellidos}</h:panelGroup>
+                    <div class="section-divider"></div>
+                    <p:messages id="messages"
+                                showDetail="true"
+                                closable="true" />
+
+                    <!-- Tabla principal -->
+                    <div class="table-title">#{msg['medioContacto.lista']}</div>
+                    <p:dataTable id="contactoTable"
+                                 value="#{medioContactoModel}"
+                                 var="item"
+                                 lazy="true"
+                                 paginator="true"
+                                 rows="10"
+                                 reflow="true"
+                                 selectionMode="single"
+                                 selection="#{medioContactoModel.seleccionado}"
+                                 rowKey="#{medioContactoModel.getRowKey(item)}"
+                                 emptyMessage="#{msg['medioContacto.sinRegistros']}"
+                                 styleClass="clinical-table medio-contacto-table">
+                        <p:ajax event="rowSelect"
+                                listener="#{medioContactoModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('contactoDialog').show()" />
+                        <p:column headerText="#{msg['medioContacto.persona']}"
+                                  field="idPersona.nombres">
+                            <h:outputText value="#{item.idPersona.nombres} #{item.idPersona.apellidos}" />
+                        </p:column>
+                        <p:column headerText="#{msg['medioContacto.tipo']}"
+                                  field="idTipoMedioContacto.nombre">
+                            <h:outputText value="#{item.idTipoMedioContacto.nombre}" />
+                        </p:column>
+                        <p:column headerText="#{msg['medioContacto.valor']}"
+                                  field="valor"
+                                  filterBy="#{item.valor}"
+                                  filterMatchMode="contains">
+                            <h:outputText value="#{item.valor}"
+                                          styleClass="valor-contacto" />
+                        </p:column>
+                        <p:column headerText="#{msg['comun.acciones']}"
+                                  styleClass="action-cell">
+                            <p:commandButton icon="pi pi-pencil"
+                                             title="#{msg['crud.editar']}"
+                                             action="#{medioContactoModel.seleccionar(item)}"
+                                             process="@this"
+                                             update="edicionDialog"
+                                             oncomplete="PF('contactoDialog').show()"
+                                             styleClass="edit-button" />
+                        </p:column>
+                    </p:dataTable>
+                </div>
+            </section>
+        </main>
+
+        <!-- Diálogo de edición -->
+        <p:dialog id="edicionDialog"
+                  widgetVar="contactoDialog"
+                  header="#{medioContactoModel.estado eq 'CREACION' ? msg['medioContacto.nuevo'] : msg['medioContacto.editar']}"
+                  modal="true"
+                  responsive="true"
+                  resizable="false"
+                  width="580"
+                  styleClass="clinical-dialog">
+            <p:outputPanel id="edicionContenido">
+                <h:panelGroup rendered="#{medioContactoModel.seleccionado ne null}">
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel for="persona"
+                                           value="#{msg['medioContacto.persona']}" />
+                            <p:selectOneMenu id="persona"
+                                             value="#{medioContactoModel.personaSeleccionadaId}"
+                                             required="true"
+                                             requiredMessage="#{msg['medioContacto.personaRequerida']}"
+                                             disabled="#{medioContactoModel.conPersonaContexto}"
+                                             styleClass="selector-wide">
+                                <f:selectItem itemLabel="#{msg['selector.seleccione']}"
+                                              itemValue="#{null}"
+                                              noSelectionOption="true" />
+                                <f:selectItems value="#{medioContactoModel.personas}"
+                                               var="persona"
+                                               itemValue="#{persona.idPersona}"
+                                               itemLabel="#{persona.nombres} #{persona.apellidos}" />
+                            </p:selectOneMenu>
+
+                            <p:message for="persona" />
+                        </div>
+                        <div class="form-field">
+                            <p:outputLabel for="tipo"
+                                           value="#{msg['medioContacto.tipo']}" />
+                            <p:selectOneMenu id="tipo"
+                                             value="#{medioContactoModel.tipoMedioSeleccionadoId}"
+                                             required="true"
+                                             requiredMessage="#{msg['medioContacto.tipoRequerido']}"
+                                             styleClass="selector-wide">
+                                <f:selectItem itemLabel="#{msg['selector.seleccione']}"
+                                              itemValue="#{null}"
+                                              noSelectionOption="true" />
+                                <f:selectItems value="#{medioContactoModel.tiposMedioContacto}"
+                                               var="tipo"
+                                               itemValue="#{tipo.idTipoMedioContacto}"
+                                               itemLabel="#{tipo.nombre}" />
+
+                                <p:ajax
+                                    process="@this" />
+                            </p:selectOneMenu>
+
+                            <p:message for="tipo" />
+                        </div>
+                        <div class="form-field">
+                            <p:outputLabel for="valor"
+                                           value="#{msg['medioContacto.valor']}" />
+                            <p:inputText id="valor"
+                                         value="#{medioContactoModel.seleccionado.valor}"
+                                         required="true"
+                                         requiredMessage="#{msg['medioContacto.valorRequerido']}" />
+
+                            <p:message for="valor" />
+                        </div>
+                    </div>
+                    <div class="dialog-actions">
+                        <crud:botones-bottom model="#{medioContactoModel}"
+                                             procesar="@this edicionContenido"
+                                             actualizar="messages contactoTable edicionDialog"
+                                             oncompleteCancelar="PF('contactoDialog').hide()"
+                                             oncompleteGuardar="if (!args.validationFailed) PF('contactoDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>
