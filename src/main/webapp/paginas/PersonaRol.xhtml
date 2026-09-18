@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:crud="jakarta.faces.composite/crud"
+                xmlns:f="jakarta.faces.core"
+                xmlns:h="jakarta.faces.html"
+                xmlns:p="primefaces"
+                xmlns:ui="jakarta.faces.facelets"
+                template="/WEB-INF/plantillas/general.xhtml">
+    <f:metadata>
+        <f:viewParam name="idPersona"
+                     value="#{personaRolModel.idPersonaContexto}" />
+    </f:metadata>
+    <ui:define name="titulo">#{msg['personaRol.titulo']} | #{msg['app.nombre']}</ui:define>
+    <ui:define name="head">
+        <h:outputStylesheet library="estilos"
+                            name="persona-rol.css" />
+    </ui:define>
+    <ui:define name="contenido">
+        <!-- Encabezado y navegación contextual -->
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+                <div class="card-content">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">#{msg['personaRol.titulo']}</h1>
+                            <p class="page-subtitle">#{msg['personaRol.subtitulo']}</p>
+                        </div>
+                        <div class="context-actions">
+                            <h:link outcome="/paginas/Persona"
+                                    value="#{msg['comun.volverPersona']}"
+                                    styleClass="context-link"
+                                    rendered="#{personaRolModel.conPersonaContexto}">
+                                <f:param name="idPersona"
+                                         value="#{personaRolModel.idPersonaContexto}" />
+                            </h:link>
+                            <h:link outcome="/paginas/Persona"
+                                    value="#{msg['comun.volverPersona']}"
+                                    styleClass="context-link"
+                                    rendered="#{not personaRolModel.conPersonaContexto}" />
+                            <crud:botones-top model="#{personaRolModel}"
+                                              actualizar="messages rolTable edicionDialog"
+                                              oncompleteNuevo="PF('personaRolDialog').show()" />
+                        </div>
+                    </div>
+                    <h:panelGroup layout="block"
+                                  styleClass="context-person"
+                                  rendered="#{personaRolModel.conPersonaContexto}">
+                                  #{msg['comun.personaContexto']}:
+                                  #{personaRolModel.personaContexto.nombres}
+                                  #{personaRolModel.personaContexto.apellidos}</h:panelGroup>
+                    <div class="section-divider"></div>
+                    <p:messages id="messages"
+                                showDetail="true"
+                                closable="true" />
+
+                    <!-- Tabla principal -->
+                    <div class="table-title">#{msg['personaRol.lista']}</div>
+                    <p:dataTable id="rolTable"
+                                 value="#{personaRolModel}"
+                                 var="item"
+                                 lazy="true"
+                                 paginator="true"
+                                 rows="10"
+                                 reflow="true"
+                                 selectionMode="single"
+                                 selection="#{personaRolModel.seleccionado}"
+                                 rowKey="#{personaRolModel.getRowKey(item)}"
+                                 emptyMessage="#{msg['personaRol.sinRegistros']}"
+                                 styleClass="clinical-table persona-rol-table">
+                        <p:ajax event="rowSelect"
+                                listener="#{personaRolModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('personaRolDialog').show()" />
+                        <p:column headerText="#{msg['personaRol.persona']}"
+                                  field="idPersona.nombres">
+                            <h:outputText value="#{item.idPersona.nombres} #{item.idPersona.apellidos}"
+                                          styleClass="persona-rol-nombre" />
+                        </p:column>
+                        <p:column headerText="#{msg['personaRol.rol']}"
+                                  field="idRol.nombre">
+                            <h:outputText value="#{item.idRol.nombre}" />
+                        </p:column>
+                        <p:column headerText="#{msg['personaRol.clinica']}"
+                                  field="idClinica.nombre">
+                            <h:outputText value="#{item.idClinica.nombre}" />
+                        </p:column>
+                        <p:column headerText="#{msg['personaRol.fechaCreacion']}"
+                                  field="fechaCreacion">
+                            <h:outputText value="#{item.fechaCreacion}">
+                                <f:convertDateTime pattern="dd/MM/yyyy HH:mm" />
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="#{msg['comun.acciones']}"
+                                  styleClass="action-cell">
+                            <p:commandButton icon="pi pi-pencil"
+                                             title="#{msg['crud.editar']}"
+                                             action="#{personaRolModel.seleccionar(item)}"
+                                             process="@this"
+                                             update="edicionDialog"
+                                             oncomplete="PF('personaRolDialog').show()"
+                                             styleClass="edit-button" />
+                        </p:column>
+                    </p:dataTable>
+                </div>
+            </section>
+        </main>
+
+        <!-- Diálogo de edición -->
+        <p:dialog id="edicionDialog"
+                  widgetVar="personaRolDialog"
+                  header="#{personaRolModel.estado eq 'CREACION' ? msg['personaRol.nuevo'] : msg['personaRol.editar']}"
+                  modal="true"
+                  responsive="true"
+                  resizable="false"
+                  width="580"
+                  styleClass="clinical-dialog">
+            <p:outputPanel id="edicionContenido">
+                <h:panelGroup rendered="#{personaRolModel.seleccionado ne null}">
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel for="persona"
+                                           value="#{msg['personaRol.persona']}" />
+                            <p:selectOneMenu id="persona"
+                                             value="#{personaRolModel.personaSeleccionadaId}"
+                                             required="true"
+                                             requiredMessage="#{msg['personaRol.personaRequerida']}"
+                                             disabled="#{personaRolModel.conPersonaContexto}"
+                                             styleClass="selector-wide">
+                                <f:selectItem itemLabel="#{msg['selector.seleccione']}"
+                                              itemValue="#{null}"
+                                              noSelectionOption="true" />
+                                <f:selectItems value="#{personaRolModel.personas}"
+                                               var="persona"
+                                               itemValue="#{persona.idPersona}"
+                                               itemLabel="#{persona.nombres} #{persona.apellidos}" />
+                            </p:selectOneMenu>
+
+                            <p:message for="persona" />
+                        </div>
+                        <div class="form-field">
+                            <p:outputLabel for="rol"
+                                           value="#{msg['personaRol.rol']}" />
+                            <p:selectOneMenu id="rol"
+                                             value="#{personaRolModel.rolSeleccionadoId}"
+                                             required="true"
+                                             requiredMessage="#{msg['personaRol.rolRequerido']}"
+                                             styleClass="selector-wide">
+                                <f:selectItem itemLabel="#{msg['selector.seleccione']}"
+                                              itemValue="#{null}"
+                                              noSelectionOption="true" />
+                                <f:selectItems value="#{personaRolModel.roles}"
+                                               var="rol"
+                                               itemValue="#{rol.idRol}"
+                                               itemLabel="#{rol.nombre}" />
+                            </p:selectOneMenu>
+
+                            <p:message for="rol" />
+                        </div>
+                        <div class="form-field">
+                            <p:outputLabel for="clinica"
+                                           value="#{msg['personaRol.clinica']}" />
+                            <p:selectOneMenu id="clinica"
+                                             value="#{personaRolModel.clinicaSeleccionadaId}"
+                                             required="true"
+                                             requiredMessage="#{msg['personaRol.clinicaRequerida']}"
+                                             styleClass="selector-wide">
+                                <f:selectItem itemLabel="#{msg['selector.seleccione']}"
+                                              itemValue="#{null}"
+                                              noSelectionOption="true" />
+                                <f:selectItems value="#{personaRolModel.clinicas}"
+                                               var="clinica"
+                                               itemValue="#{clinica.idClinica}"
+                                               itemLabel="#{clinica.nombre}" />
+                            </p:selectOneMenu>
+
+                            <p:message for="clinica" />
+                        </div>
+                    </div>
+                    <div class="dialog-actions">
+                        <crud:botones-bottom model="#{personaRolModel}"
+                                             procesar="@this edicionContenido"
+                                             actualizar="messages rolTable edicionDialog"
+                                             oncompleteCancelar="PF('personaRolDialog').hide()"
+                                             oncompleteGuardar="if (!args.validationFailed) PF('personaRolDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>
