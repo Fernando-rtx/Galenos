@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:f="jakarta.faces.core"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
+
+    <ui:define name="titulo">
+        #{msg['examenResultado.titulo']} | #{msg['app.nombre']}
+    </ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet
+            library="estilos"
+            name="examen-resultado.css"/>
+    </ui:define>
+
+    <ui:define name="contenido">
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+
+                <div class="card-content">
+                    <div class="page-header">
+                        <div class="header-info">
+                            <div class="clinical-brand">
+                                <span class="clinical-brand-icon">
+                                    <i class="pi pi-check-circle"></i>
+                                </span>
+                                #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                            </div>
+
+                            <h1 class="page-title">
+                                #{msg['examenResultado.titulo']}
+                            </h1>
+
+                            <p class="page-subtitle">
+                                #{msg['examenResultado.subtitulo']}
+                            </p>
+                        </div>
+
+                        <crud:botones-top
+                            model="#{examenResultadoModel}"
+                            actualizar="messages examenResultadoTable edicionDialog"
+                            oncompleteNuevo="PF('examenResultadoDialog').show()" />
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <p:messages
+                        id="messages"
+                        showDetail="true"
+                        closable="true" />
+
+                    <div class="table-section">
+                        <div class="table-heading">
+                            <div class="table-title">
+                                <i class="pi pi-list"></i>
+                                #{msg['examenResultado.lista']}
+                            </div>
+                        </div>
+
+                        <p:dataTable
+                            id="examenResultadoTable"
+                            value="#{examenResultadoModel}"
+                            var="item"
+                            lazy="true"
+                            paginator="true"
+                            rows="10"
+                            reflow="true"
+                            selectionMode="single"
+                            selection="#{examenResultadoModel.seleccionado}"
+                            rowKey="#{examenResultadoModel.getRowKey(item)}"
+                            emptyMessage="#{msg['examenResultado.sinRegistros']}"
+                            styleClass="examen-resultado-table">
+
+                            <p:ajax
+                                event="rowSelect"
+                                listener="#{examenResultadoModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('examenResultadoDialog').show()" />
+
+                            <p:column
+                                headerText="#{msg['examenResultado.ordenExamen']}"
+                                styleClass="orden-cell">
+
+                                <h:outputText
+                                    value="#{item.idOrdenExamen.idConsultaProcedimientoPaso.idConsultaProcedimiento.idConsulta.referenciaExterna} - #{item.idOrdenExamen.idConsultaProcedimientoPaso.estado}"
+                                    styleClass="orden-text" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['examenResultado.fechaCreacion']}"
+                                field="fechaCreacion"
+                                sortBy="#{item.fechaCreacion}">
+
+                                <h:outputText
+                                    value="#{item.fechaCreacion}"
+                                    styleClass="date-text">
+                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                </h:outputText>
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['examenResultado.resultado']}"
+                                styleClass="resultado-cell">
+
+                                <h:outputText
+                                    value="#{item.resultado != null ? item.resultado : msg['examenResultado.sinResultado']}"
+                                    styleClass="#{item.resultado != null ? 'resultado-text' : 'empty-note'}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['examenResultado.interpretacion']}"
+                                styleClass="interpretacion-cell">
+
+                                <h:outputText
+                                    value="#{item.interpretacion != null ? item.interpretacion : msg['examenResultado.sinResultado']}"
+                                    styleClass="#{item.interpretacion != null ? 'interpretacion-text' : 'empty-note'}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['examenResultado.rutaAtestado']}"
+                                styleClass="ruta-cell">
+
+                                <h:outputText
+                                    value="#{item.rutaAtestado != null ? item.rutaAtestado : msg['examenResultado.sinResultado']}"
+                                    styleClass="#{item.rutaAtestado != null ? 'ruta-text' : 'empty-note'}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['examenResultado.acciones']}"
+                                styleClass="action-cell">
+
+                                <p:commandButton
+                                    icon="pi pi-pencil"
+                                    title="#{msg['crud.editar']}"
+                                    styleClass="edit-button"
+                                    action="#{examenResultadoModel.seleccionar(item)}"
+                                    process="@this"
+                                    update="edicionDialog"
+                                    oncomplete="PF('examenResultadoDialog').show()" />
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <p:dialog
+            id="edicionDialog"
+            widgetVar="examenResultadoDialog"
+            header="#{examenResultadoModel.estado eq 'CREACION'
+                      ? msg['examenResultado.nuevo']
+                      : msg['examenResultado.editar']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="560"
+            styleClass="clinical-dialog">
+
+            <p:outputPanel
+                id="edicionContenido"
+                layout="block">
+
+                <h:panelGroup rendered="#{examenResultadoModel.seleccionado ne null}">
+                    <div class="dialog-intro">
+                        <div class="dialog-intro-icon">
+                            <i class="pi pi-check-circle"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                #{msg['examenResultado.informacion']}
+                            </strong>
+
+                            <span>
+                                #{msg['examenResultado.completar']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="ordenExamen"
+                                value="#{msg['examenResultado.ordenExamen']}"
+                                styleClass="form-label" />
+
+                            <p:selectOneMenu
+                                id="ordenExamen"
+                                value="#{examenResultadoModel.seleccionado.idOrdenExamen}"
+                                converter="#{ordenExamenConverter}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}">
+
+                                <f:selectItem
+                                    itemLabel="-- Seleccionar --"
+                                    itemValue="#{null}" />
+
+                                <f:selectItems
+                                    value="#{examenResultadoModel.ordenExamenes}"
+                                    var="oe"
+                                    itemLabel="#{oe.idConsultaProcedimientoPaso.idConsultaProcedimiento.idConsulta.referenciaExterna} - #{oe.idConsultaProcedimientoPaso.estado}"
+                                    itemValue="#{oe}" />
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="fechaCreacion"
+                                value="#{msg['examenResultado.fechaCreacion']}"
+                                styleClass="form-label" />
+
+                            <p:calendar
+                                id="fechaCreacion"
+                                value="#{examenResultadoModel.seleccionado.fechaCreacion}"
+                                showIcon="true"
+                                pattern="dd/MM/yyyy HH:mm"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}" />
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="resultado"
+                                value="#{msg['examenResultado.resultado']}"
+                                styleClass="form-label" />
+
+                            <p:inputTextarea
+                                id="resultado"
+                                value="#{examenResultadoModel.seleccionado.resultado}"
+                                rows="4"
+                                placeholder="#{msg['examenResultado.resultadoPlaceholder']}"
+                                autoResize="false" />
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="interpretacion"
+                                value="#{msg['examenResultado.interpretacion']}"
+                                styleClass="form-label" />
+
+                            <p:inputTextarea
+                                id="interpretacion"
+                                value="#{examenResultadoModel.seleccionado.interpretacion}"
+                                rows="4"
+                                placeholder="#{msg['examenResultado.interpretacionPlaceholder']}"
+                                autoResize="false" />
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="rutaAtestado"
+                                value="#{msg['examenResultado.rutaAtestado']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="rutaAtestado"
+                                value="#{examenResultadoModel.seleccionado.rutaAtestado}"
+                                placeholder="#{msg['examenResultado.rutaAtestadoPlaceholder']}" />
+                        </div>
+                    </div>
+
+                    <div class="dialog-actions">
+                        <crud:botones-bottom
+                            model="#{examenResultadoModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages examenResultadoTable edicionDialog"
+                            oncompleteCancelar="PF('examenResultadoDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('examenResultadoDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>
