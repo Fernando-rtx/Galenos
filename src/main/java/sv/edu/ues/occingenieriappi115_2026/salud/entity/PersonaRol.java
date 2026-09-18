@@ -23,8 +23,12 @@ import java.util.Collection;
 import java.util.Date;
 
 /**
+ * Entidad asociativa de {@code persona_rol}; asigna una {@link Persona} y un
+ * {@link Rol} dentro de una {@link Clinica}.
  *
- * @author rodrigo
+ * <p>Posee UUID y las tres FKs, por lo que es dueña de esas relaciones
+ * muchos-a-uno. Sus colecciones de consultas y pasos ejecutados son inversas:
+ * las entidades hijas guardan {@code id_persona_rol}.</p>
  */
 @Entity
 @Table(name = "persona_rol")

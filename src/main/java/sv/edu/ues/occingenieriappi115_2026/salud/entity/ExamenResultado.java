@@ -22,8 +22,11 @@ import java.util.UUID;
 import java.util.Date;
 
 /**
+ * Entidad JPA de {@code examen_resultado}, resultado producido para una orden.
  *
- * @author rodrigo
+ * <p>Su UUID es la PK; almacena fecha, resultado, interpretación y ruta del
+ * atestado. La relación muchos-a-uno es dueña de la FK {@code id_orden_examen}
+ * que apunta a {@link OrdenExamen}.</p>
  */
 @Entity
 @Table(name = "examen_resultado")

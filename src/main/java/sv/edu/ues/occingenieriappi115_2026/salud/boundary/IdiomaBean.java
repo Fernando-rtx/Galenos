@@ -8,7 +8,12 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Mantiene el idioma elegido por el usuario durante su sesion.
+ * Bean de presentación que mantiene el idioma elegido durante la sesión.
+ *
+ * <p>{@code @Named} permite usar {@code idiomaBean} desde la plantilla JSF y
+ * {@code @SessionScoped} conserva la selección al navegar entre páginas. Es
+ * {@link Serializable} porque el contenedor puede almacenar la sesión. El bean
+ * modifica el {@code Locale} del árbol de componentes; no consulta la base.</p>
  */
 @Named
 @SessionScoped

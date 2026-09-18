@@ -24,8 +24,11 @@ import java.util.Collection;
 import java.util.Date;
 
 /**
+ * Entidad JPA de {@code orden_examen}, solicitud de exámenes durante un paso.
  *
- * @author rodrigo
+ * <p>La PK es UUID; registra fecha e indicaciones. Es dueña de la relación con
+ * {@link ConsultaProcedimientoPaso}. La colección de resultados es inversa:
+ * cada {@link ExamenResultado} contiene la FK de la orden.</p>
  */
 @Entity
 @Table(name = "orden_examen")

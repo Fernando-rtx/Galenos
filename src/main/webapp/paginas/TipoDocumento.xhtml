@@ -9,6 +9,12 @@
     xmlns:ui="jakarta.faces.facelets"
     template="/WEB-INF/plantillas/general.xhtml">
 
+    <!--
+    Vista del catálogo TipoDocumento compuesta sobre la plantilla general.
+    El flujo es XHTML → tipoDocumentoModel → TipoDocumentoDAO → DefaultDAO →
+    EntityManager/GalenoPU → tabla tipo_documento en PostgreSQL.
+    -->
+
     <ui:define name="titulo">
         #{msg['tipoDocumento.titulo']} | #{msg['app.nombre']}
     </ui:define>
@@ -43,6 +49,7 @@
                             </p>
                         </div>
 
+                        <!-- Acción AJAX reutilizable para preparar una entidad nueva y abrir el diálogo. -->
                         <crud:botones-top
                             model="#{tipoDocumentoModel}"
                             actualizar="messages documentosTable edicionDialog"
@@ -64,6 +71,10 @@
                             </div>
                         </div>
 
+                        <!--
+                        Tabla paginada lazy. PrimeFaces entrega filtros y límites a
+                        AbstractModel; selection y rowKey identifican la fila mediante UUID.
+                        -->
                         <p:dataTable
                             id="documentosTable"
                             value="#{tipoDocumentoModel}"
@@ -78,12 +89,14 @@
                             emptyMessage="#{msg['tipoDocumento.sinRegistros']}"
                             styleClass="tipo-table">
 
+                            <!-- Seleccionar una fila cambia el modelo a EDICION y abre el formulario. -->
                             <p:ajax
                                 event="rowSelect"
                                 listener="#{tipoDocumentoModel.seleccionar(item)}"
                                 update="edicionDialog"
                                 oncomplete="PF('tipoDocumentoDialog').show()" />
 
+                            <!-- El filtro por nombre se convierte en Predicate LIKE desde DefaultDAO. -->
                             <p:column
                                 headerText="#{msg['tipoDocumento.nombre']}"
                                 filterBy="#{item.nombre}"
@@ -138,6 +151,7 @@
             </section>
         </main>
 
+        <!-- Diálogo compartido por creación y edición, controlado con widgetVar. -->
         <p:dialog
             id="edicionDialog"
             widgetVar="tipoDocumentoDialog"
@@ -178,6 +192,7 @@
                                 value="#{msg['tipoDocumento.nombre']}"
                                 styleClass="form-label" />
 
+                            <!-- JSF exige el nombre antes de ejecutar la acción Guardar. -->
                             <p:inputText
                                 id="nombre"
                                 value="#{tipoDocumentoModel.seleccionado.nombre}"
@@ -234,6 +249,7 @@
                     </div>
 
                     <div class="dialog-actions">
+                        <!-- process valida el panel; update refresca mensajes, tabla y diálogo por AJAX. -->
                         <crud:botones-bottom
                             model="#{tipoDocumentoModel}"
                             procesar="@this edicionContenido"

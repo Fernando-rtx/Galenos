@@ -19,8 +19,11 @@ import java.util.UUID;
 import java.util.Collection;
 
 /**
+ * Entidad JPA del catálogo {@code rol}.
  *
- * @author rodrigo
+ * <p>Su PK es UUID y conserva nombre, estado y observaciones. Las colecciones
+ * de {@link PersonaRol} y {@link ProcedimientoPaso} son lados inversos: esas
+ * entidades contienen la FK {@code id_rol}.</p>
  */
 @Entity
 @Table(name = "rol")

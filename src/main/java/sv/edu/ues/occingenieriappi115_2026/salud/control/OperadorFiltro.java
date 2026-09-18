@@ -1,5 +1,9 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.control;
 
+/**
+ * Operadores neutrales usados para convertir filtros de PrimeFaces en
+ * predicados de Criteria API: texto, igualdad, comparación y nulidad.
+ */
 public enum OperadorFiltro {
     CONTIENE,
     INICIA_CON,

@@ -19,8 +19,15 @@ import java.util.Collection;
 import java.util.UUID;
 
 /**
+ * Entidad JPA que representa una sede o clínica en la tabla {@code clinica}.
  *
- * @author rodrigo
+ * <p>Su clave primaria es {@code id_clinica} de tipo UUID. Nombre, estado,
+ * tipo y comentarios describen la sede. La colección {@code personaRolCollection}
+ * es el lado inverso de una relación uno-a-muchos: la FK y la propiedad dueña
+ * están en {@link PersonaRol#idClinica}.</p>
+ *
+ * <p>La NamedQuery {@code Clinica.findAll} expresa en JPQL la consulta de todas
+ * las clínicas, operando sobre entidades y no sobre SQL específico.</p>
  */
 @Entity
 @Table(name = "clinica")

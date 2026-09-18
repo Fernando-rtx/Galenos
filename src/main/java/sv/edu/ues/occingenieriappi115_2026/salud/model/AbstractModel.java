@@ -17,9 +17,26 @@ import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OrdenDAO;
 
+/**
+ * Adaptador genérico entre tablas lazy de PrimeFaces y la capa DAO.
+ *
+ * <p>{@link LazyDataModel} evita cargar una tabla completa de PostgreSQL:
+ * PrimeFaces solicita el conteo y únicamente la página visible. Este modelo
+ * convierte {@link FilterMeta} y {@link SortMeta} en {@link FiltroDAO} y
+ * {@link OrdenDAO}; el DAO concreto delega en {@code DefaultDAO}, que crea la
+ * consulta Criteria ejecutada por JPA.</p>
+ *
+ * <p>Recorrido: PrimeFaces → AbstractModel → DAO concreto → DefaultDAO → JPA
+ * → PostgreSQL. También traduce entre el UUID de la entidad y el {@code rowKey}
+ * textual requerido para selección de filas.</p>
+ *
+ * @param <T> entidad mostrada por la tabla
+ */
 public abstract class AbstractModel<T> extends LazyDataModel<T> {
 
+    /** Contrato de persistencia inyectado por el modelo concreto. */
     private final DAOInterface<T> dao;
+    /** Estado que decide si la vista lista, crea o edita. */
     private ESTADO_CRUD estado = ESTADO_CRUD.LISTADO;
 
     protected AbstractModel(DAOInterface<T> dao) {
@@ -40,12 +57,15 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
 
     @Override
     public int count(Map<String, FilterMeta> filterBy) {
+        // PrimeFaces usa este total para calcular cuántas páginas mostrar.
         return limitarConteo(dao.contar(convertirFiltros(filterBy)));
     }
 
     @Override
     public List<T> load(int first, int pageSize, Map<String, SortMeta> sortBy,
             Map<String, FilterMeta> filterBy) {
+        // Solo se solicita al DAO el segmento visible; filtros y ordenamientos
+        // se conservan para que el conteo y la consulta sean coherentes.
         List<FiltroDAO> filtros = convertirFiltros(filterBy);
         setRowCount(limitarConteo(dao.contar(filtros)));
         return dao.obtenerPagina(first, pageSize, filtros, convertirOrdenamientos(sortBy));
@@ -53,12 +73,14 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
 
     @Override
     public String getRowKey(T objeto) {
+        // El UUID estable permite a PrimeFaces reconocer una fila entre AJAX.
         UUID id = dao.obtenerId(objeto);
         return id == null ? null : id.toString();
     }
 
     @Override
     public T getRowData(String rowKey) {
+        // La selección recibida desde el navegador se resuelve otra vez por ID.
         if (rowKey == null || rowKey.isBlank()) {
             return null;
         }
@@ -70,6 +92,7 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
     }
 
     private List<FiltroDAO> convertirFiltros(Map<String, FilterMeta> filterBy) {
+        // Se desacopla la API de PrimeFaces de la capa JPA mediante records.
         List<FiltroDAO> resultado = new ArrayList<>();
         if (filterBy == null) {
             return resultado;
@@ -87,6 +110,7 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
     }
 
     private List<OrdenDAO> convertirOrdenamientos(Map<String, SortMeta> sortBy) {
+        // La prioridad natural de SortMeta preserva el orden múltiple de columnas.
         List<SortMeta> activos = sortBy == null ? List.of() : sortBy.values().stream()
                 .filter(SortMeta::isActive)
                 .sorted(Comparator.naturalOrder())

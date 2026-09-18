@@ -21,13 +21,41 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Implementación base y genérica de la capa de acceso a datos.
+ *
+ * <p>El parámetro {@code T} representa la entidad JPA administrada por cada
+ * subclase. El constructor recibe su objeto {@link Class} porque el borrado de
+ * tipos de Java impide conocer {@code T} en tiempo de ejecución; esa referencia
+ * permite crear consultas Criteria, consultar el metamodelo y localizar la
+ * clave primaria.</p>
+ *
+ * <p>Centraliza el {@link EntityManager} asociado a {@code GalenoPU}. Los veinte
+ * DAO concretos lo heredan, evitando repetir {@code @PersistenceContext} y
+ * aplicando DRY. Liberty inyecta el contexto de persistencia cuando construye
+ * los EJB {@code @Stateless}.</p>
+ *
+ * <p>Las escrituras usan transacciones EJB {@code REQUIRED}: reutilizan una
+ * transacción existente o crean una. Las lecturas usan {@code SUPPORTS}:
+ * participan en la transacción del llamador cuando existe, sin exigir una
+ * nueva. La Criteria API construye filtros, orden y paginación sin SQL manual.</p>
+ *
+ * @param <T> tipo de entidad JPA administrada
+ */
 public abstract class DefaultDAO<T> implements DAOInterface<T> {
 
+    /** Tipo concreto necesario para Criteria, {@code find} y metamodelo JPA. */
     private final Class<T> entityClass;
 
+    /** Contexto JPA común enlazado por Liberty con la unidad {@code GalenoPU}. */
     @PersistenceContext(unitName = "GalenoPU")
     private EntityManager entityManager;
 
+    /**
+     * Configura la entidad administrada por el DAO concreto.
+     *
+     * @param entityClass clase JPA de la entidad; nunca puede ser nula
+     */
     protected DefaultDAO(Class<T> entityClass) {
         this.entityClass = Objects.requireNonNull(entityClass, "La clase de entidad es requerida");
     }
@@ -35,6 +63,8 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public T guardar(T entidad) {
+        // persist registra una entidad nueva en el contexto JPA. Antes se
+        // completa su UUID para no depender de una secuencia de PostgreSQL.
         Objects.requireNonNull(entidad, "La entidad a guardar es requerida");
         asignarUuidSiNoExiste(entidad);
         getEntityManager().persist(entidad);
@@ -44,6 +74,8 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public T buscarPorId(UUID id) {
+        // find usa la clave primaria y puede resolver la entidad desde el
+        // contexto de persistencia antes de consultar PostgreSQL.
         Objects.requireNonNull(id, "El UUID de busqueda es requerido");
         return getEntityManager().find(entityClass, id);
     }
@@ -51,6 +83,8 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<T> obtenerTodos() {
+        // Criteria API crea una consulta tipada para la clase recibida en el
+        // constructor, sin escribir JPQL distinto para cada DAO concreto.
         CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<T> query = builder.createQuery(entityClass);
         Root<T> root = query.from(entityClass);
@@ -66,6 +100,8 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
         if (primero < 0 || tamano <= 0) {
             throw new IllegalArgumentException("La paginacion debe tener valores positivos");
         }
+        // Root representa la entidad de origen. Predicate y Order se generan
+        // dinámicamente y PostgreSQL recibe solo la página solicitada.
         CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<T> query = builder.createQuery(entityClass);
         Root<T> root = query.from(entityClass);
@@ -81,6 +117,8 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public T actualizar(T entidad) {
+        // merge devuelve la instancia administrada; por eso se retorna el
+        // resultado producido por JPA y no necesariamente el objeto recibido.
         Objects.requireNonNull(entidad, "La entidad a actualizar es requerida");
         validarUuidExistente(entidad);
         return getEntityManager().merge(entidad);
@@ -89,6 +127,8 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public boolean eliminar(UUID id) {
+        // remove requiere una instancia administrada, que primero se obtiene
+        // por su UUID dentro de la misma transacción REQUIRED.
         T entidad = buscarPorId(id);
         if (entidad == null) {
             return false;
@@ -101,6 +141,8 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public long contar() {
+        // El conteo separado permite a PrimeFaces calcular el paginador sin
+        // traer todas las filas a memoria.
         CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Long> query = builder.createQuery(Long.class);
         Root<T> root = query.from(entityClass);
@@ -112,6 +154,8 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     @Override
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public long contar(List<FiltroDAO> filtros) {
+        // Se reutilizan los mismos predicados de la consulta paginada para que
+        // el total corresponda exactamente al conjunto filtrado.
         CriteriaBuilder builder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Long> query = builder.createQuery(Long.class);
         Root<T> root = query.from(entityClass);
@@ -126,6 +170,13 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
         return leerUuid(entidad, obtenerCampoIdUuid());
     }
 
+    /**
+     * Da acceso controlado al EntityManager común a CRUD y DAO especializados.
+     *
+     * @return EntityManager inyectado por el contenedor
+     * @throws IllegalStateException si la clase se usa fuera del contenedor y
+     *         no se proporcionó un contexto de persistencia
+     */
     protected EntityManager getEntityManager() {
         if (entityManager == null) {
             throw new IllegalStateException("EntityManager no inicializado para " + entityClass.getName());
@@ -138,6 +189,8 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
     }
 
     private void asignarUuidSiNoExiste(T entidad) {
+        // El nombre real del atributo @Id se obtiene del metamodelo y luego se
+        // usa reflexión porque cada entidad denomina su UUID de forma distinta.
         Field campoId = obtenerCampoIdUuid();
         UUID idActual = leerUuid(entidad, campoId);
         if (idActual == null) {
@@ -164,6 +217,8 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
         if (filtros == null || filtros.isEmpty()) {
             return new Predicate[0];
         }
+        // Cada FiltroDAO independiente de PrimeFaces se convierte a un
+        // Predicate Criteria equivalente (LIKE, igualdad, comparación o null).
         List<Predicate> predicados = new ArrayList<>();
         for (FiltroDAO filtro : filtros) {
             PathInfo path = resolverPath(root, filtro.campo());
@@ -188,6 +243,8 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
 
     private List<Order> construirOrdenamientos(CriteriaBuilder builder, Root<T> root,
             Collection<OrdenDAO> ordenamientos) {
+        // Los OrdenDAO preservan la prioridad enviada por la tabla y se
+        // traducen a expresiones ASC/DESC de Criteria.
         List<Order> ordenes = new ArrayList<>();
         if (ordenamientos != null) {
             for (OrdenDAO ordenamiento : ordenamientos) {

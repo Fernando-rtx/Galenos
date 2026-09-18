@@ -4,6 +4,12 @@
       xmlns:cc="jakarta.faces.composite"
       xmlns:p="primefaces">
 
+    <!--
+    Componente compuesto de acciones del formulario CRUD. Guardar procesa los
+    campos indicados y llama model.guardar; Cancelar usa immediate para omitir
+    validaciones y resetValues para descartar valores locales del formulario.
+    -->
+
     <cc:interface>
         <cc:attribute name="model" required="true" />
         <cc:attribute name="actualizar" required="false" default="@form" />
@@ -13,6 +19,7 @@
     </cc:interface>
 
     <cc:implementation>
+        <!-- update identifica mensajes, tabla y diálogo que PrimeFaces refresca por AJAX. -->
         <div class="crud-actions-bottom">
             <p:commandButton
                 value="#{msg['crud.cancelar']}"

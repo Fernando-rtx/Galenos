@@ -9,6 +9,12 @@
     xmlns:ui="jakarta.faces.facelets"
     template="/WEB-INF/plantillas/general.xhtml">
 
+    <!--
+    Vista principal del catálogo TipoExamen. Facelets aplica general.xhtml y
+    esta página completa sus secciones. Recorrido de datos:
+    XHTML → tipoExamenModel → TipoExamenDAO → DefaultDAO → JPA → PostgreSQL.
+    -->
+
     <ui:define name="titulo">
         #{msg['tipoExamen.titulo']} | #{msg['app.nombre']}
     </ui:define>
@@ -43,6 +49,7 @@
                             </p>
                         </div>
 
+                        <!-- Componente reutilizable que llama nuevo() y abre el diálogo al completar AJAX. -->
                         <crud:botones-top
                             model="#{tipoExamenModel}"
                             actualizar="messages tiposExamenTable edicionDialog"
@@ -51,6 +58,7 @@
 
                     <div class="section-divider"></div>
 
+                    <!-- Área preparada para mensajes de validación y FacesMessage. -->
                     <p:messages
                         id="messages"
                         showDetail="true"
@@ -64,6 +72,12 @@
                             </div>
                         </div>
 
+                        <!--
+                        Tabla lazy: PrimeFaces usa tipoExamenModel como LazyDataModel.
+                        Solo solicita la página visible. var="item" representa cada fila;
+                        rowKey usa el UUID y selection conserva la entidad seleccionada.
+                        paginator controla offset/tamaño que AbstractModel envía al DAO.
+                        -->
                         <p:dataTable
                             id="tiposExamenTable"
                             value="#{tipoExamenModel}"
@@ -78,12 +92,14 @@
                             emptyMessage="#{msg['tipoExamen.sinRegistros']}"
                             styleClass="tipo-table">
 
+                            <!-- Al seleccionar una fila, AJAX ejecuta seleccionar(item), actualiza el diálogo y lo abre. -->
                             <p:ajax
                                 event="rowSelect"
                                 listener="#{tipoExamenModel.seleccionar(item)}"
                                 update="edicionDialog"
                                 oncomplete="PF('tipoExamenDialog').show()" />
 
+                            <!-- filterBy/sortBy generan FilterMeta y SortMeta que AbstractModel adapta a Criteria. -->
                             <p:column
                                 headerText="#{msg['tipoExamen.nombre']}"
                                 field="nombre"
@@ -125,6 +141,7 @@
                                 headerText="#{msg['tipoExamen.acciones']}"
                                 styleClass="action-cell">
 
+                                <!-- process="@this" evita procesar la tabla completa; update refresca el diálogo. -->
                                 <p:commandButton
                                     icon="pi pi-pencil"
                                     title="#{msg['crud.editar']}"
@@ -140,6 +157,10 @@
             </section>
         </main>
 
+        <!--
+        Diálogo modal de creación/edición. widgetVar permite controlarlo desde
+        oncomplete; rendered evita mostrar campos mientras no exista selección.
+        -->
         <p:dialog
             id="edicionDialog"
             widgetVar="tipoExamenDialog"
@@ -180,6 +201,7 @@
                                 value="#{msg['tipoExamen.nombre']}"
                                 styleClass="form-label" />
 
+                            <!-- required activa la validación JSF antes de invocar guardar(). -->
                             <p:inputText
                                 id="nombre"
                                 value="#{tipoExamenModel.seleccionado.nombre}"
@@ -224,6 +246,10 @@
                     </div>
 
                     <div class="dialog-actions">
+                        <!--
+                        Guardar procesa el contenido, actualiza mensajes/tabla/diálogo y
+                        solo oculta el diálogo cuando args.validationFailed es falso.
+                        -->
                         <crud:botones-bottom
                             model="#{tipoExamenModel}"
                             procesar="@this edicionContenido"

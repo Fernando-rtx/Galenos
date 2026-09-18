@@ -1,4 +1,4 @@
-
+/* Contenedor y tarjeta principal del catálogo TipoExamen. */
 .page-shell {
     width: min(1180px, 100%);
     margin: 0 auto;
@@ -23,6 +23,7 @@
     padding: 30px 32px 32px;
 }
 
+/* Encabezado de la pantalla y acción para crear registros. */
 .page-header {
     align-items: center;
     display: flex;
@@ -101,6 +102,7 @@
     color: #1683b6;
 }
 
+/* Tabla PrimeFaces: encabezados, filtros, filas y paginador. */
 .tipo-table {
     border: 1px solid #e3edf3;
     border-radius: 8px;
@@ -212,6 +214,7 @@
     color: #106f9c;
 }
 
+/* Diálogo y formulario usados para creación y edición. */
 .clinical-dialog.ui-dialog {
     border: 0;
     border-radius: 8px;
@@ -349,6 +352,7 @@
     padding: 18px 24px;
 }
 
+/* Distribución responsive del catálogo. */
 @media (max-width: 720px) {
     .card-content {
         padding: 22px 18px;

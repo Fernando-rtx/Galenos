@@ -24,8 +24,12 @@ import java.util.Collection;
 import java.util.Date;
 
 /**
+ * Entidad JPA de la tabla {@code consulta}, inicio del registro asistencial.
  *
- * @author rodrigo
+ * <p>Usa un UUID como PK y registra fechas, referencia externa y observaciones.
+ * Muchas consultas pueden corresponder a un {@link PersonaRol}, dueño de la FK
+ * {@code id_persona_rol}. Sus procedimientos forman el lado inverso
+ * {@code @OneToMany}; {@link ConsultaProcedimiento} conserva la FK.</p>
  */
 @Entity
 @Table(name = "consulta")

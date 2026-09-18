@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+Configuración JPA de GalenosSV. Recorrido en ejecución:
+EntityManager → GalenoPU → JNDI jdbc/pgdb → DataSource de Liberty → PostgreSQL.
+-->
 <persistence version="3.2" xmlns="https://jakarta.ee/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_2.xsd">
+  <!-- JTA permite que Liberty coordine las transacciones EJB y el EntityManager. -->
   <persistence-unit name="GalenoPU" transaction-type="JTA">
+    <!-- Nombre JNDI del DataSource; las credenciales no se almacenan aquí. -->
     <jta-data-source>jdbc/pgdb</jta-data-source>
+    <!-- Lista explícita de las veinte clases que forman el modelo persistente. -->
     <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.MedioContacto</class>
     <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.ConsultaProcedimientoPaso</class>
     <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.Persona</class>
@@ -23,6 +30,7 @@
     <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.ConsultaProcedimiento</class>
     <class>sv.edu.ues.occingenieriappi115_2026.salud.entity.Procedimiento</class>
     <properties>
+      <!-- El esquema se administra con el script SQL; JPA no crea ni altera tablas. -->
       <property name="jakarta.persistence.schema-generation.database.action" value="none"/>
     </properties>
   </persistence-unit>

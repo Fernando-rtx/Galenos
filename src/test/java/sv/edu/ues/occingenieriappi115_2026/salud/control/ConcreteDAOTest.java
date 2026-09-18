@@ -1,6 +1,7 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.control;
 
-import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ejb.LocalBean;
+import jakarta.ejb.Stateless;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -14,9 +15,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Pruebas de herencia de los DAO concretos.
  *
  * <p>Verifica que cada DAO concreto del proyecto herede de
- * {@link DefaultDAO}, este anotado con {@link ApplicationScoped} y resuelva la
- * clase de entidad que administra mediante el constructor que le pasa a su
- * padre.</p>
+ * {@link DefaultDAO}, este anotado como EJB sin estado con vista local sin
+ * interfaz y resuelva la clase de entidad que administra mediante el
+ * constructor que le pasa a su padre.</p>
  *
  * <p>Es una prueba estructural: valida el diseno fijo que exige la arquitectura
  * del proyecto (DefaultDAO -> DAO concreto) sin necesitar abrir una conexion
@@ -87,14 +88,15 @@ public class ConcreteDAOTest {
     }
 
     @Test
-    public void testEstanAnotadosConApplicationScoped() {
-        // Escenario: CDI maneja el ciclo de vida de cada DAO.
-        // Esperado: todos estan anotados con @ApplicationScoped, que crea una
-        // unica instancia compartida por toda la aplicacion.
+    public void testEstanAnotadosComoEjbStatelessLocalBean() {
+        // Escenario: EJB maneja el ciclo de vida y las transacciones del DAO.
+        // Esperado: todos estan anotados con @Stateless y @LocalBean.
         DAOS_CONCRETOS.forEach(daoClase ->
                 assertTrue(
-                        daoClase.isAnnotationPresent(ApplicationScoped.class),
-                        daoClase.getSimpleName() + " debe tener @ApplicationScoped"
+                        daoClase.isAnnotationPresent(Stateless.class)
+                                && daoClase.isAnnotationPresent(LocalBean.class),
+                        daoClase.getSimpleName()
+                                + " debe tener @Stateless y @LocalBean"
                 )
         );
     }

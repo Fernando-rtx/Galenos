@@ -24,8 +24,13 @@ import java.util.Collection;
 import java.util.Date;
 
 /**
+ * Entidad JPA de {@code consulta_procedimiento}, ejecución de un procedimiento
+ * dentro de una {@link Consulta}.
  *
- * @author rodrigo
+ * <p>La PK es UUID. Conserva fechas, observaciones y el UUID de procedimiento.
+ * La asociación {@code idConsulta} es dueña de la relación muchos-a-uno. La
+ * colección de pasos es inversa mediante {@code mappedBy}; cada
+ * {@link ConsultaProcedimientoPaso} almacena la FK correspondiente.</p>
  */
 @Entity
 @Table(name = "consulta_procedimiento")

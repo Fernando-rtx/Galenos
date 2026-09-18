@@ -14,6 +14,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+/**
+ * Pruebas del backing bean {@link TipoDocumentoModel} con un DAO simulado.
+ * Verifican transiciones LISTADO/CREACION/EDICION y que guardar delegue en la
+ * operación correcta, siguiendo el patrón Arrange/Act/Assert.
+ */
 class TipoDocumentoModelTest {
 
     @Test

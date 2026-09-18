@@ -5,14 +5,17 @@
     xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-facesconfig_4_1.xsd"
     version="4.1">
 
+    <!-- Configuración global de internacionalización usada por #{msg[...]} en XHTML. -->
     <application>
         <locale-config>
+            <!-- Español es el locale inicial; el usuario puede elegir los otros tres. -->
             <default-locale>es</default-locale>
             <supported-locale>en</supported-locale>
             <supported-locale>de</supported-locale>
             <supported-locale>zh_CN</supported-locale>
         </locale-config>
 
+        <!-- Faces carga i18n/messages*.properties y lo expone con la variable msg. -->
         <resource-bundle>
             <base-name>i18n.messages</base-name>
             <var>msg</var>

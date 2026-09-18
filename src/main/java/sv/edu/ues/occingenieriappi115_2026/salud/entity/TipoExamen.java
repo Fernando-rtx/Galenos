@@ -19,8 +19,11 @@ import java.util.UUID;
 import java.util.Collection;
 
 /**
+ * Entidad JPA del catálogo clínico {@code tipo_examen}.
  *
- * @author rodrigo
+ * <p>La PK es UUID y sus columnas describen nombre, estado y observaciones. La
+ * colección {@link ExamenTipoExamen} es el lado inverso de la clasificación;
+ * la entidad puente conserva la FK. Su NamedQuery {@code findAll} usa JPQL.</p>
  */
 @Entity
 @Table(name = "tipo_examen")

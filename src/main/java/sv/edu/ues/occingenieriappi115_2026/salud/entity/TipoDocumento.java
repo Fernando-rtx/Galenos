@@ -19,8 +19,11 @@ import java.util.UUID;
 import java.util.Collection;
 
 /**
+ * Entidad JPA del catálogo {@code tipo_documento}.
  *
- * @author rodrigo
+ * <p>Su PK es UUID y define nombre, indicaciones, expresión regular y estado.
+ * La colección de {@link Documento} es inversa; cada documento posee la FK.
+ * La NamedQuery {@code TipoDocumento.findAll} consulta entidades mediante JPQL.</p>
  */
 @Entity
 @Table(name = "tipo_documento")

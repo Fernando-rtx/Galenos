@@ -1,13 +1,16 @@
 <server description="GalenosSV">
 
+    <!-- La feature agregada habilita Faces, CDI, EJB, JPA, Servlet y demás APIs Jakarta EE 11. -->
     <featureManager>
         <feature>jakartaee-11.0</feature>
     </featureManager>
 
+    <!-- Registro básico del servidor; no constituye por sí solo un login funcional de la aplicación. -->
     <basicRegistry id="basic" realm="BasicRealm">
         <user name="dev" password="dev"/>
     </basicRegistry>
 
+    <!-- Puertos y ubicación de PostgreSQL configurables sin cambiar este XML. -->
     <variable name="HTTP_PORT" defaultValue="9080"/>
     <variable name="HTTPS_PORT" defaultValue="9443"/>
 
@@ -18,11 +21,13 @@
     <variable name="POSTGRESQL_JDBC_DRIVER_DIR"
               defaultValue="${server.config.dir}/jdbc"/>
 
+    <!-- Endpoint que publica la aplicación por HTTP y HTTPS. -->
     <httpEndpoint id="defaultHttpEndpoint"
                   host="*"
                   httpPort="${HTTP_PORT}"
                   httpsPort="${HTTPS_PORT}"/>
 
+    <!-- Despliega el WAR bajo /GalenosSV y comparte PrimeFaces con su classloader. -->
     <webApplication id="GalenosSV"
                     name="GalenosSV"
                     location="GalenosSV.war"
@@ -32,6 +37,7 @@
 
     </webApplication>
 
+    <!-- Driver JDBC externo que permite al DataSource comunicarse con PostgreSQL. -->
     <library id="PostgreSQLJdbcLib">
 
         <fileset dir="${POSTGRESQL_JDBC_DRIVER_DIR}"
@@ -39,6 +45,7 @@
 
     </library>
 
+    <!-- Biblioteca de componentes visuales copiada por Maven fuera del WAR. -->
     <library id="PrimeFacesLib">
 
         <fileset dir="${server.config.dir}/../../../../../primefaces"
@@ -46,6 +53,11 @@
 
     </library>
 
+    <!--
+    DataSource administrado y publicado como jdbc/pgdb. Las variables locales
+    llegan a estas propiedades; persistence.xml consume el nombre JNDI y
+    DefaultDAO recibe finalmente el EntityManager de GalenoPU.
+    -->
     <dataSource id="pgdb" jndiName="jdbc/pgdb">
 
         <jdbcDriver libraryRef="PostgreSQLJdbcLib"/>

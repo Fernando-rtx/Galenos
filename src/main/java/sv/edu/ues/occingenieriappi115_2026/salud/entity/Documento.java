@@ -19,8 +19,12 @@ import java.io.Serializable;
 import java.util.UUID;
 
 /**
+ * Entidad JPA de la tabla {@code documento}, asociada a una persona.
  *
- * @author rodrigo
+ * <p>La PK es UUID; valor y ruta física describen el documento. Es dueña de
+ * dos relaciones muchos-a-uno porque contiene las FKs hacia {@link Persona} y
+ * {@link TipoDocumento}. Las anotaciones {@code @JoinColumn} indican las
+ * columnas reales usadas por PostgreSQL.</p>
  */
 @Entity
 @Table(name = "documento")

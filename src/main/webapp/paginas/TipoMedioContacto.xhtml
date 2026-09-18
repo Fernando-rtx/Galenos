@@ -9,6 +9,12 @@
     xmlns:ui="jakarta.faces.facelets"
     template="/WEB-INF/plantillas/general.xhtml">
 
+    <!--
+    Vista del catálogo TipoMedioContacto. Usa la plantilla general y enlaza sus
+    componentes con tipoMedioContactoModel. El bean delega al DAO EJB y este al
+    CRUD JPA centralizado en DefaultDAO.
+    -->
+
     <ui:define name="titulo">
         #{msg['tipoMedioContacto.titulo']} | #{msg['app.nombre']}
     </ui:define>
@@ -43,6 +49,7 @@
                             </p>
                         </div>
 
+                        <!-- El composite ejecuta nuevo() y muestra el diálogo al finalizar AJAX. -->
                         <crud:botones-top
                             model="#{tipoMedioContactoModel}"
                             actualizar="messages tiposTable edicionDialog"
@@ -64,6 +71,10 @@
                             </div>
                         </div>
 
+                        <!--
+                        Tabla lazy y paginada: no carga todo PostgreSQL. PrimeFaces solicita
+                        cada página, usa item como variable y el UUID como rowKey estable.
+                        -->
                         <p:dataTable
                             id="tiposTable"
                             value="#{tipoMedioContactoModel}"
@@ -78,12 +89,14 @@
                             emptyMessage="#{msg['tipoMedioContacto.sinRegistros']}"
                             styleClass="tipo-table">
 
+                            <!-- La selección actualiza únicamente el diálogo y lo abre en EDICION. -->
                             <p:ajax
                                 event="rowSelect"
                                 listener="#{tipoMedioContactoModel.seleccionar(item)}"
                                 update="edicionDialog"
                                 oncomplete="PF('tipoMedioContactoDialog').show()" />
 
+                            <!-- filterBy genera el filtro que termina como Predicate Criteria. -->
                             <p:column
                                 headerText="#{msg['tipoMedioContacto.nombre']}"
                                 filterBy="#{item.nombre}"
@@ -138,6 +151,7 @@
             </section>
         </main>
 
+        <!-- Formulario modal reutilizado para alta y modificación. -->
         <p:dialog
             id="edicionDialog"
             widgetVar="tipoMedioContactoDialog"
@@ -178,6 +192,7 @@
                                 value="#{msg['tipoMedioContacto.nombre']}"
                                 styleClass="form-label" />
 
+                            <!-- El nombre es obligatorio según el ciclo de validación de Faces. -->
                             <p:inputText
                                 id="nombre"
                                 value="#{tipoMedioContactoModel.seleccionado.nombre}"
@@ -234,6 +249,7 @@
                     </div>
 
                     <div class="dialog-actions">
+                        <!-- Guardar procesa campos y oculta el diálogo solo cuando la validación termina bien. -->
                         <crud:botones-bottom
                             model="#{tipoMedioContactoModel}"
                             procesar="@this edicionContenido"

@@ -2,8 +2,6 @@ package sv.edu.ues.occingenieriappi115_2026.salud.control;
 
 import jakarta.ejb.LocalBean;
 import jakarta.ejb.Stateless;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import java.util.List;
 import java.util.UUID;
@@ -13,7 +11,9 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPasoExamen;
  * DAO concreto para ProcedimientoPasoExamen.
  *
  * <p>La entidad conserva su propio DAO porque la tabla puente tiene datos
- * propios como activo, fecha y observaciones.</p>
+ * propios como activo, fecha y observaciones. Hereda CRUD y EntityManager de
+ * {@link DefaultDAO}; sus cuatro métodos consumen NamedQueries para listar y
+ * contar la relación tanto desde el paso como desde el examen.</p>
  */
 @Stateless
 @LocalBean
@@ -21,23 +21,9 @@ public class ProcedimientoPasoExamenDAO
         extends DefaultDAO<ProcedimientoPasoExamen>
         implements ProcedimientoPasoExamenDAOInterface {
 
-    /** EntityManager inyectado con la unidad GalenoPU. */
-    @PersistenceContext(unitName = "GalenoPU")
-    EntityManager em;
-
     /** Construye el DAO indicando que administra ProcedimientoPasoExamen. */
     public ProcedimientoPasoExamenDAO() {
         super(ProcedimientoPasoExamen.class);
-    }
-
-    /**
-     * Devuelve el EntityManager que usara DefaultDAO.
-     *
-     * @return EntityManager inyectado.
-     */
-    @Override
-    public EntityManager getEntityManager() {
-        return em;
     }
 
     /**
@@ -47,6 +33,8 @@ public class ProcedimientoPasoExamenDAO
      * @param first posicion inicial base cero.
      * @param max cantidad maxima de registros.
      * @return lista paginada de relaciones procedimiento-paso-examen.
+     * @throws IllegalArgumentException si el ID o la paginación no son válidos
+     * @throws IllegalStateException si falla la consulta JPA
      */
     @Override
     public List<ProcedimientoPasoExamen> findByIdProcedimientoPaso(
@@ -98,6 +86,8 @@ public class ProcedimientoPasoExamenDAO
      *
      * @param idProcedimientoPaso identificador del paso de procedimiento.
      * @return cantidad de relaciones encontradas.
+     * @throws IllegalArgumentException si el ID es nulo
+     * @throws IllegalStateException si falla el conteo JPA
      */
     @Override
     public long countByIdProcedimientoPaso(UUID idProcedimientoPaso) {
@@ -133,6 +123,8 @@ public class ProcedimientoPasoExamenDAO
      * @param first posicion inicial base cero.
      * @param max cantidad maxima de registros.
      * @return lista paginada de relaciones procedimiento-paso-examen.
+     * @throws IllegalArgumentException si el ID o la paginación no son válidos
+     * @throws IllegalStateException si falla la consulta JPA
      */
     @Override
     public List<ProcedimientoPasoExamen> findByIdExamen(
@@ -184,6 +176,8 @@ public class ProcedimientoPasoExamenDAO
      *
      * @param idExamen identificador del examen.
      * @return cantidad de relaciones encontradas.
+     * @throws IllegalArgumentException si el ID es nulo
+     * @throws IllegalStateException si falla el conteo JPA
      */
     @Override
     public long countByIdExamen(UUID idExamen) {

@@ -2,8 +2,6 @@ package sv.edu.ues.occingenieriappi115_2026.salud.control;
 
 import jakarta.ejb.LocalBean;
 import jakarta.ejb.Stateless;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import java.util.List;
 import java.util.UUID;
@@ -13,7 +11,10 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.ExamenTipoExamen;
  * DAO concreto para ExamenTipoExamen.
  *
  * <p>La entidad se mantiene como tabla puente con datos propios, por eso tiene
- * su propio DAO concreto.</p>
+ * consultas específicas además del CRUD heredado. Consume las NamedQueries
+ * {@code findByIdExamen}, {@code countByIdExamen} y
+ * {@code countByIdExamenAndIdTipoExamen}. El EntityManager se obtiene del
+ * método protegido de {@link DefaultDAO}, sin repetir {@code @PersistenceContext}.</p>
  */
 @Stateless
 @LocalBean
@@ -21,23 +22,9 @@ public class ExamenTipoExamenDAO
         extends DefaultDAO<ExamenTipoExamen>
         implements ExamenTipoExamenDAOInterface {
 
-    /** EntityManager inyectado con la unidad GalenoPU. */
-    @PersistenceContext(unitName = "GalenoPU")
-    EntityManager em;
-
     /** Construye el DAO indicando que administra ExamenTipoExamen. */
     public ExamenTipoExamenDAO() {
         super(ExamenTipoExamen.class);
-    }
-
-    /**
-     * Devuelve el EntityManager usado por la capa generica.
-     *
-     * @return EntityManager inyectado.
-     */
-    @Override
-    public EntityManager getEntityManager() {
-        return em;
     }
 
     /**
@@ -47,6 +34,8 @@ public class ExamenTipoExamenDAO
      * @param first posicion inicial base cero.
      * @param max cantidad maxima de registros.
      * @return lista paginada de relaciones examen-tipo examen.
+     * @throws IllegalArgumentException si el ID o la paginación no son válidos
+     * @throws IllegalStateException si JPA no puede ejecutar la NamedQuery
      */
     @Override
     public List<ExamenTipoExamen> findByIdExamen(
@@ -98,6 +87,8 @@ public class ExamenTipoExamenDAO
      *
      * @param idExamen identificador del examen padre.
      * @return cantidad de relaciones encontradas.
+     * @throws IllegalArgumentException si el ID es nulo
+     * @throws IllegalStateException si JPA no puede ejecutar el conteo
      */
     @Override
     public long countByIdExamen(UUID idExamen) {
@@ -132,6 +123,8 @@ public class ExamenTipoExamenDAO
      * @param idExamen identificador del examen padre.
      * @param idTipoExamen identificador del tipo de examen asociado.
      * @return cantidad de relaciones encontradas para la pareja indicada.
+     * @throws IllegalArgumentException si algún ID es nulo
+     * @throws IllegalStateException si JPA no puede ejecutar el conteo
      */
     @Override
     public long countByIdExamenAndIdTipoExamen(

@@ -12,7 +12,34 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * Pruebas unitarias de las NamedQueries consumidas por
+ * {@link ExamenTipoExamenDAO}.
+ *
+ * <p>Mockito representa EntityManager y TypedQuery. Cada caso prepara los
+ * mocks (Arrange), ejecuta el método (Act) y verifica resultado e interacciones
+ * (Assert), sin abrir PostgreSQL.</p>
+ */
 public class ExamenTipoExamenDAOTest {
+
+    /**
+     * Sustituto exclusivo de prueba que entrega un EntityManager mock mediante
+     * el punto protegido de extensión. Así se prueba el DAO sin reintroducir
+     * campos EntityManager ni {@code @PersistenceContext} en producción.
+     */
+    private static class TestableExamenTipoExamenDAO extends ExamenTipoExamenDAO {
+
+        private final EntityManager entityManager;
+
+        TestableExamenTipoExamenDAO(EntityManager entityManager) {
+            this.entityManager = entityManager;
+        }
+
+        @Override
+        protected EntityManager getEntityManager() {
+            return entityManager;
+        }
+    }
 
     @Test
     public void findByIdExamenUsaNamedQueryParametrosYPaginacion() {
@@ -20,8 +47,7 @@ public class ExamenTipoExamenDAOTest {
         EntityManager em = Mockito.mock(EntityManager.class);
         TypedQuery<ExamenTipoExamen> query = Mockito.mock(TypedQuery.class);
         List<ExamenTipoExamen> esperado = List.of(new ExamenTipoExamen(UUID.randomUUID()));
-        ExamenTipoExamenDAO cut = new ExamenTipoExamenDAO();
-        cut.em = em;
+        ExamenTipoExamenDAO cut = new TestableExamenTipoExamenDAO(em);
 
         Mockito.when(em.createNamedQuery(
                 "ExamenTipoExamen.findByIdExamen",
@@ -50,8 +76,7 @@ public class ExamenTipoExamenDAOTest {
         UUID idExamen = UUID.randomUUID();
         EntityManager em = Mockito.mock(EntityManager.class);
         TypedQuery<Long> query = Mockito.mock(TypedQuery.class);
-        ExamenTipoExamenDAO cut = new ExamenTipoExamenDAO();
-        cut.em = em;
+        ExamenTipoExamenDAO cut = new TestableExamenTipoExamenDAO(em);
 
         Mockito.when(em.createNamedQuery(
                 "ExamenTipoExamen.countByIdExamen",
@@ -77,8 +102,7 @@ public class ExamenTipoExamenDAOTest {
         UUID idTipoExamen = UUID.randomUUID();
         EntityManager em = Mockito.mock(EntityManager.class);
         TypedQuery<Long> query = Mockito.mock(TypedQuery.class);
-        ExamenTipoExamenDAO cut = new ExamenTipoExamenDAO();
-        cut.em = em;
+        ExamenTipoExamenDAO cut = new TestableExamenTipoExamenDAO(em);
 
         Mockito.when(em.createNamedQuery(
                 "ExamenTipoExamen.countByIdExamenAndIdTipoExamen",
@@ -128,8 +152,7 @@ public class ExamenTipoExamenDAOTest {
     public void findByIdExamenEnvuelveErroresDePersistencia() {
         UUID idExamen = UUID.randomUUID();
         EntityManager em = Mockito.mock(EntityManager.class);
-        ExamenTipoExamenDAO cut = new ExamenTipoExamenDAO();
-        cut.em = em;
+        ExamenTipoExamenDAO cut = new TestableExamenTipoExamenDAO(em);
 
         Mockito.when(em.createNamedQuery(
                 "ExamenTipoExamen.findByIdExamen",
@@ -147,8 +170,7 @@ public class ExamenTipoExamenDAOTest {
     public void countByIdExamenEnvuelveErroresDePersistencia() {
         UUID idExamen = UUID.randomUUID();
         EntityManager em = Mockito.mock(EntityManager.class);
-        ExamenTipoExamenDAO cut = new ExamenTipoExamenDAO();
-        cut.em = em;
+        ExamenTipoExamenDAO cut = new TestableExamenTipoExamenDAO(em);
 
         Mockito.when(em.createNamedQuery(
                 "ExamenTipoExamen.countByIdExamen",
@@ -167,8 +189,7 @@ public class ExamenTipoExamenDAOTest {
         UUID idExamen = UUID.randomUUID();
         UUID idTipoExamen = UUID.randomUUID();
         EntityManager em = Mockito.mock(EntityManager.class);
-        ExamenTipoExamenDAO cut = new ExamenTipoExamenDAO();
-        cut.em = em;
+        ExamenTipoExamenDAO cut = new TestableExamenTipoExamenDAO(em);
 
         Mockito.when(em.createNamedQuery(
                 "ExamenTipoExamen.countByIdExamenAndIdTipoExamen",

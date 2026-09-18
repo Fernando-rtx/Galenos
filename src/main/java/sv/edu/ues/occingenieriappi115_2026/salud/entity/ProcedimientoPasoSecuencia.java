@@ -19,8 +19,12 @@ import java.io.Serializable;
 import java.util.UUID;
 
 /**
+ * Entidad JPA de {@code procedimiento_paso_secuencia}, que describe enlaces
+ * entre pasos de un procedimiento.
  *
- * @author rodrigo
+ * <p>Usa UUID como PK. La relación muchos-a-uno enlaza el paso origen mediante
+ * una FK; el UUID de referencia y el tipo de secuencia describen el siguiente
+ * paso y la naturaleza del enlace según el esquema actual.</p>
  */
 @Entity
 @Table(name = "procedimiento_paso_secuencia")

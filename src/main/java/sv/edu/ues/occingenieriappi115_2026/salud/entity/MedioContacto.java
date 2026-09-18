@@ -22,8 +22,11 @@ import java.util.UUID;
 import java.util.Date;
 
 /**
+ * Entidad JPA de {@code medio_contacto}, un dato de contacto de una persona.
  *
- * @author rodrigo
+ * <p>Su PK es UUID y registra valor y fecha. Contiene las FKs, por lo que es el
+ * lado dueño de las relaciones muchos-a-uno hacia {@link Persona} y
+ * {@link TipoMedioContacto}.</p>
  */
 @Entity
 @Table(name = "medio_contacto")

@@ -40,6 +40,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.times;
 
+/**
+ * Pruebas de integración unitaria entre {@link AbstractModel} y
+ * {@link DefaultDAO} usando mocks de Criteria API y PrimeFaces.
+ *
+ * <p>Verifican offset/límite, orden, filtros, conteo, UUID, rowKey y estados
+ * CRUD. No son pruebas contra un servidor ni una base real.</p>
+ */
 class Fase8Test {
 
     private static class TestEntity {

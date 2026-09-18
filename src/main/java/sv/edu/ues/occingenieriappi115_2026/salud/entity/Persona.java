@@ -22,8 +22,12 @@ import java.util.Collection;
 import java.util.Date;
 
 /**
+ * Entidad JPA central de la tabla {@code persona}.
  *
- * @author rodrigo
+ * <p>Su PK es UUID y conserva nombres, apellidos y fechas. Las colecciones de
+ * medios, documentos y roles son lados inversos {@code @OneToMany}; las FKs se
+ * encuentran respectivamente en {@link MedioContacto}, {@link Documento} y
+ * {@link PersonaRol}, que son dueños de esas relaciones.</p>
  */
 @Entity
 @Table(name = "persona")

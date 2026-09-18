@@ -21,8 +21,13 @@ import java.util.UUID;
 import java.util.Collection;
 
 /**
+ * Entidad JPA de {@code procedimiento_paso}, una etapa de un procedimiento.
  *
- * @author rodrigo
+ * <p>Su UUID es la PK. Es dueña de relaciones muchos-a-uno hacia
+ * {@link Procedimiento} y {@link Rol}. Secuencias y exámenes son colecciones
+ * inversas cuyas FKs están en las entidades hijas. Las NamedQueries JPQL
+ * permiten al {@code ProcedimientoPasoDAO} listar y contar pasos por
+ * {@code idProcedimiento}, ordenando por nombre.</p>
  */
 @Entity
 @Table(name = "procedimiento_paso")

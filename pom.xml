@@ -5,6 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- Coordenadas Maven: identifican al proyecto y producen GalenosSV.war. -->
     <groupId>sv.edu.ues.occingenieriappi115_2026.salud</groupId>
     <artifactId>GalenosSV</artifactId>
     <version>1.0-SNAPSHOT</version>
@@ -12,6 +13,7 @@
 
     <name>GalenosSV</name>
 
+    <!-- Versiones centralizadas para una compilación reproducible con Java 21. -->
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
@@ -28,6 +30,7 @@
     </properties>
 
     <dependencies>
+        <!-- API Jakarta EE disponible al compilar; Liberty la aporta en ejecución. -->
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
@@ -35,6 +38,7 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Driver JDBC provisto como biblioteca externa del servidor, no dentro del WAR. -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
@@ -42,6 +46,7 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Componentes JSF PrimeFaces compilados para el namespace Jakarta. -->
         <dependency>
             <groupId>org.primefaces</groupId>
             <artifactId>primefaces</artifactId>
@@ -50,7 +55,7 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- JUnit -->
+        <!-- JUnit ejecuta las pruebas unitarias con Surefire. -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -58,7 +63,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Mockito -->
+        <!-- Mockito crea dobles de EntityManager, Criteria y DAO en las pruebas. -->
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
@@ -68,10 +73,12 @@
     </dependencies>
 
     <build>
+        <!-- El artefacto final se llama GalenosSV.war. -->
         <finalName>${project.artifactId}</finalName>
 
         <plugins>
 
+            <!-- Compila fuentes y pruebas usando las APIs de Java 21. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -81,12 +88,14 @@
                 </configuration>
             </plugin>
 
+            <!-- Surefire descubre y ejecuta las pruebas JUnit durante test/package. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.2</version>
             </plugin>
 
+            <!-- Empaqueta clases, recursos y webapp en formato WAR. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
@@ -96,7 +105,8 @@
                 </configuration>
             </plugin>
 
-            <!-- JaCoCo -->
+            <!-- JaCoCo instrumenta las pruebas y genera el reporte de cobertura. -->
+            <!-- Copia PrimeFaces a target/primefaces para la biblioteca común de Liberty. -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -117,6 +127,12 @@
                 </executions>
             </plugin>
 
+            <!--
+            Descarga/prepara Open Liberty, copia el driver PostgreSQL y permite
+            arrancar con mvn liberty:run. Comandos principales:
+            mvn test ejecuta pruebas; mvn clean package limpia y crea el WAR;
+            mvn liberty:run inicia el servidor y despliega la aplicación.
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>

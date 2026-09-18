@@ -14,6 +14,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+/**
+ * Pruebas del flujo de estado de {@link TipoExamenModel}.
+ *
+ * <p>Mockito aísla el DAO para comprobar que creación llama {@code guardar},
+ * edición llama {@code actualizar} y cancelación no persiste cambios.</p>
+ */
 class TipoExamenModelTest {
 
     @Test

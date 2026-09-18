@@ -19,8 +19,11 @@ import java.util.UUID;
 import java.util.Collection;
 
 /**
+ * Entidad JPA del catálogo {@code procedimiento}.
  *
- * @author rodrigo
+ * <p>Su UUID es la PK; nombre, estado y observaciones definen el procedimiento.
+ * La colección de {@link ProcedimientoPaso} es el lado inverso indicado por
+ * {@code mappedBy}; cada paso contiene la FK del procedimiento.</p>
  */
 @Entity
 @Table(name = "procedimiento")

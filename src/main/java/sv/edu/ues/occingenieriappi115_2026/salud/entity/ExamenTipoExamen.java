@@ -22,8 +22,13 @@ import java.util.UUID;
 import java.util.Date;
 
 /**
+ * Entidad puente JPA de {@code examen_tipo_examen}.
  *
- * @author rodrigo
+ * <p>Relaciona muchos exámenes con muchos tipos mediante dos asociaciones
+ * {@code @ManyToOne}, pero se modela como entidad porque posee UUID, fecha y
+ * observaciones propias. Sus NamedQueries JPQL listan y cuentan relaciones por
+ * {@code idExamen}, y detectan una pareja examen/tipo; las consume
+ * {@code ExamenTipoExamenDAO} con parámetros tipados y paginación.</p>
  */
 @Entity
 @Table(name = "examen_tipo_examen")

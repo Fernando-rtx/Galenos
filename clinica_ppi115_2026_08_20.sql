@@ -1,3 +1,7 @@
+-- Esquema relacional de GalenosSV. Las PK usan UUID y las relaciones se
+-- refuerzan al final mediante FOREIGN KEY; JPA no genera estas tablas.
+
+-- Clínica o sede. PK id_clinica; se relaciona con persona_rol.
 CREATE TABLE public.clinica (
     id_clinica uuid NOT NULL,
     nombre character varying(255) NOT NULL,
@@ -6,6 +10,8 @@ CREATE TABLE public.clinica (
     comentarios text
 );
 
+-- Consulta clínica vinculada al rol que una persona ejerce en una clínica.
+-- PK id_consulta; FK id_persona_rol agregada al final.
 CREATE TABLE public.consulta (
     id_consulta uuid NOT NULL,
     fecha_inicio timestamp with time zone DEFAULT now(),
@@ -15,6 +21,8 @@ CREATE TABLE public.consulta (
     id_persona_rol uuid
 );
 
+-- Procedimiento ejecutado dentro de una consulta. PK propia y FK a consulta.
+-- id_procedimiento se conserva como UUID según el diseño actual.
 CREATE TABLE public.consulta_procedimiento (
     id_consulta_procedimiento uuid NOT NULL,
     id_consulta uuid,
@@ -24,6 +32,8 @@ CREATE TABLE public.consulta_procedimiento (
     observaciones text
 );
 
+-- Ejecución de un paso: registra responsable, fechas y estado.
+-- Sus FKs apuntan a consulta_procedimiento y persona_rol.
 CREATE TABLE public.consulta_procedimiento_paso (
     id_consulta_procedimiento_paso uuid NOT NULL,
     id_consulta_procedimiento uuid,
@@ -33,6 +43,7 @@ CREATE TABLE public.consulta_procedimiento_paso (
     estado character varying(20)
 );
 
+-- Documento de una persona clasificado por tipo. PK UUID y dos FKs.
 CREATE TABLE public.documento (
     id_documento uuid NOT NULL,
     id_persona uuid,
@@ -41,6 +52,7 @@ CREATE TABLE public.documento (
     ruta_fisica text
 );
 
+-- Catálogo de exámenes disponibles. Se relaciona con tipos y pasos mediante puentes.
 CREATE TABLE public.examen (
     id_examen uuid NOT NULL,
     nombre character varying(255),
@@ -48,6 +60,7 @@ CREATE TABLE public.examen (
     observaciones text
 );
 
+-- Resultado e interpretación asociados a una orden de examen.
 CREATE TABLE public.examen_resultado (
     id_examen_resultado uuid NOT NULL,
     id_orden_examen uuid,
@@ -57,6 +70,7 @@ CREATE TABLE public.examen_resultado (
     ruta_atestado text
 );
 
+-- Entidad puente examen-tipo_examen con fecha y observaciones propias.
 CREATE TABLE public.examen_tipo_examen (
     id_examen_tipo_examen uuid NOT NULL,
     id_examen uuid,
@@ -65,6 +79,7 @@ CREATE TABLE public.examen_tipo_examen (
     observaciones text
 );
 
+-- Dato de contacto de una persona, clasificado por tipo de medio.
 CREATE TABLE public.medio_contacto (
     id_medio_contacto uuid NOT NULL,
     id_persona uuid,
@@ -73,6 +88,7 @@ CREATE TABLE public.medio_contacto (
     fecha_creacion timestamp with time zone DEFAULT now()
 );
 
+-- Orden generada durante la ejecución de un paso de procedimiento.
 CREATE TABLE public.orden_examen (
     id_orden_examen uuid NOT NULL,
     id_consulta_procedimiento_paso uuid,
@@ -80,6 +96,7 @@ CREATE TABLE public.orden_examen (
     indicaciones text
 );
 
+-- Persona base del dominio. Documentos, contactos y roles apuntan a esta PK.
 CREATE TABLE public.persona (
     id_persona uuid NOT NULL,
     nombres character varying(255),
@@ -88,6 +105,7 @@ CREATE TABLE public.persona (
     fecha_creacion timestamp with time zone DEFAULT now()
 );
 
+-- Asociación persona-rol-clínica que contextualiza responsabilidades y consultas.
 CREATE TABLE public.persona_rol (
     id_persona_rol uuid NOT NULL,
     id_persona uuid,
@@ -96,6 +114,7 @@ CREATE TABLE public.persona_rol (
     id_clinica uuid
 );
 
+-- Catálogo de procedimientos clínicos; sus pasos se almacenan por separado.
 CREATE TABLE public.procedimiento (
     id_procedimiento uuid NOT NULL,
     nombre character varying(155),
@@ -103,6 +122,7 @@ CREATE TABLE public.procedimiento (
     observaciones text
 );
 
+-- Paso de un procedimiento y rol encargado; indica si finaliza el flujo.
 CREATE TABLE public.procedimiento_paso (
     id_procedimiento_paso uuid NOT NULL,
     id_procedimiento uuid,
@@ -111,6 +131,7 @@ CREATE TABLE public.procedimiento_paso (
     id_rol uuid
 );
 
+-- Puente paso-examen con estado, fecha y observaciones propias.
 CREATE TABLE public.procedimiento_paso_examen (
     id_procedimiento_paso_examen uuid NOT NULL,
     id_procedimiento_paso uuid,
@@ -120,6 +141,7 @@ CREATE TABLE public.procedimiento_paso_examen (
     observaciones text
 );
 
+-- Enlace de secuencia entre un paso origen y un UUID de paso de referencia.
 CREATE TABLE public.procedimiento_paso_secuencia (
     id_procedimiento_paso_secuencia uuid NOT NULL,
     id_procedimiento_paso uuid,
@@ -127,6 +149,7 @@ CREATE TABLE public.procedimiento_paso_secuencia (
     tipo_secuencia character varying(20)
 );
 
+-- Catálogo de roles que una persona puede ejercer y que un paso puede requerir.
 CREATE TABLE public.rol (
     id_rol uuid NOT NULL,
     nombre character varying(155),
@@ -134,6 +157,7 @@ CREATE TABLE public.rol (
     observaciones text
 );
 
+-- Catálogo de tipos documentales y expresión regular descriptiva.
 CREATE TABLE public.tipo_documento (
     id_tipo_documento uuid NOT NULL,
     nombre character varying(155),
@@ -142,6 +166,7 @@ CREATE TABLE public.tipo_documento (
     activo boolean
 );
 
+-- Catálogo de clasificaciones de examen.
 CREATE TABLE public.tipo_examen (
     id_tipo_examen uuid NOT NULL,
     nombre character varying,
@@ -149,6 +174,7 @@ CREATE TABLE public.tipo_examen (
     observaciones text
 );
 
+-- Catálogo de tipos de contacto y expresión regular descriptiva.
 CREATE TABLE public.tipo_medio_contacto (
     id_tipo_medio_contacto uuid NOT NULL,
     nombre character varying(155),
@@ -157,6 +183,7 @@ CREATE TABLE public.tipo_medio_contacto (
     activo boolean
 );
 
+-- Claves primarias: cada tabla queda identificada por su UUID.
 ALTER TABLE ONLY public.clinica
     ADD CONSTRAINT pk_clinica PRIMARY KEY (id_clinica);
 
@@ -217,6 +244,7 @@ ALTER TABLE ONLY public.tipo_examen
 ALTER TABLE ONLY public.tipo_medio_contacto
     ADD CONSTRAINT pk_tipo_medio_contacto PRIMARY KEY (id_tipo_medio_contacto);
 
+-- Índice auxiliar y claves foráneas: preservan las relaciones del dominio.
 CREATE INDEX fki_fk_persona_rol_clinica ON public.persona_rol USING btree (id_clinica);
 
 ALTER TABLE ONLY public.consulta

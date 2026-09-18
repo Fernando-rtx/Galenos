@@ -19,8 +19,11 @@ import java.util.UUID;
 import java.util.Collection;
 
 /**
+ * Entidad JPA del catálogo {@code tipo_medio_contacto}.
  *
- * @author rodrigo
+ * <p>Su UUID es la PK y define nombre, indicaciones, expresión regular y
+ * estado. La colección de {@link MedioContacto} es inversa mediante
+ * {@code mappedBy}; cada medio contiene la FK que hace de dueño.</p>
  */
 @Entity
 @Table(name = "tipo_medio_contacto")

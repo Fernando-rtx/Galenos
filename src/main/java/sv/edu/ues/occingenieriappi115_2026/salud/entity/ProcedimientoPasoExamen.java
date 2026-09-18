@@ -22,8 +22,12 @@ import java.util.UUID;
 import java.util.Date;
 
 /**
+ * Entidad puente de {@code procedimiento_paso_examen}.
  *
- * @author rodrigo
+ * <p>Une {@link ProcedimientoPaso} y {@link Examen} mediante FKs propias y
+ * conserva UUID, fecha, estado y observaciones. Sus NamedQueries JPQL permiten
+ * listar y contar en ambos sentidos; {@code ProcedimientoPasoExamenDAO} las
+ * consume sin SQL directo.</p>
  */
 @Entity
 @Table(name = "procedimiento_paso_examen")

@@ -24,8 +24,13 @@ import java.util.Collection;
 import java.util.Date;
 
 /**
+ * Entidad JPA de {@code consulta_procedimiento_paso}; registra la ejecución de
+ * un paso concreto dentro de un procedimiento de consulta.
  *
- * @author rodrigo
+ * <p>Su UUID es la PK. Las relaciones muchos-a-uno enlazan la ejecución padre
+ * y el {@link PersonaRol} responsable mediante FKs propias. Las órdenes de
+ * examen son el lado inverso: {@link OrdenExamen} conserva la FK y esta entidad
+ * declara {@code mappedBy="idConsultaProcedimientoPaso"}.</p>
  */
 @Entity
 @Table(name = "consulta_procedimiento_paso")
