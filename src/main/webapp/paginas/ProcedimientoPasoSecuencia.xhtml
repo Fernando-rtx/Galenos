@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:f="jakarta.faces.core"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
+
+    <ui:define name="titulo">
+        #{msg['secuencia.titulo']} | #{msg['app.nombre']}
+    </ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet
+            library="estilos"
+            name="procedimiento-paso-secuencia.css"/>
+    </ui:define>
+
+    <ui:define name="contenido">
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+
+                <div class="card-content">
+                    <div class="page-header">
+                        <div class="header-info">
+                            <div class="clinical-brand">
+                                <span class="clinical-brand-icon">
+                                    <i class="pi pi-link"></i>
+                                </span>
+                                #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                            </div>
+
+                            <h1 class="page-title">
+                                #{msg['secuencia.titulo']}
+                            </h1>
+
+                            <p class="page-subtitle">
+                                #{msg['secuencia.subtitulo']}
+                            </p>
+                        </div>
+
+                        <crud:botones-top
+                            model="#{secuenciaModel}"
+                            actualizar="messages secuenciasTable edicionDialog"
+                            oncompleteNuevo="PF('secuenciaDialog').show()" />
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <p:messages
+                        id="messages"
+                        showDetail="true"
+                        closable="true" />
+
+                    <div class="table-section">
+                        <div class="table-heading">
+                            <div class="table-title">
+                                <i class="pi pi-list"></i>
+                                #{msg['secuencia.lista']}
+                            </div>
+                        </div>
+
+                        <p:dataTable
+                            id="secuenciasTable"
+                            value="#{secuenciaModel}"
+                            var="item"
+                            lazy="true"
+                            paginator="true"
+                            rows="10"
+                            reflow="true"
+                            selectionMode="single"
+                            selection="#{secuenciaModel.seleccionado}"
+                            rowKey="#{secuenciaModel.getRowKey(item)}"
+                            emptyMessage="#{msg['secuencia.sinRegistros']}"
+                            styleClass="secuencia-table">
+
+                            <p:ajax
+                                event="rowSelect"
+                                listener="#{secuenciaModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('secuenciaDialog').show()" />
+
+                            <p:column
+                                headerText="#{msg['secuencia.tipo']}"
+                                field="tipoSecuencia"
+                                sortBy="#{item.tipoSecuencia}"
+                                filterBy="#{item.tipoSecuencia}"
+                                filterMatchMode="contains"
+                                filterPlaceholder="#{msg['secuencia.buscar']}">
+
+                                <h:outputText
+                                    value="#{empty item.tipoSecuencia
+                                             ? msg['secuencia.sinTipo']
+                                             : item.tipoSecuencia}"
+                                    styleClass="#{empty item.tipoSecuencia
+                                                  ? 'empty-note'
+                                                  : ''}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['secuencia.pasoOrigen']}"
+                                field="idProcedimientoPaso.nombre"
+                                sortBy="#{item.idProcedimientoPaso.nombre}">
+
+                                <h:outputText
+                                    value="#{item.idProcedimientoPaso.nombre}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['secuencia.pasoReferencia']}"
+                                field="idProcedimientoPasoReferencia">
+
+                                <h:outputText
+                                    value="#{empty item.idProcedimientoPasoReferencia
+                                             ? msg['secuencia.sinReferencia']
+                                             : item.idProcedimientoPasoReferencia}"
+                                    styleClass="#{empty item.idProcedimientoPasoReferencia
+                                                  ? 'empty-note'
+                                                  : ''}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['secuencia.acciones']}"
+                                styleClass="action-cell">
+
+                                <p:commandButton
+                                    icon="pi pi-pencil"
+                                    title="#{msg['crud.editar']}"
+                                    styleClass="edit-button"
+                                    action="#{secuenciaModel.seleccionar(item)}"
+                                    process="@this"
+                                    update="edicionDialog"
+                                    oncomplete="PF('secuenciaDialog').show()" />
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <p:dialog
+            id="edicionDialog"
+            widgetVar="secuenciaDialog"
+            header="#{secuenciaModel.estado eq 'CREACION'
+                      ? msg['secuencia.nueva']
+                      : msg['secuencia.editar']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="560"
+            styleClass="clinical-dialog">
+
+            <p:outputPanel
+                id="edicionContenido"
+                layout="block">
+
+                <h:panelGroup rendered="#{secuenciaModel.seleccionado ne null}">
+                    <div class="dialog-intro">
+                        <div class="dialog-intro-icon">
+                            <i class="pi pi-file-edit"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                #{msg['secuencia.informacion']}
+                            </strong>
+
+                            <span>
+                                #{msg['secuencia.completar']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="idProcedimientoPaso"
+                                value="#{msg['secuencia.pasoOrigen']}"
+                                styleClass="form-label" />
+
+                            <p:selectOneMenu
+                                id="idProcedimientoPaso"
+                                value="#{secuenciaModel.seleccionado.idProcedimientoPaso}"
+                                
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}"
+                                styleClass="full-width">
+
+                                <f:selectItem
+                                    itemLabel="#{msg['secuencia.seleccionarPaso']}"
+                                    itemValue="" />
+                                <f:selectItems
+                                    value="#{secuenciaModel.procedimientosPaso}"
+                                    var="paso"
+                                    itemLabel="#{paso.nombre}"
+                                    itemValue="#{paso}" />
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="tipoSecuencia"
+                                value="#{msg['secuencia.tipo']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="tipoSecuencia"
+                                value="#{secuenciaModel.seleccionado.tipoSecuencia}"
+                                placeholder="#{msg['secuencia.tipoPlaceholder']}"
+                                maxlength="20" />
+
+                            <span class="form-helper">
+                                #{msg['secuencia.tipoAyuda']}
+                            </span>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="idProcedimientoPasoReferencia"
+                                value="#{msg['secuencia.pasoReferencia']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="idProcedimientoPasoReferencia"
+                                value="#{secuenciaModel.seleccionado.idProcedimientoPasoReferencia}"
+                                placeholder="#{msg['secuencia.referenciaPlaceholder']}" />
+
+                            <span class="form-helper">
+                                #{msg['secuencia.referenciaAyuda']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dialog-actions">
+                        <crud:botones-bottom
+                            model="#{secuenciaModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages secuenciasTable edicionDialog"
+                            oncompleteCancelar="PF('secuenciaDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('secuenciaDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

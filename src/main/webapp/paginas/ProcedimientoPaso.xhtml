@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:f="jakarta.faces.core"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
+
+    <ui:define name="titulo">
+        #{msg['procedimientoPaso.titulo']} | #{msg['app.nombre']}
+    </ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet
+            library="estilos"
+            name="procedimiento-paso.css"/>
+    </ui:define>
+
+    <ui:define name="contenido">
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+
+                <div class="card-content">
+                    <div class="page-header">
+                        <div class="header-info">
+                            <div class="clinical-brand">
+                                <span class="clinical-brand-icon">
+                                    <i class="pi pi-arrow-right"></i>
+                                </span>
+                                #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                            </div>
+
+                            <h1 class="page-title">
+                                #{msg['procedimientoPaso.titulo']}
+                            </h1>
+
+                            <p class="page-subtitle">
+                                #{msg['procedimientoPaso.subtitulo']}
+                            </p>
+                        </div>
+
+                        <crud:botones-top
+                            model="#{procedimientoPasoModel}"
+                            actualizar="messages procedimientosPasoTable edicionDialog"
+                            oncompleteNuevo="PF('procedimientoPasoDialog').show()" />
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <p:messages
+                        id="messages"
+                        showDetail="true"
+                        closable="true" />
+
+                    <div class="table-section">
+                        <div class="table-heading">
+                            <div class="table-title">
+                                <i class="pi pi-list"></i>
+                                #{msg['procedimientoPaso.lista']}
+                            </div>
+                        </div>
+
+                        <p:dataTable
+                            id="procedimientosPasoTable"
+                            value="#{procedimientoPasoModel}"
+                            var="item"
+                            lazy="true"
+                            paginator="true"
+                            rows="10"
+                            reflow="true"
+                            selectionMode="single"
+                            selection="#{procedimientoPasoModel.seleccionado}"
+                            rowKey="#{procedimientoPasoModel.getRowKey(item)}"
+                            emptyMessage="#{msg['procedimientoPaso.sinRegistros']}"
+                            styleClass="procedimiento-paso-table">
+
+                            <p:ajax
+                                event="rowSelect"
+                                listener="#{procedimientoPasoModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('procedimientoPasoDialog').show()" />
+
+                            <p:column
+                                headerText="#{msg['procedimientoPaso.nombre']}"
+                                field="nombre"
+                                sortBy="#{item.nombre}"
+                                filterBy="#{item.nombre}"
+                                filterMatchMode="contains"
+                                filterPlaceholder="#{msg['procedimientoPaso.buscar']}">
+
+                                <h:outputText
+                                    value="#{item.nombre}"
+                                    styleClass="paso-name" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['procedimientoPaso.procedimiento']}"
+                                field="idProcedimiento.nombre"
+                                sortBy="#{item.idProcedimiento.nombre}"
+                                filterBy="#{item.idProcedimiento.nombre}"
+                                filterMatchMode="contains">
+
+                                <h:outputText
+                                    value="#{item.idProcedimiento.nombre}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['procedimientoPaso.rol']}"
+                                field="idRol.nombre"
+                                sortBy="#{item.idRol.nombre}"
+                                filterBy="#{item.idRol.nombre}"
+                                filterMatchMode="contains">
+
+                                <h:outputText
+                                    value="#{item.idRol.nombre}" />
+                            </p:column>
+
+                            <p:column headerText="#{msg['procedimientoPaso.indicaFin']}">
+                                <p:tag
+                                    styleClass="clinical-status"
+                                    value="#{item.indicaFin eq true
+                                             ? msg['procedimientoPaso.finSi']
+                                             : msg['procedimientoPaso.finNo']}"
+                                    severity="#{item.indicaFin eq true
+                                                ? 'success'
+                                                : 'secondary'}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['procedimientoPaso.acciones']}"
+                                styleClass="action-cell">
+
+                                <p:commandButton
+                                    icon="pi pi-pencil"
+                                    title="#{msg['crud.editar']}"
+                                    styleClass="edit-button"
+                                    action="#{procedimientoPasoModel.seleccionar(item)}"
+                                    process="@this"
+                                    update="edicionDialog"
+                                    oncomplete="PF('procedimientoPasoDialog').show()" />
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <p:dialog
+            id="edicionDialog"
+            widgetVar="procedimientoPasoDialog"
+            header="#{procedimientoPasoModel.estado eq 'CREACION'
+                      ? msg['procedimientoPaso.nuevo']
+                      : msg['procedimientoPaso.editar']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="560"
+            styleClass="clinical-dialog">
+
+            <p:outputPanel
+                id="edicionContenido"
+                layout="block">
+
+                <h:panelGroup rendered="#{procedimientoPasoModel.seleccionado ne null}">
+                    <div class="dialog-intro">
+                        <div class="dialog-intro-icon">
+                            <i class="pi pi-file-edit"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                #{msg['procedimientoPaso.informacion']}
+                            </strong>
+
+                            <span>
+                                #{msg['procedimientoPaso.completar']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="nombre"
+                                value="#{msg['procedimientoPaso.nombre']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="nombre"
+                                value="#{procedimientoPasoModel.seleccionado.nombre}"
+                                placeholder="#{msg['procedimientoPaso.nombrePlaceholder']}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}" />
+
+                            <span class="form-helper">
+                                #{msg['procedimientoPaso.nombreAyuda']}
+                            </span>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="idProcedimiento"
+                                value="#{msg['procedimientoPaso.procedimiento']}"
+                                styleClass="form-label" />
+
+                            <p:selectOneMenu
+                                id="idProcedimiento"
+                                value="#{procedimientoPasoModel.seleccionado.idProcedimiento}"
+                                
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}"
+                                styleClass="full-width">
+
+                                <f:selectItem
+                                    itemLabel="#{msg['procedimientoPaso.seleccionarProcedimiento']}"
+                                    itemValue="" />
+                                <f:selectItems
+                                    value="#{procedimientoPasoModel.procedimientos}"
+                                    var="procedimiento"
+                                    itemLabel="#{procedimiento.nombre}"
+                                    itemValue="#{procedimiento}" />
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="idRol"
+                                value="#{msg['procedimientoPaso.rol']}"
+                                styleClass="form-label" />
+
+                            <p:selectOneMenu
+                                id="idRol"
+                                value="#{procedimientoPasoModel.seleccionado.idRol}"
+                                
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}"
+                                styleClass="full-width">
+
+                                <f:selectItem
+                                    itemLabel="#{msg['procedimientoPaso.seleccionarRol']}"
+                                    itemValue="" />
+                                <f:selectItems
+                                    value="#{procedimientoPasoModel.roles}"
+                                    var="rol"
+                                    itemLabel="#{rol.nombre}"
+                                    itemValue="#{rol}" />
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="toggle-field">
+                            <div class="toggle-info">
+                                <strong>
+                                    #{msg['procedimientoPaso.indicaFin']}
+                                </strong>
+
+                                <span>
+                                    #{msg['procedimientoPaso.indicaFinAyuda']}
+                                </span>
+                            </div>
+
+                            <p:toggleSwitch
+                                id="indicaFin"
+                                value="#{procedimientoPasoModel.seleccionado.indicaFin}" />
+                        </div>
+                    </div>
+
+                    <div class="dialog-actions">
+                        <crud:botones-bottom
+                            model="#{procedimientoPasoModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages procedimientosPasoTable edicionDialog"
+                            oncompleteCancelar="PF('procedimientoPasoDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('procedimientoPasoDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

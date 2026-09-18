@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
+
+    <ui:define name="titulo">
+        #{msg['clinica.titulo']} | #{msg['app.nombre']}
+    </ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet
+            library="estilos"
+            name="clinica.css"/>
+    </ui:define>
+
+    <ui:define name="contenido">
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+
+                <div class="card-content">
+                    <div class="page-header">
+                        <div class="header-info">
+                            <div class="clinical-brand">
+                                <span class="clinical-brand-icon">
+                                    <i class="pi pi-building"></i>
+                                </span>
+                                #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                            </div>
+
+                            <h1 class="page-title">
+                                #{msg['clinica.titulo']}
+                            </h1>
+
+                            <p class="page-subtitle">
+                                #{msg['clinica.subtitulo']}
+                            </p>
+                        </div>
+
+                        <crud:botones-top
+                            model="#{clinicaModel}"
+                            actualizar="messages clinicasTable edicionDialog"
+                            oncompleteNuevo="PF('clinicaDialog').show()" />
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <p:messages
+                        id="messages"
+                        showDetail="true"
+                        closable="true" />
+
+                    <div class="table-section">
+                        <div class="table-heading">
+                            <div class="table-title">
+                                <i class="pi pi-list"></i>
+                                #{msg['clinica.lista']}
+                            </div>
+                        </div>
+
+                        <p:dataTable
+                            id="clinicasTable"
+                            value="#{clinicaModel}"
+                            var="item"
+                            lazy="true"
+                            paginator="true"
+                            rows="10"
+                            reflow="true"
+                            selectionMode="single"
+                            selection="#{clinicaModel.seleccionado}"
+                            rowKey="#{clinicaModel.getRowKey(item)}"
+                            emptyMessage="#{msg['clinica.sinRegistros']}"
+                            styleClass="clinica-table">
+
+                            <p:ajax
+                                event="rowSelect"
+                                listener="#{clinicaModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('clinicaDialog').show()" />
+
+                            <p:column
+                                headerText="#{msg['clinica.nombre']}"
+                                field="nombre"
+                                sortBy="#{item.nombre}"
+                                filterBy="#{item.nombre}"
+                                filterMatchMode="contains"
+                                filterPlaceholder="#{msg['clinica.buscar']}">
+
+                                <h:outputText
+                                    value="#{item.nombre}"
+                                    styleClass="clinica-name" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['clinica.tipo']}"
+                                field="tipo"
+                                sortBy="#{item.tipo}"
+                                filterBy="#{item.tipo}"
+                                filterMatchMode="contains">
+
+                                <h:outputText
+                                    value="#{empty item.tipo
+                                             ? msg['clinica.sinTipo']
+                                             : item.tipo}"
+                                    styleClass="#{empty item.tipo
+                                                  ? 'empty-note'
+                                                  : ''}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['clinica.comentarios']}"
+                                styleClass="observaciones-cell">
+
+                                <h:outputText
+                                    value="#{empty item.comentarios
+                                             ? msg['clinica.sinComentarios']
+                                             : item.comentarios}"
+                                    styleClass="#{empty item.comentarios
+                                                  ? 'empty-note'
+                                                  : ''}" />
+                            </p:column>
+
+                            <p:column headerText="#{msg['clinica.activo']}">
+                                <p:tag
+                                    styleClass="clinical-status"
+                                    value="#{item.activo eq true
+                                             ? msg['clinica.activoLabel']
+                                             : msg['clinica.inactivo']}"
+                                    severity="#{item.activo eq true
+                                                ? 'success'
+                                                : 'secondary'}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['clinica.acciones']}"
+                                styleClass="action-cell">
+
+                                <p:commandButton
+                                    icon="pi pi-pencil"
+                                    title="#{msg['crud.editar']}"
+                                    styleClass="edit-button"
+                                    action="#{clinicaModel.seleccionar(item)}"
+                                    process="@this"
+                                    update="edicionDialog"
+                                    oncomplete="PF('clinicaDialog').show()" />
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <p:dialog
+            id="edicionDialog"
+            widgetVar="clinicaDialog"
+            header="#{clinicaModel.estado eq 'CREACION'
+                      ? msg['clinica.nuevo']
+                      : msg['clinica.editar']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="560"
+            styleClass="clinical-dialog">
+
+            <p:outputPanel
+                id="edicionContenido"
+                layout="block">
+
+                <h:panelGroup rendered="#{clinicaModel.seleccionado ne null}">
+                    <div class="dialog-intro">
+                        <div class="dialog-intro-icon">
+                            <i class="pi pi-file-edit"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                #{msg['clinica.informacion']}
+                            </strong>
+
+                            <span>
+                                #{msg['clinica.completar']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="nombre"
+                                value="#{msg['clinica.nombre']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="nombre"
+                                value="#{clinicaModel.seleccionado.nombre}"
+                                placeholder="#{msg['clinica.nombrePlaceholder']}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}" />
+
+                            <span class="form-helper">
+                                #{msg['clinica.nombreAyuda']}
+                            </span>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="tipo"
+                                value="#{msg['clinica.tipo']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="tipo"
+                                value="#{clinicaModel.seleccionado.tipo}"
+                                placeholder="#{msg['clinica.tipoPlaceholder']}"
+                                maxlength="20" />
+
+                            <span class="form-helper">
+                                #{msg['clinica.tipoAyuda']}
+                            </span>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="comentarios"
+                                value="#{msg['clinica.comentarios']}"
+                                styleClass="form-label" />
+
+                            <p:inputTextarea
+                                id="comentarios"
+                                value="#{clinicaModel.seleccionado.comentarios}"
+                                rows="5"
+                                autoResize="false"
+                                placeholder="#{msg['clinica.comentariosPlaceholder']}" />
+                        </div>
+
+                        <div class="toggle-field">
+                            <div class="toggle-info">
+                                <strong>
+                                    #{msg['clinica.activo']}
+                                </strong>
+
+                                <span>
+                                    #{msg['clinica.usarSistema']}
+                                </span>
+                            </div>
+
+                            <p:toggleSwitch
+                                id="activo"
+                                value="#{clinicaModel.seleccionado.activo}" />
+                        </div>
+                    </div>
+
+                    <div class="dialog-actions">
+                        <crud:botones-bottom
+                            model="#{clinicaModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages clinicasTable edicionDialog"
+                            oncompleteCancelar="PF('clinicaDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('clinicaDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

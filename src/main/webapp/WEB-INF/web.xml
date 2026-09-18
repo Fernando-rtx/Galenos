@@ -14,7 +14,7 @@
     <!-- Solo las URLs bajo /faces/* pasan por Jakarta Faces. -->
     <servlet-mapping>
         <servlet-name>Faces Servlet</servlet-name>
-        <url-pattern>/faces/*</url-pattern>
+        <url-pattern>*.xhtml</url-pattern>
     </servlet-mapping>
     <!-- Duración de la sesión que, entre otros datos, conserva IdiomaBean. -->
     <session-config>
@@ -24,6 +24,6 @@
     </session-config>
     <!-- Destino de bienvenida declarado actualmente; este comentario no corrige su ruta. -->
     <welcome-file-list>
-        <welcome-file>faces/index.xhtml</welcome-file>
+        <welcome-file>paginas/TipoDocumento.xhtml</welcome-file>
     </welcome-file-list>
 </web-app>

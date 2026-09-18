@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
+
+    <ui:define name="titulo">
+        #{msg['rol.titulo']} | #{msg['app.nombre']}
+    </ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet
+            library="estilos"
+            name="rol.css"/>
+    </ui:define>
+
+    <ui:define name="contenido">
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+
+                <div class="card-content">
+                    <div class="page-header">
+                        <div class="header-info">
+                            <div class="clinical-brand">
+                                <span class="clinical-brand-icon">
+                                    <i class="pi pi-users"></i>
+                                </span>
+                                #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                            </div>
+
+                            <h1 class="page-title">
+                                #{msg['rol.titulo']}
+                            </h1>
+
+                            <p class="page-subtitle">
+                                #{msg['rol.subtitulo']}
+                            </p>
+                        </div>
+
+                        <crud:botones-top
+                            model="#{rolModel}"
+                            actualizar="messages rolesTable edicionDialog"
+                            oncompleteNuevo="PF('rolDialog').show()" />
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <p:messages
+                        id="messages"
+                        showDetail="true"
+                        closable="true" />
+
+                    <div class="table-section">
+                        <div class="table-heading">
+                            <div class="table-title">
+                                <i class="pi pi-list"></i>
+                                #{msg['rol.lista']}
+                            </div>
+                        </div>
+
+                        <p:dataTable
+                            id="rolesTable"
+                            value="#{rolModel}"
+                            var="item"
+                            lazy="true"
+                            paginator="true"
+                            rows="10"
+                            reflow="true"
+                            selectionMode="single"
+                            selection="#{rolModel.seleccionado}"
+                            rowKey="#{rolModel.getRowKey(item)}"
+                            emptyMessage="#{msg['rol.sinRegistros']}"
+                            styleClass="rol-table">
+
+                            <p:ajax
+                                event="rowSelect"
+                                listener="#{rolModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('rolDialog').show()" />
+
+                            <p:column
+                                headerText="#{msg['rol.nombre']}"
+                                field="nombre"
+                                sortBy="#{item.nombre}"
+                                filterBy="#{item.nombre}"
+                                filterMatchMode="contains"
+                                filterPlaceholder="#{msg['rol.buscar']}">
+
+                                <h:outputText
+                                    value="#{item.nombre}"
+                                    styleClass="rol-name" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['rol.observaciones']}"
+                                styleClass="observaciones-cell">
+
+                                <h:outputText
+                                    value="#{empty item.observaciones
+                                             ? msg['rol.sinObservaciones']
+                                             : item.observaciones}"
+                                    styleClass="#{empty item.observaciones
+                                                  ? 'empty-note'
+                                                  : ''}" />
+                            </p:column>
+
+                            <p:column headerText="#{msg['rol.activo']}">
+                                <p:tag
+                                    styleClass="clinical-status"
+                                    value="#{item.activo eq true
+                                             ? msg['rol.activoLabel']
+                                             : msg['rol.inactivo']}"
+                                    severity="#{item.activo eq true
+                                                ? 'success'
+                                                : 'secondary'}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['rol.acciones']}"
+                                styleClass="action-cell">
+
+                                <p:commandButton
+                                    icon="pi pi-pencil"
+                                    title="#{msg['crud.editar']}"
+                                    styleClass="edit-button"
+                                    action="#{rolModel.seleccionar(item)}"
+                                    process="@this"
+                                    update="edicionDialog"
+                                    oncomplete="PF('rolDialog').show()" />
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <p:dialog
+            id="edicionDialog"
+            widgetVar="rolDialog"
+            header="#{rolModel.estado eq 'CREACION'
+                      ? msg['rol.nuevo']
+                      : msg['rol.editar']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="560"
+            styleClass="clinical-dialog">
+
+            <p:outputPanel
+                id="edicionContenido"
+                layout="block">
+
+                <h:panelGroup rendered="#{rolModel.seleccionado ne null}">
+                    <div class="dialog-intro">
+                        <div class="dialog-intro-icon">
+                            <i class="pi pi-file-edit"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                #{msg['rol.informacion']}
+                            </strong>
+
+                            <span>
+                                #{msg['rol.completar']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="nombre"
+                                value="#{msg['rol.nombre']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="nombre"
+                                value="#{rolModel.seleccionado.nombre}"
+                                placeholder="#{msg['rol.nombrePlaceholder']}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}" />
+
+                            <span class="form-helper">
+                                #{msg['rol.nombreAyuda']}
+                            </span>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="observaciones"
+                                value="#{msg['rol.observaciones']}"
+                                styleClass="form-label" />
+
+                            <p:inputTextarea
+                                id="observaciones"
+                                value="#{rolModel.seleccionado.observaciones}"
+                                rows="5"
+                                autoResize="false"
+                                placeholder="#{msg['rol.observacionesPlaceholder']}" />
+                        </div>
+
+                        <div class="toggle-field">
+                            <div class="toggle-info">
+                                <strong>
+                                    #{msg['rol.activo']}
+                                </strong>
+
+                                <span>
+                                    #{msg['rol.usarSistema']}
+                                </span>
+                            </div>
+
+                            <p:toggleSwitch
+                                id="activo"
+                                value="#{rolModel.seleccionado.activo}" />
+                        </div>
+                    </div>
+
+                    <div class="dialog-actions">
+                        <crud:botones-bottom
+                            model="#{rolModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages rolesTable edicionDialog"
+                            oncompleteCancelar="PF('rolDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('rolDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

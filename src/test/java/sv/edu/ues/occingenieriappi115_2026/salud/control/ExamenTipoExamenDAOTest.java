@@ -36,7 +36,7 @@ public class ExamenTipoExamenDAOTest {
         }
 
         @Override
-        protected EntityManager getEntityManager() {
+        public EntityManager getEntityManager() {
             return entityManager;
         }
     }

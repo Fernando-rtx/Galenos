@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
+
+    <ui:define name="titulo">
+        #{msg['procedimiento.titulo']} | #{msg['app.nombre']}
+    </ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet
+            library="estilos"
+            name="procedimiento.css"/>
+    </ui:define>
+
+    <ui:define name="contenido">
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+
+                <div class="card-content">
+                    <div class="page-header">
+                        <div class="header-info">
+                            <div class="clinical-brand">
+                                <span class="clinical-brand-icon">
+                                    <i class="pi pi-cog"></i>
+                                </span>
+                                #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                            </div>
+
+                            <h1 class="page-title">
+                                #{msg['procedimiento.titulo']}
+                            </h1>
+
+                            <p class="page-subtitle">
+                                #{msg['procedimiento.subtitulo']}
+                            </p>
+                        </div>
+
+                        <crud:botones-top
+                            model="#{procedimientoModel}"
+                            actualizar="messages procedimientosTable edicionDialog"
+                            oncompleteNuevo="PF('procedimientoDialog').show()" />
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <p:messages
+                        id="messages"
+                        showDetail="true"
+                        closable="true" />
+
+                    <div class="table-section">
+                        <div class="table-heading">
+                            <div class="table-title">
+                                <i class="pi pi-list"></i>
+                                #{msg['procedimiento.lista']}
+                            </div>
+                        </div>
+
+                        <p:dataTable
+                            id="procedimientosTable"
+                            value="#{procedimientoModel}"
+                            var="item"
+                            lazy="true"
+                            paginator="true"
+                            rows="10"
+                            reflow="true"
+                            selectionMode="single"
+                            selection="#{procedimientoModel.seleccionado}"
+                            rowKey="#{procedimientoModel.getRowKey(item)}"
+                            emptyMessage="#{msg['procedimiento.sinRegistros']}"
+                            styleClass="procedimiento-table">
+
+                            <p:ajax
+                                event="rowSelect"
+                                listener="#{procedimientoModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('procedimientoDialog').show()" />
+
+                            <p:column
+                                headerText="#{msg['procedimiento.nombre']}"
+                                field="nombre"
+                                sortBy="#{item.nombre}"
+                                filterBy="#{item.nombre}"
+                                filterMatchMode="contains"
+                                filterPlaceholder="#{msg['procedimiento.buscar']}">
+
+                                <h:outputText
+                                    value="#{item.nombre}"
+                                    styleClass="procedimiento-name" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['procedimiento.observaciones']}"
+                                styleClass="observaciones-cell">
+
+                                <h:outputText
+                                    value="#{empty item.observaciones
+                                             ? msg['procedimiento.sinObservaciones']
+                                             : item.observaciones}"
+                                    styleClass="#{empty item.observaciones
+                                                  ? 'empty-note'
+                                                  : ''}" />
+                            </p:column>
+
+                            <p:column headerText="#{msg['procedimiento.activo']}">
+                                <p:tag
+                                    styleClass="clinical-status"
+                                    value="#{item.activo eq true
+                                             ? msg['procedimiento.activoLabel']
+                                             : msg['procedimiento.inactivo']}"
+                                    severity="#{item.activo eq true
+                                                ? 'success'
+                                                : 'secondary'}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['procedimiento.acciones']}"
+                                styleClass="action-cell">
+
+                                <p:commandButton
+                                    icon="pi pi-pencil"
+                                    title="#{msg['crud.editar']}"
+                                    styleClass="edit-button"
+                                    action="#{procedimientoModel.seleccionar(item)}"
+                                    process="@this"
+                                    update="edicionDialog"
+                                    oncomplete="PF('procedimientoDialog').show()" />
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <p:dialog
+            id="edicionDialog"
+            widgetVar="procedimientoDialog"
+            header="#{procedimientoModel.estado eq 'CREACION'
+                      ? msg['procedimiento.nuevo']
+                      : msg['procedimiento.editar']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="560"
+            styleClass="clinical-dialog">
+
+            <p:outputPanel
+                id="edicionContenido"
+                layout="block">
+
+                <h:panelGroup rendered="#{procedimientoModel.seleccionado ne null}">
+                    <div class="dialog-intro">
+                        <div class="dialog-intro-icon">
+                            <i class="pi pi-file-edit"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                #{msg['procedimiento.informacion']}
+                            </strong>
+
+                            <span>
+                                #{msg['procedimiento.completar']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="nombre"
+                                value="#{msg['procedimiento.nombre']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="nombre"
+                                value="#{procedimientoModel.seleccionado.nombre}"
+                                placeholder="#{msg['procedimiento.nombrePlaceholder']}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}" />
+
+                            <span class="form-helper">
+                                #{msg['procedimiento.nombreAyuda']}
+                            </span>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="observaciones"
+                                value="#{msg['procedimiento.observaciones']}"
+                                styleClass="form-label" />
+
+                            <p:inputTextarea
+                                id="observaciones"
+                                value="#{procedimientoModel.seleccionado.observaciones}"
+                                rows="5"
+                                autoResize="false"
+                                placeholder="#{msg['procedimiento.observacionesPlaceholder']}" />
+                        </div>
+
+                        <div class="toggle-field">
+                            <div class="toggle-info">
+                                <strong>
+                                    #{msg['procedimiento.activo']}
+                                </strong>
+
+                                <span>
+                                    #{msg['procedimiento.usarSistema']}
+                                </span>
+                            </div>
+
+                            <p:toggleSwitch
+                                id="activo"
+                                value="#{procedimientoModel.seleccionado.activo}" />
+                        </div>
+                    </div>
+
+                    <div class="dialog-actions">
+                        <crud:botones-bottom
+                            model="#{procedimientoModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages procedimientosTable edicionDialog"
+                            oncompleteCancelar="PF('procedimientoDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('procedimientoDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>
