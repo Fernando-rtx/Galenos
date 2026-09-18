@@ -9,7 +9,7 @@
 | Open Liberty | 26.0.0.8 |
 | PostgreSQL | 18.6 |
 | PostgreSQL JDBC | 42.7.4 |
-| PrimeFaces | Pendiente de acordar versión exacta |
+| PrimeFaces | 15.0.17 Jakarta |
 
 ## Proyecto
 
@@ -34,6 +34,7 @@
 - Base por defecto: `universidad` en `localhost:5432`.
 - Credenciales: crear `src/main/liberty/config/server.env` desde `server.env.example`. Ese archivo esta ignorado por Git.
 - Driver JDBC: Maven lo copia como libreria de Liberty a `${server.config.dir}/jdbc` mediante `liberty-maven-plugin`; no debe empaquetarse en `WEB-INF/lib`.
+- PrimeFaces: Maven lo declara con classifier `jakarta` y scope `provided`, y lo copia como libreria externa a `target/primefaces`. `server.xml` lo carga mediante la libreria comun `PrimeFacesLib` usando una ruta relativa desde `${server.config.dir}`; no debe empaquetarse en `WEB-INF/lib`.
 
 Comando de arranque:
 

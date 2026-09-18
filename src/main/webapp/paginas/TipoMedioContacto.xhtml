@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
+
+    <!--
+    Vista del catálogo TipoMedioContacto. Usa la plantilla general y enlaza sus
+    componentes con tipoMedioContactoModel. El bean delega al DAO EJB y este al
+    CRUD JPA centralizado en DefaultDAO.
+    -->
+
+    <ui:define name="titulo">
+        #{msg['tipoMedioContacto.titulo']} | #{msg['app.nombre']}
+    </ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet
+            library="estilos"
+            name="tipo-medio-contacto.css"/>
+    </ui:define>
+
+    <ui:define name="contenido">
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+
+                <div class="card-content">
+                    <div class="page-header">
+                        <div class="header-info">
+                            <div class="clinical-brand">
+                                <span class="clinical-brand-icon">
+                                    <i class="pi pi-heart-fill"></i>
+                                </span>
+                                #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                            </div>
+
+                            <h1 class="page-title">
+                                #{msg['tipoMedioContacto.titulo']}
+                            </h1>
+
+                            <p class="page-subtitle">
+                                #{msg['tipoMedioContacto.subtitulo']}
+                            </p>
+                        </div>
+
+                        <!-- El composite ejecuta nuevo() y muestra el diálogo al finalizar AJAX. -->
+                        <crud:botones-top
+                            model="#{tipoMedioContactoModel}"
+                            actualizar="messages tiposTable edicionDialog"
+                            oncompleteNuevo="PF('tipoMedioContactoDialog').show()" />
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <p:messages
+                        id="messages"
+                        showDetail="true"
+                        closable="true" />
+
+                    <div class="table-section">
+                        <div class="table-heading">
+                            <div class="table-title">
+                                <i class="pi pi-list"></i>
+                                #{msg['tipoMedioContacto.catalogo']}
+                            </div>
+                        </div>
+
+                        <!--
+                        Tabla lazy y paginada: no carga todo PostgreSQL. PrimeFaces solicita
+                        cada página, usa item como variable y el UUID como rowKey estable.
+                        -->
+                        <p:dataTable
+                            id="tiposTable"
+                            value="#{tipoMedioContactoModel}"
+                            var="item"
+                            lazy="true"
+                            paginator="true"
+                            rows="10"
+                            reflow="true"
+                            selectionMode="single"
+                            selection="#{tipoMedioContactoModel.seleccionado}"
+                            rowKey="#{tipoMedioContactoModel.getRowKey(item)}"
+                            emptyMessage="#{msg['tipoMedioContacto.sinRegistros']}"
+                            styleClass="tipo-table">
+
+                            <!-- La selección actualiza únicamente el diálogo y lo abre en EDICION. -->
+                            <p:ajax
+                                event="rowSelect"
+                                listener="#{tipoMedioContactoModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('tipoMedioContactoDialog').show()" />
+
+                            <!-- filterBy genera el filtro que termina como Predicate Criteria. -->
+                            <p:column
+                                headerText="#{msg['tipoMedioContacto.nombre']}"
+                                filterBy="#{item.nombre}"
+                                filterMatchMode="contains"
+                                filterPlaceholder="#{msg['tipoMedioContacto.buscar']}">
+
+                                <h:outputText
+                                    value="#{item.nombre}"
+                                    styleClass="exam-name" />
+                            </p:column>
+
+                            <p:column headerText="#{msg['tipoMedioContacto.estado']}">
+                                <p:tag
+                                    styleClass="clinical-status"
+                                    value="#{item.activo eq true
+                                             ? msg['tipoMedioContacto.activo']
+                                             : msg['tipoMedioContacto.inactivo']}"
+                                    severity="#{item.activo eq true
+                                                ? 'success'
+                                                : 'secondary'}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['tipoMedioContacto.indicaciones']}"
+                                styleClass="observaciones-cell">
+
+                                <h:outputText
+                                    value="#{empty item.indicaciones
+                                             ? msg['tipoMedioContacto.sinObservaciones']
+                                             : item.indicaciones}"
+                                    styleClass="#{empty item.indicaciones
+                                                  ? 'empty-note'
+                                                  : ''}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['tipoMedioContacto.acciones']}"
+                                styleClass="action-cell">
+
+                                <p:commandButton
+                                    icon="pi pi-pencil"
+                                    title="#{msg['crud.editar']}"
+                                    styleClass="edit-button"
+                                    action="#{tipoMedioContactoModel.seleccionar(item)}"
+                                    process="@this"
+                                    update="edicionDialog"
+                                    oncomplete="PF('tipoMedioContactoDialog').show()" />
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Formulario modal reutilizado para alta y modificación. -->
+        <p:dialog
+            id="edicionDialog"
+            widgetVar="tipoMedioContactoDialog"
+            header="#{tipoMedioContactoModel.estado eq 'CREAR'
+                      ? msg['tipoMedioContacto.nuevo']
+                      : msg['tipoMedioContacto.editar']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="560"
+            styleClass="clinical-dialog">
+
+            <p:outputPanel
+                id="edicionContenido"
+                layout="block">
+
+                <h:panelGroup rendered="#{tipoMedioContactoModel.seleccionado ne null}">
+                    <div class="dialog-intro">
+                        <div class="dialog-intro-icon">
+                            <i class="pi pi-file-edit"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                #{msg['tipoMedioContacto.informacion']}
+                            </strong>
+
+                            <span>
+                                #{msg['tipoMedioContacto.completar']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="nombre"
+                                value="#{msg['tipoMedioContacto.nombre']}"
+                                styleClass="form-label" />
+
+                            <!-- El nombre es obligatorio según el ciclo de validación de Faces. -->
+                            <p:inputText
+                                id="nombre"
+                                value="#{tipoMedioContactoModel.seleccionado.nombre}"
+                                placeholder="#{msg['tipoMedioContacto.nombrePlaceholder']}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}" />
+
+                            <span class="form-helper">
+                                #{msg['tipoMedioContacto.nombreAyuda']}
+                            </span>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="indicaciones"
+                                value="#{msg['tipoMedioContacto.indicaciones']}"
+                                styleClass="form-label" />
+
+                            <p:inputTextarea
+                                id="indicaciones"
+                                value="#{tipoMedioContactoModel.seleccionado.indicaciones}"
+                                rows="5"
+                                autoResize="false"
+                                placeholder="#{msg['tipoMedioContacto.indicacionesPlaceholder']}" />
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="expresionRegular"
+                                value="#{msg['tipoMedioContacto.expresionRegular']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="expresionRegular"
+                                value="#{tipoMedioContactoModel.seleccionado.expresionRegular}"
+                                placeholder="#{msg['tipoMedioContacto.expresionRegularPlaceholder']}" />
+                        </div>
+
+                        <div class="toggle-field">
+                            <div class="toggle-info">
+                                <strong>
+                                    #{msg['tipoMedioContacto.activo']}
+                                </strong>
+
+                                <span>
+                                    #{msg['tipoMedioContacto.usarSistema']}
+                                </span>
+                            </div>
+
+                            <p:toggleSwitch
+                                id="activo"
+                                value="#{tipoMedioContactoModel.seleccionado.activo}" />
+                        </div>
+                    </div>
+
+                    <div class="dialog-actions">
+                        <!-- Guardar procesa campos y oculta el diálogo solo cuando la validación termina bien. -->
+                        <crud:botones-bottom
+                            model="#{tipoMedioContactoModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages tiposTable edicionDialog"
+                            oncompleteCancelar="PF('tipoMedioContactoDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('tipoMedioContactoDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

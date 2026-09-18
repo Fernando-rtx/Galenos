@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:cc="jakarta.faces.composite"
+      xmlns:p="primefaces">
+
+    <!--
+    Componente compuesto de acciones del formulario CRUD. Guardar procesa los
+    campos indicados y llama model.guardar; Cancelar usa immediate para omitir
+    validaciones y resetValues para descartar valores locales del formulario.
+    -->
+
+    <cc:interface>
+        <cc:attribute name="model" required="true" />
+        <cc:attribute name="actualizar" required="false" default="@form" />
+        <cc:attribute name="procesar" required="false" default="@form" />
+        <cc:attribute name="oncompleteGuardar" required="false" default="" />
+        <cc:attribute name="oncompleteCancelar" required="false" default="" />
+    </cc:interface>
+
+    <cc:implementation>
+        <!-- update identifica mensajes, tabla y diálogo que PrimeFaces refresca por AJAX. -->
+        <div class="crud-actions-bottom">
+            <p:commandButton
+                value="#{msg['crud.cancelar']}"
+                icon="pi pi-times"
+                action="#{cc.attrs.model.cancelar}"
+                process="@this"
+                update="#{cc.attrs.actualizar}"
+                immediate="true"
+                resetValues="true"
+                oncomplete="#{cc.attrs.oncompleteCancelar}"
+                styleClass="cancel-button" />
+
+            <p:commandButton
+                value="#{msg['crud.guardar']}"
+                icon="pi pi-check"
+                action="#{cc.attrs.model.guardar}"
+                process="#{cc.attrs.procesar}"
+                update="#{cc.attrs.actualizar}"
+                oncomplete="#{cc.attrs.oncompleteGuardar}"
+                styleClass="clinical-primary" />
+        </div>
+    </cc:implementation>
+</html>

@@ -1,0 +1,70 @@
+package sv.edu.ues.occingenieriappi115_2026.salud.model;
+
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import java.io.Serializable;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoDocumentoDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoDocumento;
+
+/**
+ * Backing bean JSF del catálogo {@link TipoDocumento}.
+ *
+ * <p>CDI lo publica con {@code @Named}, conserva su estado con
+ * {@code @ViewScoped} e inyecta {@link TipoDocumentoDAO}. Hereda de
+ * {@link AbstractModel} el soporte de tabla lazy y coordina el diálogo CRUD.</p>
+ */
+@Named
+@ViewScoped
+public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    /** Registro enlazado al formulario; es nuevo o proviene de la tabla. */
+    private TipoDocumento seleccionado;
+
+    @Inject
+    public TipoDocumentoModel(TipoDocumentoDAO tipoDocumentoDAO) {
+        super(tipoDocumentoDAO);
+    }
+
+    public TipoDocumento getSeleccionado() {
+        return seleccionado;
+    }
+
+    public void setSeleccionado(TipoDocumento seleccionado) {
+        this.seleccionado = seleccionado;
+    }
+
+    public void nuevo() {
+        // Prepara una entidad transitoria y cambia el formulario a creación.
+        seleccionado = new TipoDocumento();
+        setEstado(ESTADO_CRUD.CREACION);
+    }
+
+    public void seleccionar(TipoDocumento seleccionado) {
+        // Conserva la fila elegida para editarla durante las peticiones AJAX.
+        this.seleccionado = seleccionado;
+        setEstado(ESTADO_CRUD.EDICION);
+    }
+
+    public void guardar() {
+        // El estado decide entre guardar con persist o actualizar con merge.
+        if (seleccionado == null) {
+            return;
+        }
+        switch (getEstado()) {
+            case CREACION -> getDao().guardar(seleccionado);
+            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
+            case LISTADO -> {
+            }
+        }
+        setEstado(ESTADO_CRUD.LISTADO);
+    }
+
+    public void cancelar() {
+        // Restablece el listado sin escribir cambios en PostgreSQL.
+        seleccionado = null;
+        setEstado(ESTADO_CRUD.LISTADO);
+    }
+}

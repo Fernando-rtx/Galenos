@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:f="jakarta.faces.core"
+      xmlns:h="jakarta.faces.html"
+      xmlns:p="primefaces"
+      xmlns:ui="jakarta.faces.facelets">
+
+    <!--
+    Plantilla Facelets compartida por las páginas del sistema. Las vistas usan
+    ui:composition y completan los ui:insert de título, cabecera y contenido.
+    El h:form único permite que los componentes PrimeFaces participen en AJAX.
+    -->
+
+    <h:head>
+        <title>
+            <ui:insert name="titulo">#{msg['app.nombre']}</ui:insert>
+        </title>
+        <h:outputStylesheet library="estilos" name="galenos.css" />
+        <ui:insert name="head" />
+    </h:head>
+
+    <h:body styleClass="clinical-body">
+        <h:form id="layoutForm">
+            <div class="layout-shell">
+
+                <!-- Cabecera común: identidad visual y selector de idioma. -->
+                <header class="layout-header ui-g">
+                    <div class="ui-g-12 ui-md-4 layout-logo">
+                        <span class="brand-mark">#{msg['app.logoTexto']}</span>
+                        <span>#{msg['app.nombre']}</span>
+                    </div>
+
+                    <div class="ui-g-12 ui-md-4 layout-brand">
+                        #{msg['app.nombre']}
+                    </div>
+
+                    <div class="ui-g-12 ui-md-4 layout-tools">
+                        <p:outputLabel
+                            for="idioma"
+                            value="#{msg['idioma.seleccionar']}" />
+
+                        <p:selectOneMenu
+                            id="idioma"
+                            value="#{idiomaBean.idioma}"
+                            styleClass="layout-language">
+
+                            <f:selectItem
+                                itemLabel="#{msg['idioma.espanol']}"
+                                itemValue="es" />
+                            <f:selectItem
+                                itemLabel="#{msg['idioma.ingles']}"
+                                itemValue="en" />
+                            <f:selectItem
+                                itemLabel="#{msg['idioma.aleman']}"
+                                itemValue="de" />
+                            <f:selectItem itemLabel="中文" 
+                                          itemValue="zh_CN"/>
+                            <!-- AJAX procesa el nuevo valor y vuelve a renderizar el formulario. -->
+                            <p:ajax
+                                event="change"
+                                listener="#{idiomaBean.cambiarIdioma}"
+                                update="@form" />
+                        </p:selectOneMenu>
+                    </div>
+                </header>
+
+                <main class="layout-body ui-g">
+                    <!-- Navegación mediante outcomes JSF. Los destinos se resuelven como vistas. -->
+                    <aside class="ui-g-12 ui-md-2 layout-nav">
+                        <div class="layout-nav-inner">
+                            <span class="layout-nav-title">
+                                #{msg['app.navegacion']}
+                            </span>
+
+                            <h:link
+                                outcome="/paginas/Examen"
+                                value="#{msg['nav.examen']}"
+                                styleClass="layout-nav-link" />
+
+                            <h:link
+                                outcome="/paginas/TipoExamen"
+                                value="#{msg['nav.tipoExamen']}"
+                                styleClass="layout-nav-link" />
+
+                            <h:link
+                                outcome="/paginas/TipoMedioContacto"
+                                value="#{msg['nav.tipoMedioContacto']}"
+                                styleClass="layout-nav-link" />
+
+                            <h:link
+                                outcome="/paginas/TipoDocumento"
+                                value="#{msg['nav.tipoDocumento']}"
+                                styleClass="layout-nav-link" />
+                        </div>
+                    </aside>
+
+                    <!-- Cada página inserta aquí su área de trabajo específica. -->
+                    <section class="ui-g-12 ui-md-10 layout-workspace">
+                        <ui:insert name="contenido" />
+                    </section>
+                </main>
+
+                <!-- Pie común traducido mediante el bundle #{msg}. -->
+                <footer class="layout-footer ui-g">
+                    <div class="ui-g-12">
+                        #{msg['app.footer']}
+                    </div>
+                </footer>
+            </div>
+        </h:form>
+    </h:body>
+</html>
