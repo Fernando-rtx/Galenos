@@ -6,12 +6,6 @@
       xmlns:p="primefaces"
       xmlns:ui="jakarta.faces.facelets">
 
-    <!--
-    Plantilla Facelets compartida por las páginas del sistema. Las vistas usan
-    ui:composition y completan los ui:insert de título, cabecera y contenido.
-    El h:form único permite que los componentes PrimeFaces participen en AJAX.
-    -->
-
     <h:head>
         <title>
             <ui:insert name="titulo">#{msg['app.nombre']}</ui:insert>
@@ -24,7 +18,6 @@
         <h:form id="layoutForm">
             <div class="layout-shell">
 
-                <!-- Cabecera común: identidad visual y selector de idioma. -->
                 <header class="layout-header ui-g">
                     <div class="ui-g-12 ui-md-4 layout-logo">
                         <span class="brand-mark">#{msg['app.logoTexto']}</span>
@@ -56,7 +49,6 @@
                                 itemValue="de" />
                             <f:selectItem itemLabel="中文" 
                                           itemValue="zh_CN"/>
-                            <!-- AJAX procesa el nuevo valor y vuelve a renderizar el formulario. -->
                             <p:ajax
                                 event="change"
                                 listener="#{idiomaBean.cambiarIdioma}"
@@ -66,22 +58,25 @@
                 </header>
 
                 <main class="layout-body ui-g">
-                    <!-- Navegación mediante outcomes JSF. Los destinos se resuelven como vistas. -->
                     <aside class="ui-g-12 ui-md-2 layout-nav">
                         <div class="layout-nav-inner">
                             <span class="layout-nav-title">
                                 #{msg['app.navegacion']}
                             </span>
 
-                            <h:link outcome="/paginas/Persona" value="#{msg['nav.persona']}" styleClass="layout-nav-link" />
-                            <h:link outcome="/paginas/Documento" value="#{msg['nav.documento']}" styleClass="layout-nav-link" />
-                            <h:link outcome="/paginas/MedioContacto" value="#{msg['nav.medioContacto']}" styleClass="layout-nav-link" />
-                            <h:link outcome="/paginas/Examen" value="#{msg['nav.examen']}" styleClass="layout-nav-link" />
-                            <h:link outcome="/paginas/PersonaRol" value="#{msg['nav.personaRol']}" styleClass="layout-nav-link" />
+                            <h:link
+                                outcome="/paginas/Examen"
+                                value="#{msg['nav.examen']}"
+                                styleClass="layout-nav-link" />
 
                             <h:link
                                 outcome="/paginas/TipoExamen"
                                 value="#{msg['nav.tipoExamen']}"
+                                styleClass="layout-nav-link" />
+
+                            <h:link
+                                outcome="/paginas/ExamenTipoExamen"
+                                value="#{msg['nav.examenTipoExamen']}"
                                 styleClass="layout-nav-link" />
 
                             <h:link
@@ -95,44 +90,37 @@
                                 styleClass="layout-nav-link" />
 
                             <h:link
-                                outcome="/paginas/Rol"
-                                value="#{msg['nav.rol']}"
+                                outcome="/paginas/Consulta"
+                                value="#{msg['nav.consulta']}"
                                 styleClass="layout-nav-link" />
 
                             <h:link
-                                outcome="/paginas/Clinica"
-                                value="#{msg['nav.clinica']}"
+                                outcome="/paginas/ConsultaProcedimiento"
+                                value="#{msg['nav.consultaProcedimiento']}"
                                 styleClass="layout-nav-link" />
 
                             <h:link
-                                outcome="/paginas/Procedimiento"
-                                value="#{msg['nav.procedimiento']}"
+                                outcome="/paginas/ConsultaProcedimientoPaso"
+                                value="#{msg['nav.consultaProcedimientoPaso']}"
                                 styleClass="layout-nav-link" />
 
                             <h:link
-                                outcome="/paginas/ProcedimientoPaso"
-                                value="#{msg['nav.procedimientoPaso']}"
+                                outcome="/paginas/OrdenExamen"
+                                value="#{msg['nav.ordenExamen']}"
                                 styleClass="layout-nav-link" />
 
                             <h:link
-                                outcome="/paginas/ProcedimientoPasoSecuencia"
-                                value="#{msg['nav.secuencia']}"
-                                styleClass="layout-nav-link" />
-
-                            <h:link
-                                outcome="/paginas/ProcedimientoPasoExamen"
-                                value="#{msg['nav.ppe']}"
+                                outcome="/paginas/ExamenResultado"
+                                value="#{msg['nav.examenResultado']}"
                                 styleClass="layout-nav-link" />
                         </div>
                     </aside>
 
-                    <!-- Cada página inserta aquí su área de trabajo específica. -->
                     <section class="ui-g-12 ui-md-10 layout-workspace">
                         <ui:insert name="contenido" />
                     </section>
                 </main>
 
-                <!-- Pie común traducido mediante el bundle #{msg}. -->
                 <footer class="layout-footer ui-g">
                     <div class="ui-g-12">
                         #{msg['app.footer']}

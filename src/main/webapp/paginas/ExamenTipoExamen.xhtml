@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:f="jakarta.faces.core"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
+
+    <ui:define name="titulo">
+        #{msg['examenTipoExamen.titulo']} | #{msg['app.nombre']}
+    </ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet
+            library="estilos"
+            name="examen-tipo-examen.css"/>
+    </ui:define>
+
+    <ui:define name="contenido">
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+
+                <div class="card-content">
+                    <div class="page-header">
+                        <div class="header-info">
+                            <div class="clinical-brand">
+                                <span class="clinical-brand-icon">
+                                    <i class="pi pi-link"></i>
+                                </span>
+                                #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                            </div>
+
+                            <h1 class="page-title">
+                                #{msg['examenTipoExamen.titulo']}
+                            </h1>
+
+                            <p class="page-subtitle">
+                                #{msg['examenTipoExamen.subtitulo']}
+                            </p>
+                        </div>
+
+                        <crud:botones-top
+                            model="#{examenTipoExamenModel}"
+                            actualizar="messages examenTipoExamenTable edicionDialog"
+                            oncompleteNuevo="PF('examenTipoExamenDialog').show()" />
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <p:messages
+                        id="messages"
+                        showDetail="true"
+                        closable="true" />
+
+                    <div class="table-section">
+                        <div class="table-heading">
+                            <div class="table-title">
+                                <i class="pi pi-list"></i>
+                                #{msg['examenTipoExamen.lista']}
+                            </div>
+                        </div>
+
+                        <p:dataTable
+                            id="examenTipoExamenTable"
+                            value="#{examenTipoExamenModel}"
+                            var="item"
+                            lazy="true"
+                            paginator="true"
+                            rows="10"
+                            reflow="true"
+                            selectionMode="single"
+                            selection="#{examenTipoExamenModel.seleccionado}"
+                            rowKey="#{examenTipoExamenModel.getRowKey(item)}"
+                            emptyMessage="#{msg['examenTipoExamen.sinRegistros']}"
+                            styleClass="examen-tipo-table">
+
+                            <p:ajax
+                                event="rowSelect"
+                                listener="#{examenTipoExamenModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('examenTipoExamenDialog').show()" />
+
+                            <p:column
+                                headerText="#{msg['examenTipoExamen.examen']}"
+                                styleClass="examen-cell">
+
+                                <h:outputText
+                                    value="#{item.idExamen.nombre}"
+                                    styleClass="exam-name" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['examenTipoExamen.tipoExamen']}"
+                                styleClass="tipo-cell">
+
+                                <h:outputText
+                                    value="#{item.idTipoExamen.nombre}"
+                                    styleClass="tipo-name" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['examenTipoExamen.fechaCreacion']}"
+                                field="fechaCreacion"
+                                sortBy="#{item.fechaCreacion}">
+
+                                <h:outputText
+                                    value="#{item.fechaCreacion}"
+                                    styleClass="date-text">
+                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                </h:outputText>
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['examenTipoExamen.observaciones']}"
+                                styleClass="observaciones-cell">
+
+                                <h:outputText
+                                    value="#{empty item.observaciones
+                                             ? msg['examenTipoExamen.sinObservaciones']
+                                             : item.observaciones}"
+                                    styleClass="#{empty item.observaciones
+                                                  ? 'empty-note'
+                                                  : ''}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['examenTipoExamen.acciones']}"
+                                styleClass="action-cell">
+
+                                <p:commandButton
+                                    icon="pi pi-pencil"
+                                    title="#{msg['crud.editar']}"
+                                    styleClass="edit-button"
+                                    action="#{examenTipoExamenModel.seleccionar(item)}"
+                                    process="@this"
+                                    update="edicionDialog"
+                                    oncomplete="PF('examenTipoExamenDialog').show()" />
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <p:dialog
+            id="edicionDialog"
+            widgetVar="examenTipoExamenDialog"
+            header="#{examenTipoExamenModel.estado eq 'CREACION'
+                      ? msg['examenTipoExamen.nueva']
+                      : msg['examenTipoExamen.editar']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="560"
+            styleClass="clinical-dialog">
+
+            <p:outputPanel
+                id="edicionContenido"
+                layout="block">
+
+                <h:panelGroup rendered="#{examenTipoExamenModel.seleccionado ne null}">
+                    <div class="dialog-intro">
+                        <div class="dialog-intro-icon">
+                            <i class="pi pi-link"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                #{msg['examenTipoExamen.informacion']}
+                            </strong>
+
+                            <span>
+                                #{msg['examenTipoExamen.completar']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="idExamen"
+                                value="#{msg['examenTipoExamen.examen']}"
+                                styleClass="form-label" />
+
+                            <p:selectOneMenu
+                                id="idExamen"
+                                value="#{examenTipoExamenModel.seleccionado.idExamen}"
+                                converter="#{examenConverter}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}">
+
+                                <f:selectItem
+                                    itemLabel="-- Seleccionar --"
+                                    itemValue="#{null}" />
+
+                                <f:selectItems
+                                    value="#{examenTipoExamenModel.examenes}"
+                                    var="ex"
+                                    itemLabel="#{ex.nombre}"
+                                    itemValue="#{ex}" />
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="idTipoExamen"
+                                value="#{msg['examenTipoExamen.tipoExamen']}"
+                                styleClass="form-label" />
+
+                            <p:selectOneMenu
+                                id="idTipoExamen"
+                                value="#{examenTipoExamenModel.seleccionado.idTipoExamen}"
+                                converter="#{tipoExamenConverter}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}">
+
+                                <f:selectItem
+                                    itemLabel="-- Seleccionar --"
+                                    itemValue="#{null}" />
+
+                                <f:selectItems
+                                    value="#{examenTipoExamenModel.tipoExamenes}"
+                                    var="te"
+                                    itemLabel="#{te.nombre}"
+                                    itemValue="#{te}" />
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="fechaCreacion"
+                                value="#{msg['examenTipoExamen.fechaCreacion']}"
+                                styleClass="form-label" />
+
+                            <p:calendar
+                                id="fechaCreacion"
+                                value="#{examenTipoExamenModel.seleccionado.fechaCreacion}"
+                                showIcon="true"
+                                pattern="dd/MM/yyyy HH:mm"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}" />
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="observaciones"
+                                value="#{msg['examenTipoExamen.observaciones']}"
+                                styleClass="form-label" />
+
+                            <p:inputTextarea
+                                id="observaciones"
+                                value="#{examenTipoExamenModel.seleccionado.observaciones}"
+                                rows="5"
+                                autoResize="false"
+                                placeholder="#{msg['examenTipoExamen.observacionesPlaceholder']}" />
+                        </div>
+                    </div>
+
+                    <div class="dialog-actions">
+                        <crud:botones-bottom
+                            model="#{examenTipoExamenModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages examenTipoExamenTable edicionDialog"
+                            oncompleteCancelar="PF('examenTipoExamenDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('examenTipoExamenDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>
