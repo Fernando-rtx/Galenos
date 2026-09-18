@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:crud="jakarta.faces.composite/crud"
+                xmlns:f="jakarta.faces.core"
+                xmlns:h="jakarta.faces.html"
+                xmlns:p="primefaces"
+                xmlns:ui="jakarta.faces.facelets"
+                template="/WEB-INF/plantillas/general.xhtml">
+    <f:metadata>
+        <f:viewParam name="idPersona"
+                     value="#{personaModel.idPersonaContexto}" />
+    </f:metadata>
+    <ui:define name="titulo">#{msg['persona.titulo']} | #{msg['app.nombre']}</ui:define>
+    <ui:define name="head">
+        <h:outputStylesheet library="estilos"
+                            name="persona.css" />
+    </ui:define>
+    <ui:define name="contenido">
+        <!-- Encabezado y navegación contextual -->
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+                <div class="card-content">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">#{msg['persona.titulo']}</h1>
+                            <p class="page-subtitle">#{msg['persona.subtitulo']}</p>
+                        </div>
+                        <div>
+                            <div class="context-actions">
+                                <h:link outcome="/paginas/Documento"
+                                        value="#{msg['persona.documentos']}"
+                                        styleClass="context-link"
+                                        rendered="#{personaModel.seleccionado.idPersona ne null}">
+                                    <f:param name="idPersona"
+                                             value="#{personaModel.seleccionado.idPersona}" />
+                                </h:link>
+                                <h:link outcome="/paginas/MedioContacto"
+                                        value="#{msg['persona.contactos']}"
+                                        styleClass="context-link"
+                                        rendered="#{personaModel.seleccionado.idPersona ne null}">
+                                    <f:param name="idPersona"
+                                             value="#{personaModel.seleccionado.idPersona}" />
+                                </h:link>
+                                <h:link outcome="/paginas/PersonaRol"
+                                        value="#{msg['persona.roles']}"
+                                        styleClass="context-link"
+                                        rendered="#{personaModel.seleccionado.idPersona ne null}">
+                                    <f:param name="idPersona"
+                                             value="#{personaModel.seleccionado.idPersona}" />
+                                </h:link>
+                            </div>
+                            <crud:botones-top model="#{personaModel}"
+                                              actualizar="messages personaTable edicionDialog"
+                                              oncompleteNuevo="PF('personaDialog').show()" />
+                        </div>
+                    </div>
+                    <div class="section-divider"></div>
+                    <p:messages id="messages"
+                                showDetail="true"
+                                closable="true" />
+
+                    <!-- Tabla principal -->
+                    <div class="table-title">#{msg['persona.lista']}</div>
+                    <p:dataTable id="personaTable"
+                                 value="#{personaModel}"
+                                 var="item"
+                                 lazy="true"
+                                 paginator="true"
+                                 rows="10"
+                                 reflow="true"
+                                 selectionMode="single"
+                                 selection="#{personaModel.seleccionado}"
+                                 rowKey="#{personaModel.getRowKey(item)}"
+                                 emptyMessage="#{msg['persona.sinRegistros']}"
+                                 styleClass="clinical-table persona-table">
+                        <p:ajax event="rowSelect"
+                                listener="#{personaModel.seleccionar(item)}"
+                                update="edicionDialog @form"
+                                oncomplete="PF('personaDialog').show()" />
+                        <p:column headerText="#{msg['persona.nombres']}"
+                                  field="nombres"
+                                  sortBy="#{item.nombres}"
+                                  filterBy="#{item.nombres}"
+                                  filterMatchMode="contains">
+                            <h:outputText value="#{item.nombres}"
+                                          styleClass="nombre-persona" />
+                        </p:column>
+                        <p:column headerText="#{msg['persona.apellidos']}"
+                                  field="apellidos"
+                                  sortBy="#{item.apellidos}"
+                                  filterBy="#{item.apellidos}"
+                                  filterMatchMode="contains">
+                            <h:outputText value="#{item.apellidos}" />
+                        </p:column>
+                        <p:column headerText="#{msg['persona.fechaNacimiento']}"
+                                  field="fechaNacimiento"
+                                  sortBy="#{item.fechaNacimiento}">
+                            <h:outputText value="#{item.fechaNacimiento}">
+                                <f:convertDateTime pattern="dd/MM/yyyy" />
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="#{msg['comun.acciones']}"
+                                  styleClass="action-cell">
+                            <p:commandButton icon="pi pi-pencil"
+                                             title="#{msg['crud.editar']}"
+                                             action="#{personaModel.seleccionar(item)}"
+                                             process="@this"
+                                             update="edicionDialog @form"
+                                             oncomplete="PF('personaDialog').show()"
+                                             styleClass="edit-button" />
+                        </p:column>
+                    </p:dataTable>
+                </div>
+            </section>
+        </main>
+
+        <!-- Diálogo de edición -->
+        <p:dialog id="edicionDialog"
+                  widgetVar="personaDialog"
+                  header="#{personaModel.estado eq 'CREACION' ? msg['persona.nueva'] : msg['persona.editar']}"
+                  modal="true"
+                  responsive="true"
+                  resizable="false"
+                  width="560"
+                  styleClass="clinical-dialog">
+            <p:outputPanel id="edicionContenido">
+                <h:panelGroup rendered="#{personaModel.seleccionado ne null}">
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel for="nombres"
+                                           value="#{msg['persona.nombres']}" />
+                            <p:inputText id="nombres"
+                                         value="#{personaModel.seleccionado.nombres}"
+                                         required="true"
+                                         requiredMessage="#{msg['persona.nombresRequeridos']}"
+                                         maxlength="255"
+                                         validator="#{personaModel.validarNombre}" />
+
+                            <p:message for="nombres" />
+                        </div>
+                        <div class="form-field">
+                            <p:outputLabel for="apellidos"
+                                           value="#{msg['persona.apellidos']}" />
+                            <p:inputText id="apellidos"
+                                         value="#{personaModel.seleccionado.apellidos}"
+                                         required="true"
+                                         requiredMessage="#{msg['persona.apellidosRequeridos']}"
+                                         maxlength="255"
+                                         validator="#{personaModel.validarNombre}" />
+
+                            <p:message for="apellidos" />
+                        </div>
+                        <div class="form-field">
+                            <p:outputLabel for="fechaNacimiento"
+                                           value="#{msg['persona.fechaNacimiento']}" />
+                            <p:datePicker id="fechaNacimiento"
+                                          value="#{personaModel.seleccionado.fechaNacimiento}"
+                                          pattern="dd/MM/yyyy"
+                                          required="true"
+                                          requiredMessage="#{msg['persona.fechaNacimientoRequerida']}"
+                                          mindate="#{personaModel.fechaMinimaNacimiento}"
+                                          maxdate="#{personaModel.fechaMaximaNacimiento}"
+                                          validator="#{personaModel.validarFechaNacimiento}"
+                                          showIcon="true" />
+
+                            <p:message for="fechaNacimiento" />
+                        </div>
+                    </div>
+                    <div class="dialog-actions">
+                        <crud:botones-bottom model="#{personaModel}"
+                                             procesar="@this edicionContenido"
+                                             actualizar="messages personaTable edicionDialog"
+                                             oncompleteCancelar="PF('personaDialog').hide()"
+                                             oncompleteGuardar="if (!args.validationFailed) PF('personaDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

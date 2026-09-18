@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:crud="jakarta.faces.composite/crud"
+                xmlns:f="jakarta.faces.core"
+                xmlns:h="jakarta.faces.html"
+                xmlns:p="primefaces"
+                xmlns:ui="jakarta.faces.facelets"
+                template="/WEB-INF/plantillas/general.xhtml">
+    <f:metadata>
+        <f:viewParam name="idPersona"
+                     value="#{documentoModel.idPersonaContexto}" />
+    </f:metadata>
+    <ui:define name="titulo">#{msg['documento.titulo']} | #{msg['app.nombre']}</ui:define>
+    <ui:define name="head">
+        <h:outputStylesheet library="estilos"
+                            name="documento.css" />
+    </ui:define>
+    <ui:define name="contenido">
+        <!-- Encabezado y navegación contextual -->
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+                <div class="card-content">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">#{msg['documento.titulo']}</h1>
+                            <p class="page-subtitle">#{msg['documento.subtitulo']}</p>
+                        </div>
+                        <div class="context-actions">
+                            <h:link outcome="/paginas/Persona"
+                                    value="#{msg['comun.volverPersona']}"
+                                    styleClass="context-link"
+                                    rendered="#{documentoModel.conPersonaContexto}">
+                                <f:param name="idPersona"
+                                         value="#{documentoModel.idPersonaContexto}" />
+                            </h:link>
+                            <h:link outcome="/paginas/Persona"
+                                    value="#{msg['comun.volverPersona']}"
+                                    styleClass="context-link"
+                                    rendered="#{not documentoModel.conPersonaContexto}" />
+                            <crud:botones-top model="#{documentoModel}"
+                                              actualizar="messages documentoTable edicionDialog"
+                                              oncompleteNuevo="PF('documentoDialog').show()" />
+                        </div>
+                    </div>
+                    <h:panelGroup layout="block"
+                                  styleClass="context-person"
+                                  rendered="#{documentoModel.conPersonaContexto}">
+                                  #{msg['comun.personaContexto']}:
+                                  #{documentoModel.personaContexto.nombres}
+                                  #{documentoModel.personaContexto.apellidos}</h:panelGroup>
+                    <div class="section-divider"></div>
+                    <p:messages id="messages"
+                                showDetail="true"
+                                closable="true" />
+
+                    <!-- Tabla principal -->
+                    <div class="table-title">#{msg['documento.lista']}</div>
+                    <p:dataTable id="documentoTable"
+                                 value="#{documentoModel}"
+                                 var="item"
+                                 lazy="true"
+                                 paginator="true"
+                                 rows="10"
+                                 reflow="true"
+                                 selectionMode="single"
+                                 selection="#{documentoModel.seleccionado}"
+                                 rowKey="#{documentoModel.getRowKey(item)}"
+                                 emptyMessage="#{msg['documento.sinRegistros']}"
+                                 styleClass="clinical-table documento-table">
+                        <p:ajax event="rowSelect"
+                                listener="#{documentoModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('documentoDialog').show()" />
+                        <p:column headerText="#{msg['documento.persona']}"
+                                  field="idPersona.nombres">
+                            <h:outputText value="#{item.idPersona.nombres} #{item.idPersona.apellidos}" />
+                        </p:column>
+                        <p:column headerText="#{msg['documento.tipo']}"
+                                  field="idTipoDocumento.nombre">
+                            <h:outputText value="#{item.idTipoDocumento.nombre}" />
+                        </p:column>
+                        <p:column headerText="#{msg['documento.valor']}"
+                                  field="valor"
+                                  filterBy="#{item.valor}"
+                                  filterMatchMode="contains">
+                            <h:outputText value="#{item.valor}"
+                                          styleClass="valor-documento" />
+                        </p:column>
+                        <p:column headerText="#{msg['documento.rutaFisica']}">
+                            <h:outputText value="#{empty item.rutaFisica ? msg['comun.sinDato'] : item.rutaFisica}" />
+                        </p:column>
+                        <p:column headerText="#{msg['comun.acciones']}"
+                                  styleClass="action-cell">
+                            <p:commandButton icon="pi pi-pencil"
+                                             title="#{msg['crud.editar']}"
+                                             action="#{documentoModel.seleccionar(item)}"
+                                             process="@this"
+                                             update="edicionDialog"
+                                             oncomplete="PF('documentoDialog').show()"
+                                             styleClass="edit-button" />
+                        </p:column>
+                    </p:dataTable>
+                </div>
+            </section>
+        </main>
+
+        <!-- Diálogo de edición -->
+        <p:dialog id="edicionDialog"
+                  widgetVar="documentoDialog"
+                  header="#{documentoModel.estado eq 'CREACION' ? msg['documento.nuevo'] : msg['documento.editar']}"
+                  modal="true"
+                  responsive="true"
+                  resizable="false"
+                  width="580"
+                  styleClass="clinical-dialog">
+            <p:outputPanel id="edicionContenido">
+                <h:panelGroup rendered="#{documentoModel.seleccionado ne null}">
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel for="persona"
+                                           value="#{msg['documento.persona']}" />
+                            <p:selectOneMenu id="persona"
+                                             value="#{documentoModel.personaSeleccionadaId}"
+                                             required="true"
+                                             requiredMessage="#{msg['documento.personaRequerida']}"
+                                             disabled="#{documentoModel.conPersonaContexto}"
+                                             styleClass="selector-wide">
+                                <f:selectItem itemLabel="#{msg['selector.seleccione']}"
+                                              itemValue="#{null}"
+                                              noSelectionOption="true" />
+                                <f:selectItems value="#{documentoModel.personas}"
+                                               var="persona"
+                                               itemValue="#{persona.idPersona}"
+                                               itemLabel="#{persona.nombres} #{persona.apellidos}" />
+                            </p:selectOneMenu>
+
+                            <p:message for="persona" />
+                        </div>
+                        <div class="form-field">
+                            <p:outputLabel for="tipo"
+                                           value="#{msg['documento.tipo']}" />
+                            <p:selectOneMenu id="tipo"
+                                             value="#{documentoModel.tipoDocumentoSeleccionadoId}"
+                                             required="true"
+                                             requiredMessage="#{msg['documento.tipoRequerido']}"
+                                             styleClass="selector-wide">
+                                <f:selectItem itemLabel="#{msg['selector.seleccione']}"
+                                              itemValue="#{null}"
+                                              noSelectionOption="true" />
+                                <f:selectItems value="#{documentoModel.tiposDocumento}"
+                                               var="tipo"
+                                               itemValue="#{tipo.idTipoDocumento}"
+                                               itemLabel="#{tipo.nombre}" />
+
+                                <p:ajax
+                                    process="@this" />
+                            </p:selectOneMenu>
+
+                            <p:message for="tipo" />
+                        </div>
+                        <div class="form-field">
+                            <p:outputLabel for="valor"
+                                           value="#{msg['documento.valor']}" />
+                            <p:inputText id="valor"
+                                         value="#{documentoModel.seleccionado.valor}"
+                                         required="true"
+                                         requiredMessage="#{msg['documento.valorRequerido']}" />
+
+                            <p:message for="valor" />
+                        </div>
+                        <div class="form-field">
+                            <p:outputLabel for="ruta"
+                                           value="#{msg['documento.rutaFisica']}" />
+                            <p:inputText id="ruta"
+                                         value="#{documentoModel.seleccionado.rutaFisica}" />
+                        </div>
+                    </div>
+                    <div class="dialog-actions">
+                        <crud:botones-bottom model="#{documentoModel}"
+                                             procesar="@this edicionContenido"
+                                             actualizar="messages documentoTable edicionDialog"
+                                             oncompleteCancelar="PF('documentoDialog').hide()"
+                                             oncompleteGuardar="if (!args.validationFailed) PF('documentoDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>
