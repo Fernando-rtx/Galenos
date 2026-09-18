@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:f="jakarta.faces.core"
+    xmlns:h="jakarta.faces.html"
+    xmlns:p="primefaces"
+    xmlns:ui="jakarta.faces.facelets"
+    template="/WEB-INF/plantillas/general.xhtml">
+
+    <ui:define name="titulo">
+        #{msg['consultaProcedimiento.titulo']} | #{msg['app.nombre']}
+    </ui:define>
+
+    <ui:define name="head">
+        <h:outputStylesheet
+            library="estilos"
+            name="consulta-procedimiento.css"/>
+    </ui:define>
+
+    <ui:define name="contenido">
+        <main class="page-shell">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+
+                <div class="card-content">
+                    <div class="page-header">
+                        <div class="header-info">
+                            <div class="clinical-brand">
+                                <span class="clinical-brand-icon">
+                                    <i class="pi pi-directions"></i>
+                                </span>
+                                #{msg['app.nombre']} - #{msg['app.areaTrabajo']}
+                            </div>
+
+                            <h1 class="page-title">
+                                #{msg['consultaProcedimiento.titulo']}
+                            </h1>
+
+                            <p class="page-subtitle">
+                                #{msg['consultaProcedimiento.subtitulo']}
+                            </p>
+                        </div>
+
+                        <crud:botones-top
+                            model="#{consultaProcedimientoModel}"
+                            actualizar="messages consultaProcedimientoTable edicionDialog"
+                            oncompleteNuevo="PF('consultaProcedimientoDialog').show()" />
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <p:messages
+                        id="messages"
+                        showDetail="true"
+                        closable="true" />
+
+                    <div class="table-section">
+                        <div class="table-heading">
+                            <div class="table-title">
+                                <i class="pi pi-list"></i>
+                                #{msg['consultaProcedimiento.lista']}
+                            </div>
+                        </div>
+
+                        <p:dataTable
+                            id="consultaProcedimientoTable"
+                            value="#{consultaProcedimientoModel}"
+                            var="item"
+                            lazy="true"
+                            paginator="true"
+                            rows="10"
+                            reflow="true"
+                            selectionMode="single"
+                            selection="#{consultaProcedimientoModel.seleccionado}"
+                            rowKey="#{consultaProcedimientoModel.getRowKey(item)}"
+                            emptyMessage="#{msg['consultaProcedimiento.sinRegistros']}"
+                            styleClass="consulta-procedimiento-table">
+
+                            <p:ajax
+                                event="rowSelect"
+                                listener="#{consultaProcedimientoModel.seleccionar(item)}"
+                                update="edicionDialog"
+                                oncomplete="PF('consultaProcedimientoDialog').show()" />
+
+                            <p:column
+                                headerText="#{msg['consultaProcedimiento.consulta']}"
+                                styleClass="consulta-cell">
+
+                                <h:outputText
+                                    value="#{item.idConsulta.referenciaExterna}"
+                                    styleClass="consulta-ref" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['consultaProcedimiento.idProcedimiento']}"
+                                field="idProcedimiento"
+                                sortBy="#{item.idProcedimiento}">
+
+                                <h:outputText
+                                    value="#{item.idProcedimiento}"
+                                    styleClass="uuid-text" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['consultaProcedimiento.fechaInicio']}"
+                                field="fechaInicio"
+                                sortBy="#{item.fechaInicio}">
+
+                                <h:outputText
+                                    value="#{item.fechaInicio}"
+                                    styleClass="consulta-procedimiento-date">
+                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                </h:outputText>
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['consultaProcedimiento.fechaFin']}"
+                                field="fechaFin"
+                                sortBy="#{item.fechaFin}">
+
+                                <h:outputText
+                                    value="#{item.fechaFin}"
+                                    styleClass="consulta-procedimiento-date">
+                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                </h:outputText>
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['consultaProcedimiento.observaciones']}"
+                                styleClass="observaciones-cell">
+
+                                <h:outputText
+                                    value="#{empty item.observaciones
+                                             ? msg['consultaProcedimiento.sinObservaciones']
+                                             : item.observaciones}"
+                                    styleClass="#{empty item.observaciones
+                                                  ? 'empty-note'
+                                                  : ''}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['consultaProcedimiento.acciones']}"
+                                styleClass="action-cell">
+
+                                <p:commandButton
+                                    icon="pi pi-pencil"
+                                    title="#{msg['crud.editar']}"
+                                    styleClass="edit-button"
+                                    action="#{consultaProcedimientoModel.seleccionar(item)}"
+                                    process="@this"
+                                    update="edicionDialog"
+                                    oncomplete="PF('consultaProcedimientoDialog').show()" />
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <p:dialog
+            id="edicionDialog"
+            widgetVar="consultaProcedimientoDialog"
+            header="#{consultaProcedimientoModel.estado eq 'CREACION'
+                      ? msg['consultaProcedimiento.nuevo']
+                      : msg['consultaProcedimiento.editar']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="560"
+            styleClass="clinical-dialog">
+
+            <p:outputPanel
+                id="edicionContenido"
+                layout="block">
+
+                <h:panelGroup rendered="#{consultaProcedimientoModel.seleccionado ne null}">
+                    <div class="dialog-intro">
+                        <div class="dialog-intro-icon">
+                            <i class="pi pi-file-edit"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                #{msg['consultaProcedimiento.informacion']}
+                            </strong>
+
+                            <span>
+                                #{msg['consultaProcedimiento.completar']}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dialog-form">
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="consulta"
+                                value="#{msg['consultaProcedimiento.consulta']}"
+                                styleClass="form-label" />
+
+                            <p:selectOneMenu
+                                id="consulta"
+                                value="#{consultaProcedimientoModel.seleccionado.idConsulta}"
+                                converter="#{consultaConverter}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}">
+
+                                <f:selectItem
+                                    itemLabel="-- Seleccionar --"
+                                    itemValue="#{null}" />
+
+                                <f:selectItems
+                                    value="#{consultaProcedimientoModel.consultas}"
+                                    var="c"
+                                    itemLabel="#{c.referenciaExterna}"
+                                    itemValue="#{c}" />
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="idProcedimiento"
+                                value="#{msg['consultaProcedimiento.idProcedimiento']}"
+                                styleClass="form-label" />
+
+                            <p:inputText
+                                id="idProcedimiento"
+                                value="#{consultaProcedimientoModel.seleccionado.idProcedimiento}"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}" />
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="fechaInicio"
+                                value="#{msg['consultaProcedimiento.fechaInicio']}"
+                                styleClass="form-label" />
+
+                            <p:calendar
+                                id="fechaInicio"
+                                value="#{consultaProcedimientoModel.seleccionado.fechaInicio}"
+                                showIcon="true"
+                                pattern="dd/MM/yyyy HH:mm"
+                                required="true"
+                                requiredMessage="#{msg['mensajes.error']}" />
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="fechaFin"
+                                value="#{msg['consultaProcedimiento.fechaFin']}"
+                                styleClass="form-label" />
+
+                            <p:calendar
+                                id="fechaFin"
+                                value="#{consultaProcedimientoModel.seleccionado.fechaFin}"
+                                showIcon="true"
+                                pattern="dd/MM/yyyy HH:mm" />
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="observaciones"
+                                value="#{msg['consultaProcedimiento.observaciones']}"
+                                styleClass="form-label" />
+
+                            <p:inputTextarea
+                                id="observaciones"
+                                value="#{consultaProcedimientoModel.seleccionado.observaciones}"
+                                rows="5"
+                                autoResize="false"
+                                placeholder="#{msg['consultaProcedimiento.observacionesPlaceholder']}" />
+                        </div>
+                    </div>
+
+                    <div class="dialog-actions">
+                        <crud:botones-bottom
+                            model="#{consultaProcedimientoModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages consultaProcedimientoTable edicionDialog"
+                            oncompleteCancelar="PF('consultaProcedimientoDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('consultaProcedimientoDialog').hide()" />
+                    </div>
+                </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+    </ui:define>
+</ui:composition>
