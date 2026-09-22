@@ -14,7 +14,7 @@
     <!-- Solo las URLs bajo /faces/* pasan por Jakarta Faces. -->
     <servlet-mapping>
         <servlet-name>Faces Servlet</servlet-name>
-        <url-pattern>*.xhtml</url-pattern>
+        <url-pattern>/faces/*</url-pattern>
     </servlet-mapping>
     <!-- Duración de la sesión que, entre otros datos, conserva IdiomaBean. -->
     <session-config>

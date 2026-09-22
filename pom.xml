@@ -152,7 +152,7 @@
                                     <version>15.0.17</version>
                                     <classifier>jakarta</classifier>
                                     <type>jar</type>
-                                    <outputDirectory>${project.build.directory}/primefaces</outputDirectory>
+                                    <outputDirectory>${project.build.directory}/liberty/wlp/usr/shared/resources/primefaces</outputDirectory>
                                     <destFileName>primefaces-15.0.17-jakarta.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>

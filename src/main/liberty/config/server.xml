@@ -19,7 +19,14 @@
     <webApplication id="GalenosSV"
                     name="GalenosSV"
                     location="GalenosSV.war"
-                    contextRoot="/GalenosSV"/>
+                    contextRoot="/GalenosSV">
+        <classloader commonLibraryRef="PrimeFacesLib"/>
+    </webApplication>
+
+    <library id="PrimeFacesLib">
+        <fileset dir="${shared.resource.dir}/primefaces"
+                 includes="primefaces-15.0.17-jakarta.jar"/>
+    </library>
 
     <library id="PostgreSQLJdbcLib">
         <fileset dir="${POSTGRESQL_JDBC_DRIVER_DIR}"
