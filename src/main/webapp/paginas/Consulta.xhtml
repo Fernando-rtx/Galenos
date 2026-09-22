@@ -207,11 +207,12 @@
                                 value="#{msg['consulta.fechaInicio']}"
                                 styleClass="form-label" />
 
-                            <p:calendar
+                            <p:datePicker
                                 id="fechaInicio"
                                 value="#{consultaModel.seleccionado.fechaInicio}"
                                 showIcon="true"
                                 pattern="dd/MM/yyyy HH:mm"
+                                showTime="true"
                                 required="true"
                                 requiredMessage="#{msg['mensajes.error']}" />
                         </div>
@@ -222,11 +223,12 @@
                                 value="#{msg['consulta.fechaFin']}"
                                 styleClass="form-label" />
 
-                            <p:calendar
+                            <p:datePicker
                                 id="fechaFin"
                                 value="#{consultaModel.seleccionado.fechaFin}"
                                 showIcon="true"
-                                pattern="dd/MM/yyyy HH:mm" />
+                                pattern="dd/MM/yyyy HH:mm"
+                                showTime="true" />
                         </div>
 
                         <div class="form-field">
