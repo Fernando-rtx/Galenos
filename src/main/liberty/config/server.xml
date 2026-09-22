@@ -33,7 +33,11 @@
                  includes="postgresql-42.7.4.jar"/>
     </library>
 
-    <dataSource id="pgdb" jndiName="jdbc/pgdb">
+    <connectionManager id="PostgreSQLConnectionManager"
+                       enableContainerAuthForDirectLookups="true"/>
+
+    <dataSource id="pgdb" jndiName="jdbc/pgdb"
+                connectionManagerRef="PostgreSQLConnectionManager">
         <jdbcDriver libraryRef="PostgreSQLJdbcLib"/>
         <properties.postgresql serverName="${POSTGRESQL_DB_HOST}"
                                portNumber="${POSTGRESQL_DB_PORT}"
