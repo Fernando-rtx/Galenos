@@ -238,11 +238,12 @@
                                 value="#{msg['consultaProcedimiento.fechaInicio']}"
                                 styleClass="form-label" />
 
-                            <p:calendar
+                            <p:datePicker
                                 id="fechaInicio"
                                 value="#{consultaProcedimientoModel.seleccionado.fechaInicio}"
                                 showIcon="true"
                                 pattern="dd/MM/yyyy HH:mm"
+                                showTime="true"
                                 required="true"
                                 requiredMessage="#{msg['mensajes.error']}" />
                         </div>
@@ -253,11 +254,12 @@
                                 value="#{msg['consultaProcedimiento.fechaFin']}"
                                 styleClass="form-label" />
 
-                            <p:calendar
+                            <p:datePicker
                                 id="fechaFin"
                                 value="#{consultaProcedimientoModel.seleccionado.fechaFin}"
                                 showIcon="true"
-                                pattern="dd/MM/yyyy HH:mm" />
+                                pattern="dd/MM/yyyy HH:mm"
+                                showTime="true" />
                         </div>
 
                         <div class="form-field">

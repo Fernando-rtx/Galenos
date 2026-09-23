@@ -199,11 +199,12 @@
                                 value="#{msg['ordenExamen.fechaCreacion']}"
                                 styleClass="form-label" />
 
-                            <p:calendar
+                            <p:datePicker
                                 id="fechaCreacion"
                                 value="#{ordenExamenModel.seleccionado.fechaCreacion}"
                                 showIcon="true"
                                 pattern="dd/MM/yyyy HH:mm"
+                                showTime="true"
                                 required="true"
                                 requiredMessage="#{msg['mensajes.error']}" />
                         </div>

@@ -19,14 +19,25 @@
     <webApplication id="GalenosSV"
                     name="GalenosSV"
                     location="GalenosSV.war"
-                    contextRoot="/GalenosSV"/>
+                    contextRoot="/GalenosSV">
+        <classloader commonLibraryRef="PrimeFacesLib"/>
+    </webApplication>
+
+    <library id="PrimeFacesLib">
+        <fileset dir="${shared.resource.dir}/primefaces"
+                 includes="primefaces-15.0.17-jakarta.jar"/>
+    </library>
 
     <library id="PostgreSQLJdbcLib">
         <fileset dir="${POSTGRESQL_JDBC_DRIVER_DIR}"
                  includes="postgresql-42.7.4.jar"/>
     </library>
 
-    <dataSource id="pgdb" jndiName="jdbc/pgdb">
+    <connectionManager id="PostgreSQLConnectionManager"
+                       enableContainerAuthForDirectLookups="true"/>
+
+    <dataSource id="pgdb" jndiName="jdbc/pgdb"
+                connectionManagerRef="PostgreSQLConnectionManager">
         <jdbcDriver libraryRef="PostgreSQLJdbcLib"/>
         <properties.postgresql serverName="${POSTGRESQL_DB_HOST}"
                                portNumber="${POSTGRESQL_DB_PORT}"
