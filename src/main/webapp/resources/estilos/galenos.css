@@ -160,35 +160,134 @@ body.clinical-body {
 }
 
 /* Estructura compartida por las pantallas CRUD del dominio. */
-.page-shell { margin: 0 auto; width: min(1180px, 100%); }
-.clinical-card { background: #fff; border: 1px solid #dfeaf1; border-radius: 8px; box-shadow: 0 12px 35px rgba(26, 77, 110, .07); overflow: hidden; }
-.clinical-topbar { background: #1683b6; height: 5px; }
-.card-content { padding: 30px 32px 32px; }
-.page-header { align-items: flex-start; display: flex; gap: 24px; justify-content: space-between; margin-bottom: 24px; }
-.page-title { color: #153b55; font-size: 2rem; margin: 0; }
-.page-subtitle { color: #718797; margin: 7px 0 0; }
-.section-divider { background: #e8eff4; height: 1px; margin: 0 -32px 24px; }
-.table-title { color: #34566c; font-weight: 600; margin-bottom: 14px; }
-.clinical-table { border: 1px solid #e3edf3; border-radius: 8px; overflow: hidden; }
-.clinical-table .ui-datatable-thead > tr > th { background: #f4f9fc; color: #466478; padding: 13px; }
-.clinical-table .ui-datatable-data > tr > td { border-color: #edf2f5; color: #405767; padding: 14px; }
-.edit-button.ui-button { background: #edf7fb; border: 1px solid #d9edf5; color: #1683b6; }
-.clinical-dialog .ui-dialog-content { padding: 24px; }
-.dialog-form, .form-field { display: grid; gap: 10px; }
-.dialog-form { gap: 18px; }
-.form-label { color: #405d70; font-weight: 600; }
-.dialog-actions { border-top: 1px solid #e8eff4; margin-top: 24px; padding-top: 18px; }
-.context-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
-.context-link { background: #f3f9fc; border: 1px solid #d8eaf3; border-radius: 999px; color: #167ba8; font-size: .84rem; padding: 8px 12px; text-decoration: none; }
-.context-person { background: #f3f9fc; border-left: 4px solid #1683b6; color: #34566c; margin-bottom: 18px; padding: 12px 15px; }
-.selector-wide { width: 100%; }
-.action-cell { text-align: center; width: 80px; }
+.page-shell {
+    margin: 0 auto;
+    width: min(1180px, 100%);
+}
+.clinical-card {
+    background: #fff;
+    border: 1px solid #dfeaf1;
+    border-radius: 8px;
+    box-shadow: 0 12px 35px rgba(26, 77, 110, .07);
+    overflow: hidden;
+}
+.clinical-topbar {
+    background: #1683b6;
+    height: 5px;
+}
+.card-content {
+    padding: 30px 32px 32px;
+}
+.page-header {
+    align-items: flex-start;
+    display: flex;
+    gap: 24px;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+.page-title {
+    color: #153b55;
+    font-size: 2rem;
+    margin: 0;
+}
+.page-subtitle {
+    color: #718797;
+    margin: 7px 0 0;
+}
+.section-divider {
+    background: #e8eff4;
+    height: 1px;
+    margin: 0 -32px 24px;
+}
+.table-title {
+    color: #34566c;
+    font-weight: 600;
+    margin-bottom: 14px;
+}
+.clinical-table {
+    border: 1px solid #e3edf3;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.clinical-table .ui-datatable-thead > tr > th {
+    background: #f4f9fc;
+    color: #466478;
+    padding: 13px;
+}
+.clinical-table .ui-datatable-data > tr > td {
+    border-color: #edf2f5;
+    color: #405767;
+    padding: 14px;
+}
+.edit-button.ui-button {
+    background: #edf7fb;
+    border: 1px solid #d9edf5;
+    color: #1683b6;
+}
+.clinical-dialog .ui-dialog-content {
+    padding: 24px;
+}
+.dialog-form, .form-field {
+    display: grid;
+    gap: 10px;
+}
+.dialog-form {
+    gap: 18px;
+}
+.form-label {
+    color: #405d70;
+    font-weight: 600;
+}
+.dialog-actions {
+    border-top: 1px solid #e8eff4;
+    margin-top: 24px;
+    padding-top: 18px;
+}
+.context-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+.context-link {
+    background: #f3f9fc;
+    border: 1px solid #d8eaf3;
+    border-radius: 999px;
+    color: #167ba8;
+    font-size: .84rem;
+    padding: 8px 12px;
+    text-decoration: none;
+}
+.context-person {
+    background: #f3f9fc;
+    border-left: 4px solid #1683b6;
+    color: #34566c;
+    margin-bottom: 18px;
+    padding: 12px 15px;
+}
+.selector-wide {
+    width: 100%;
+}
+.action-cell {
+    text-align: center;
+    width: 80px;
+}
 
 @media (max-width: 720px) {
-    .card-content { padding: 22px 18px; }
-    .page-header { flex-direction: column; }
-    .context-actions { justify-content: flex-start; }
-    .section-divider { margin-left: -18px; margin-right: -18px; }
+    .card-content {
+        padding: 22px 18px;
+    }
+    .page-header {
+        flex-direction: column;
+    }
+    .context-actions {
+        justify-content: flex-start;
+    }
+    .section-divider {
+        margin-left: -18px;
+        margin-right: -18px;
+    }
 }
 
 /* Ajustes responsive para pantallas pequeñas. */

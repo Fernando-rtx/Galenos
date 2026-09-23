@@ -4,7 +4,9 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenTipoExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoExamenDAO;
@@ -21,6 +23,11 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
     private ExamenTipoExamen seleccionado;
     private List<Examen> examenes;
     private List<TipoExamen> tipoExamenes;
+    private Examen examenPadre;
+    private String idTipoExamenSeleccionado;
+    private List<ExamenTipoExamen> asociaciones = List.of();
+    private final ExamenTipoExamenDAO examenTipoExamenDAO;
+    private final TipoExamenDAO tipoExamenDAO;
 
     @Inject
     public ExamenTipoExamenModel(
@@ -28,6 +35,8 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
             ExamenDAO examenDAO,
             TipoExamenDAO tipoExamenDAO) {
         super(examenTipoExamenDAO);
+        this.examenTipoExamenDAO = examenTipoExamenDAO;
+        this.tipoExamenDAO = tipoExamenDAO;
         this.examenes = examenDAO.obtenerTodos();
         this.tipoExamenes = tipoExamenDAO.obtenerTodos();
     }
@@ -46,6 +55,72 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
 
     public List<TipoExamen> getTipoExamenes() {
         return tipoExamenes;
+    }
+
+    public List<ExamenTipoExamen> getAsociaciones() {
+        return asociaciones;
+    }
+
+    public String getIdTipoExamenSeleccionado() {
+        return idTipoExamenSeleccionado;
+    }
+
+    public void setIdTipoExamenSeleccionado(String idTipoExamenSeleccionado) {
+        this.idTipoExamenSeleccionado = idTipoExamenSeleccionado;
+    }
+
+    public void cargarPorExamen(Examen examen) {
+        examenPadre = examen;
+        seleccionado = null;
+        idTipoExamenSeleccionado = null;
+        setEstado(ESTADO_CRUD.LISTADO);
+        recargarAsociaciones();
+    }
+
+    public void nuevaAsociacion(Examen examen) {
+        examenPadre = examen;
+        seleccionado = new ExamenTipoExamen();
+        seleccionado.setIdExamen(examen);
+        seleccionado.setFechaCreacion(new Date());
+        idTipoExamenSeleccionado = null;
+        setEstado(ESTADO_CRUD.CREACION);
+    }
+
+    public void guardarAsociacion() {
+        if (seleccionado != null
+                && seleccionado.getIdTipoExamen() == null
+                && idTipoExamenSeleccionado != null) {
+            seleccionado.setIdTipoExamen(tipoExamenDAO.buscarPorId(
+                    UUID.fromString(idTipoExamenSeleccionado)));
+        }
+        if (seleccionado == null
+                || seleccionado.getIdExamen() == null
+                || seleccionado.getIdExamen().getIdExamen() == null
+                || seleccionado.getIdTipoExamen() == null
+                || seleccionado.getIdTipoExamen().getIdTipoExamen() == null) {
+            return;
+        }
+
+        long existentes = examenTipoExamenDAO.countByIdExamenAndIdTipoExamen(
+                seleccionado.getIdExamen().getIdExamen(),
+                seleccionado.getIdTipoExamen().getIdTipoExamen());
+        if (existentes > 0) {
+            return;
+        }
+
+        seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
+        getDao().guardar(seleccionado);
+        examenPadre = seleccionado.getIdExamen();
+        seleccionado = null;
+        idTipoExamenSeleccionado = null;
+        setEstado(ESTADO_CRUD.LISTADO);
+        recargarAsociaciones();
+    }
+
+    public void cancelarAsociacion() {
+        seleccionado = null;
+        idTipoExamenSeleccionado = null;
+        setEstado(ESTADO_CRUD.LISTADO);
     }
 
     public void nuevo() {
@@ -74,5 +149,18 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
     public void cancelar() {
         seleccionado = null;
         setEstado(ESTADO_CRUD.LISTADO);
+    }
+
+    private void recargarAsociaciones() {
+        if (examenPadre == null || examenPadre.getIdExamen() == null) {
+            asociaciones = List.of();
+            return;
+        }
+        asociaciones = examenTipoExamenDAO.findByIdExamen(
+                examenPadre.getIdExamen(), 0, Integer.MAX_VALUE);
+    }
+
+    private String normalizar(String valor) {
+        return valor == null ? null : valor.trim();
     }
 }

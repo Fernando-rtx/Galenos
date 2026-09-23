@@ -14,6 +14,8 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.MedioContactoDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoMedioContactoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.MedioContacto;
@@ -107,6 +109,58 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
         setEstado(ESTADO_CRUD.CREACION);
     }
 
+    /**
+     * Devuelve únicamente los contactos asociados a la persona recibida.
+     *
+     * @param persona persona dueña de los contactos a mostrar
+     * @return contactos de la persona o una lista vacía si aún no existe
+     */
+    public List<MedioContacto> getContactosPorPersona(Persona persona) {
+        if (persona == null || persona.getIdPersona() == null) {
+            return List.of();
+        }
+        return getDao().obtenerPagina(0, Integer.MAX_VALUE,
+                List.of(new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL,
+                        persona.getIdPersona())),
+                List.of());
+    }
+
+    /**
+     * Inicia un contacto dentro del contexto de una persona persistida.
+     *
+     * @param persona persona que será asignada al contacto
+     */
+    public void nuevoParaPersona(Persona persona) {
+        if (persona == null || persona.getIdPersona() == null) {
+            cancelar();
+            return;
+        }
+        personaContexto = persona;
+        nuevo();
+    }
+
+    /**
+     * Selecciona un contacto solo cuando pertenece a la persona del tab.
+     *
+     * @param contacto contacto elegido en la tabla contextual
+     * @param persona persona actualmente editada
+     */
+    public void seleccionarParaPersona(MedioContacto contacto, Persona persona) {
+        if (perteneceAPersona(contacto, persona)) {
+            seleccionar(contacto);
+        }
+    }
+
+    /**
+     * Indica si el formulario activo corresponde a la persona del tab.
+     *
+     * @param persona persona actualmente editada
+     * @return {@code true} si el contacto seleccionado pertenece a esa persona
+     */
+    public boolean isSeleccionadoParaPersona(Persona persona) {
+        return perteneceAPersona(seleccionado, persona);
+    }
+
     public void seleccionar(MedioContacto seleccionado) {
         this.seleccionado = seleccionado;
         setEstado(ESTADO_CRUD.EDICION);
@@ -188,6 +242,15 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
 
     private String normalizar(String valor) {
         return valor == null ? null : valor.trim();
+    }
+
+    private boolean perteneceAPersona(MedioContacto contacto, Persona persona) {
+        return contacto != null
+                && contacto.getIdPersona() != null
+                && contacto.getIdPersona().getIdPersona() != null
+                && persona != null
+                && persona.getIdPersona() != null
+                && contacto.getIdPersona().getIdPersona().equals(persona.getIdPersona());
     }
 
     private void agregarError(String idComponente, String clave) {
