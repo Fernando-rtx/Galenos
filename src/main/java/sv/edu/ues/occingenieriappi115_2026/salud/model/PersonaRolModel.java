@@ -122,6 +122,58 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
         setEstado(ESTADO_CRUD.CREACION);
     }
 
+    /**
+     * Devuelve únicamente los roles asignados a la persona recibida.
+     *
+     * @param persona persona dueña de las asignaciones a mostrar
+     * @return roles de la persona o una lista vacía si aún no existe
+     */
+    public List<PersonaRol> getRolesPorPersona(Persona persona) {
+        if (persona == null || persona.getIdPersona() == null) {
+            return List.of();
+        }
+        return getDao().obtenerPagina(0, Integer.MAX_VALUE,
+                List.of(new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL,
+                        persona.getIdPersona())),
+                List.of());
+    }
+
+    /**
+     * Inicia una asignación de rol para una persona persistida.
+     *
+     * @param persona persona a la que se asignará el rol
+     */
+    public void nuevoParaPersona(Persona persona) {
+        if (persona == null || persona.getIdPersona() == null) {
+            cancelar();
+            return;
+        }
+        personaContexto = persona;
+        nuevo();
+    }
+
+    /**
+     * Selecciona una asignación solo cuando pertenece a la persona del tab.
+     *
+     * @param personaRol asignación elegida en la tabla contextual
+     * @param persona persona actualmente editada
+     */
+    public void seleccionarParaPersona(PersonaRol personaRol, Persona persona) {
+        if (perteneceAPersona(personaRol, persona)) {
+            seleccionar(personaRol);
+        }
+    }
+
+    /**
+     * Indica si el formulario activo corresponde a la persona del tab.
+     *
+     * @param persona persona actualmente editada
+     * @return {@code true} si la asignación seleccionada pertenece a esa persona
+     */
+    public boolean isSeleccionadoParaPersona(Persona persona) {
+        return perteneceAPersona(seleccionado, persona);
+    }
+
     public void seleccionar(PersonaRol seleccionado) {
         this.seleccionado = seleccionado;
         setEstado(ESTADO_CRUD.EDICION);
@@ -172,6 +224,15 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
         } catch (IllegalArgumentException ex) {
             return null;
         }
+    }
+
+    private boolean perteneceAPersona(PersonaRol personaRol, Persona persona) {
+        return personaRol != null
+                && personaRol.getIdPersona() != null
+                && personaRol.getIdPersona().getIdPersona() != null
+                && persona != null
+                && persona.getIdPersona() != null
+                && personaRol.getIdPersona().getIdPersona().equals(persona.getIdPersona());
     }
 
     private boolean validarAntesDeGuardar() {

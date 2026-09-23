@@ -13,6 +13,8 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.DocumentoDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoDocumentoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Documento;
@@ -104,6 +106,61 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         seleccionado.setIdPersona(personaContexto);
         setEstado(ESTADO_CRUD.CREACION);
     }
+
+    /**
+     * Devuelve únicamente los documentos asociados a la persona recibida.
+     * La consulta se mantiene en el DAO de Documento a través del contrato
+     * genérico, sin trasladar su CRUD al modelo de Persona.
+     *
+     * @param persona persona dueña de los documentos a mostrar
+     * @return documentos de la persona o una lista vacía si aún no existe
+     */
+    public List<Documento> getDocumentosPorPersona(Persona persona) {
+        if (persona == null || persona.getIdPersona() == null) {
+            return List.of();
+        }
+        return getDao().obtenerPagina(0, Integer.MAX_VALUE,
+                List.of(new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL,
+                        persona.getIdPersona())),
+                List.of());
+    }
+
+    /**
+     * Inicia un documento dentro del contexto de una persona persistida.
+     *
+     * @param persona persona que será asignada al documento
+     */
+    public void nuevoParaPersona(Persona persona) {
+        if (persona == null || persona.getIdPersona() == null) {
+            cancelar();
+            return;
+        }
+        personaContexto = persona;
+        nuevo();
+    }
+
+    /**
+     * Selecciona un documento solo cuando pertenece a la persona del tab.
+     *
+     * @param documento documento elegido en la tabla contextual
+     * @param persona persona actualmente editada
+     */
+    public void seleccionarParaPersona(Documento documento, Persona persona) {
+        if (perteneceAPersona(documento, persona)) {
+            seleccionar(documento);
+        }
+    }
+
+    /**
+     * Indica si el formulario activo corresponde a la persona del tab.
+     *
+     * @param persona persona actualmente editada
+     * @return {@code true} si el documento seleccionado pertenece a esa persona
+     */
+    public boolean isSeleccionadoParaPersona(Persona persona) {
+        return perteneceAPersona(seleccionado, persona);
+    }
+
     public void seleccionar(Documento seleccionado) {
         this.seleccionado = seleccionado;
         setEstado(ESTADO_CRUD.EDICION);
@@ -186,6 +243,15 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
 
     private String normalizar(String valor) {
         return valor == null ? null : valor.trim();
+    }
+
+    private boolean perteneceAPersona(Documento documento, Persona persona) {
+        return documento != null
+                && documento.getIdPersona() != null
+                && documento.getIdPersona().getIdPersona() != null
+                && persona != null
+                && persona.getIdPersona() != null
+                && documento.getIdPersona().getIdPersona().equals(persona.getIdPersona());
     }
 
     private void agregarError(String idComponente, String clave) {

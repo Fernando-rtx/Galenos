@@ -28,29 +28,6 @@
                             <p class="page-subtitle">#{msg['persona.subtitulo']}</p>
                         </div>
                         <div>
-                            <div class="context-actions">
-                                <h:link outcome="/paginas/Documento"
-                                        value="#{msg['persona.documentos']}"
-                                        styleClass="context-link"
-                                        rendered="#{personaModel.seleccionado.idPersona ne null}">
-                                    <f:param name="idPersona"
-                                             value="#{personaModel.seleccionado.idPersona}" />
-                                </h:link>
-                                <h:link outcome="/paginas/MedioContacto"
-                                        value="#{msg['persona.contactos']}"
-                                        styleClass="context-link"
-                                        rendered="#{personaModel.seleccionado.idPersona ne null}">
-                                    <f:param name="idPersona"
-                                             value="#{personaModel.seleccionado.idPersona}" />
-                                </h:link>
-                                <h:link outcome="/paginas/PersonaRol"
-                                        value="#{msg['persona.roles']}"
-                                        styleClass="context-link"
-                                        rendered="#{personaModel.seleccionado.idPersona ne null}">
-                                    <f:param name="idPersona"
-                                             value="#{personaModel.seleccionado.idPersona}" />
-                                </h:link>
-                            </div>
                             <crud:botones-top model="#{personaModel}"
                                               actualizar="messages personaTable edicionDialog"
                                               oncompleteNuevo="PF('personaDialog').show()" />
@@ -116,65 +93,314 @@
             </section>
         </main>
 
-        <!-- Diálogo de edición -->
+        <!-- Un único diálogo: las dependencias se editan inline por persona. -->
         <p:dialog id="edicionDialog"
                   widgetVar="personaDialog"
                   header="#{personaModel.estado eq 'CREACION' ? msg['persona.nueva'] : msg['persona.editar']}"
                   modal="true"
                   responsive="true"
                   resizable="false"
-                  width="560"
+                  width="900"
                   styleClass="clinical-dialog">
             <p:outputPanel id="edicionContenido">
                 <h:panelGroup rendered="#{personaModel.seleccionado ne null}">
-                    <div class="dialog-form">
-                        <div class="form-field">
-                            <p:outputLabel for="nombres"
-                                           value="#{msg['persona.nombres']}" />
-                            <p:inputText id="nombres"
-                                         value="#{personaModel.seleccionado.nombres}"
-                                         required="true"
-                                         requiredMessage="#{msg['persona.nombresRequeridos']}"
-                                         maxlength="255"
-                                         validator="#{personaModel.validarNombre}" />
+                    <p:tabView id="personaTabs">
+                        <p:tab title="Detalle">
+                            <p:outputPanel id="detallePersona"
+                                           layout="block"
+                                           styleClass="dialog-form">
+                                <div class="form-field">
+                                    <p:outputLabel for="nombres"
+                                                   value="#{msg['persona.nombres']}" />
+                                    <p:inputText id="nombres"
+                                                 value="#{personaModel.seleccionado.nombres}"
+                                                 required="true"
+                                                 requiredMessage="#{msg['persona.nombresRequeridos']}"
+                                                 maxlength="255"
+                                                 validator="#{personaModel.validarNombre}" />
+                                    <p:message for="nombres" />
+                                </div>
+                                <div class="form-field">
+                                    <p:outputLabel for="apellidos"
+                                                   value="#{msg['persona.apellidos']}" />
+                                    <p:inputText id="apellidos"
+                                                 value="#{personaModel.seleccionado.apellidos}"
+                                                 required="true"
+                                                 requiredMessage="#{msg['persona.apellidosRequeridos']}"
+                                                 maxlength="255"
+                                                 validator="#{personaModel.validarNombre}" />
+                                    <p:message for="apellidos" />
+                                </div>
+                                <div class="form-field">
+                                    <p:outputLabel for="fechaNacimiento"
+                                                   value="#{msg['persona.fechaNacimiento']}" />
+                                    <p:datePicker id="fechaNacimiento"
+                                                  value="#{personaModel.seleccionado.fechaNacimiento}"
+                                                  pattern="dd/MM/yyyy"
+                                                  required="true"
+                                                  requiredMessage="#{msg['persona.fechaNacimientoRequerida']}"
+                                                  mindate="#{personaModel.fechaMinimaNacimiento}"
+                                                  maxdate="#{personaModel.fechaMaximaNacimiento}"
+                                                  validator="#{personaModel.validarFechaNacimiento}"
+                                                  showIcon="true" />
+                                    <p:message for="fechaNacimiento" />
+                                </div>
+                            </p:outputPanel>
+                            <div class="dialog-actions">
+                                <p:commandButton value="#{msg['crud.cancelar']}"
+                                                 action="#{personaModel.cancelar()}"
+                                                 process="@this"
+                                                 update="messages personaTable edicionDialog"
+                                                 immediate="true"
+                                                 resetValues="true"
+                                                 oncomplete="PF('personaDialog').hide()" />
+                                <p:commandButton value="#{msg['crud.guardar']}"
+                                                 action="#{personaModel.guardar()}"
+                                                 process="detallePersona"
+                                                 update="messages personaTable edicionDialog" />
+                            </div>
+                        </p:tab>
 
-                            <p:message for="nombres" />
-                        </div>
-                        <div class="form-field">
-                            <p:outputLabel for="apellidos"
-                                           value="#{msg['persona.apellidos']}" />
-                            <p:inputText id="apellidos"
-                                         value="#{personaModel.seleccionado.apellidos}"
-                                         required="true"
-                                         requiredMessage="#{msg['persona.apellidosRequeridos']}"
-                                         maxlength="255"
-                                         validator="#{personaModel.validarNombre}" />
+                        <p:tab title="Documentos"
+                               disabled="#{personaModel.seleccionado.idPersona eq null}">
+                            <p:outputPanel id="documentosContenido">
+                                <p:commandButton value="+ #{msg['documento.nuevo']}"
+                                                 icon="pi pi-plus"
+                                                 action="#{documentoModel.nuevoParaPersona(personaModel.seleccionado)}"
+                                                 process="@this"
+                                                 update="documentosContenido" />
+                                <p:dataTable id="documentosTable"
+                                             value="#{documentoModel.documentosPorPersona(personaModel.seleccionado)}"
+                                             var="documento"
+                                             emptyMessage="#{msg['documento.sinRegistros']}"
+                                             styleClass="clinical-table">
+                                    <p:column headerText="#{msg['documento.tipo']}">
+                                        <h:outputText value="#{documento.idTipoDocumento.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="#{msg['documento.valor']}">
+                                        <h:outputText value="#{documento.valor}" />
+                                    </p:column>
+                                    <p:column headerText="#{msg['documento.rutaFisica']}">
+                                        <h:outputText value="#{empty documento.rutaFisica ? msg['comun.sinDato'] : documento.rutaFisica}" />
+                                    </p:column>
+                                    <p:column headerText="#{msg['comun.acciones']}">
+                                        <p:commandButton icon="pi pi-pencil"
+                                                         title="#{msg['crud.editar']}"
+                                                         action="#{documentoModel.seleccionarParaPersona(documento, personaModel.seleccionado)}"
+                                                         process="@this"
+                                                         update="documentosContenido" />
+                                    </p:column>
+                                </p:dataTable>
 
-                            <p:message for="apellidos" />
-                        </div>
-                        <div class="form-field">
-                            <p:outputLabel for="fechaNacimiento"
-                                           value="#{msg['persona.fechaNacimiento']}" />
-                            <p:datePicker id="fechaNacimiento"
-                                          value="#{personaModel.seleccionado.fechaNacimiento}"
-                                          pattern="dd/MM/yyyy"
-                                          required="true"
-                                          requiredMessage="#{msg['persona.fechaNacimientoRequerida']}"
-                                          mindate="#{personaModel.fechaMinimaNacimiento}"
-                                          maxdate="#{personaModel.fechaMaximaNacimiento}"
-                                          validator="#{personaModel.validarFechaNacimiento}"
-                                          showIcon="true" />
+                                <h:panelGroup rendered="#{documentoModel.seleccionadoParaPersona(personaModel.seleccionado)}">
+                                    <p:outputPanel id="documentoForm"
+                                                   layout="block"
+                                                   styleClass="dialog-form">
+                                        <div class="form-field">
+                                            <p:outputLabel for="documentoTipo" value="#{msg['documento.tipo']}" />
+                                            <p:selectOneMenu id="documentoTipo"
+                                                             value="#{documentoModel.tipoDocumentoSeleccionadoId}"
+                                                             required="true"
+                                                             requiredMessage="#{msg['documento.tipoRequerido']}">
+                                                <f:selectItem itemLabel="#{msg['selector.seleccione']}"
+                                                              itemValue="#{null}"
+                                                              noSelectionOption="true" />
+                                                <f:selectItems value="#{documentoModel.tiposDocumento}"
+                                                               var="tipo"
+                                                               itemValue="#{tipo.idTipoDocumento}"
+                                                               itemLabel="#{tipo.nombre}" />
+                                            </p:selectOneMenu>
+                                            <p:message for="documentoTipo" />
+                                        </div>
+                                        <div class="form-field">
+                                            <p:outputLabel for="documentoValor" value="#{msg['documento.valor']}" />
+                                            <p:inputText id="documentoValor"
+                                                         value="#{documentoModel.seleccionado.valor}"
+                                                         required="true"
+                                                         requiredMessage="#{msg['documento.valorRequerido']}" />
+                                            <p:message for="documentoValor" />
+                                        </div>
+                                        <div class="form-field">
+                                            <p:outputLabel for="documentoRuta" value="#{msg['documento.rutaFisica']}" />
+                                            <p:inputText id="documentoRuta"
+                                                         value="#{documentoModel.seleccionado.rutaFisica}" />
+                                        </div>
+                                    </p:outputPanel>
+                                    <div class="dialog-actions">
+                                        <p:commandButton value="#{msg['crud.cancelar']}"
+                                                         action="#{documentoModel.cancelar()}"
+                                                         process="@this"
+                                                         update="documentosContenido"
+                                                         immediate="true"
+                                                         resetValues="true" />
+                                        <p:commandButton value="#{msg['crud.guardar']}"
+                                                         action="#{documentoModel.guardar()}"
+                                                         process="documentoForm"
+                                                         update=":layoutForm:messages documentosContenido" />
+                                    </div>
+                                </h:panelGroup>
+                            </p:outputPanel>
+                        </p:tab>
 
-                            <p:message for="fechaNacimiento" />
-                        </div>
-                    </div>
-                    <div class="dialog-actions">
-                        <crud:botones-bottom model="#{personaModel}"
-                                             procesar="@this edicionContenido"
-                                             actualizar="messages personaTable edicionDialog"
-                                             oncompleteCancelar="PF('personaDialog').hide()"
-                                             oncompleteGuardar="if (!args.validationFailed) PF('personaDialog').hide()" />
-                    </div>
+                        <p:tab title="Contactos"
+                               disabled="#{personaModel.seleccionado.idPersona eq null}">
+                            <p:outputPanel id="contactosContenido">
+                                <p:commandButton value="+ #{msg['medioContacto.nuevo']}"
+                                                 icon="pi pi-plus"
+                                                 action="#{medioContactoModel.nuevoParaPersona(personaModel.seleccionado)}"
+                                                 process="@this"
+                                                 update="contactosContenido" />
+                                <p:dataTable id="contactosTable"
+                                             value="#{medioContactoModel.contactosPorPersona(personaModel.seleccionado)}"
+                                             var="contacto"
+                                             emptyMessage="#{msg['medioContacto.sinRegistros']}"
+                                             styleClass="clinical-table">
+                                    <p:column headerText="#{msg['medioContacto.tipo']}">
+                                        <h:outputText value="#{contacto.idTipoMedioContacto.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="#{msg['medioContacto.valor']}">
+                                        <h:outputText value="#{contacto.valor}" />
+                                    </p:column>
+                                    <p:column headerText="#{msg['comun.acciones']}">
+                                        <p:commandButton icon="pi pi-pencil"
+                                                         title="#{msg['crud.editar']}"
+                                                         action="#{medioContactoModel.seleccionarParaPersona(contacto, personaModel.seleccionado)}"
+                                                         process="@this"
+                                                         update="contactosContenido" />
+                                    </p:column>
+                                </p:dataTable>
+
+                                <h:panelGroup rendered="#{medioContactoModel.seleccionadoParaPersona(personaModel.seleccionado)}">
+                                    <p:outputPanel id="contactoForm"
+                                                   layout="block"
+                                                   styleClass="dialog-form">
+                                        <div class="form-field">
+                                            <p:outputLabel for="contactoTipo" value="#{msg['medioContacto.tipo']}" />
+                                            <p:selectOneMenu id="contactoTipo"
+                                                             value="#{medioContactoModel.tipoMedioSeleccionadoId}"
+                                                             required="true"
+                                                             requiredMessage="#{msg['medioContacto.tipoRequerido']}">
+                                                <f:selectItem itemLabel="#{msg['selector.seleccione']}"
+                                                              itemValue="#{null}"
+                                                              noSelectionOption="true" />
+                                                <f:selectItems value="#{medioContactoModel.tiposMedioContacto}"
+                                                               var="tipo"
+                                                               itemValue="#{tipo.idTipoMedioContacto}"
+                                                               itemLabel="#{tipo.nombre}" />
+                                            </p:selectOneMenu>
+                                            <p:message for="contactoTipo" />
+                                        </div>
+                                        <div class="form-field">
+                                            <p:outputLabel for="contactoValor" value="#{msg['medioContacto.valor']}" />
+                                            <p:inputText id="contactoValor"
+                                                         value="#{medioContactoModel.seleccionado.valor}"
+                                                         required="true"
+                                                         requiredMessage="#{msg['medioContacto.valorRequerido']}" />
+                                            <p:message for="contactoValor" />
+                                        </div>
+                                    </p:outputPanel>
+                                    <div class="dialog-actions">
+                                        <p:commandButton value="#{msg['crud.cancelar']}"
+                                                         action="#{medioContactoModel.cancelar()}"
+                                                         process="@this"
+                                                         update="contactosContenido"
+                                                         immediate="true"
+                                                         resetValues="true" />
+                                        <p:commandButton value="#{msg['crud.guardar']}"
+                                                         action="#{medioContactoModel.guardar()}"
+                                                         process="contactoForm"
+                                                         update=":layoutForm:messages contactosContenido" />
+                                    </div>
+                                </h:panelGroup>
+                            </p:outputPanel>
+                        </p:tab>
+
+                        <p:tab title="Roles"
+                               disabled="#{personaModel.seleccionado.idPersona eq null}">
+                            <p:outputPanel id="rolesContenido">
+                                <p:commandButton value="+ #{msg['personaRol.nuevo']}"
+                                                 icon="pi pi-plus"
+                                                 action="#{personaRolModel.nuevoParaPersona(personaModel.seleccionado)}"
+                                                 process="@this"
+                                                 update="rolesContenido" />
+                                <p:dataTable id="rolesTable"
+                                             value="#{personaRolModel.rolesPorPersona(personaModel.seleccionado)}"
+                                             var="personaRol"
+                                             emptyMessage="#{msg['personaRol.sinRegistros']}"
+                                             styleClass="clinical-table">
+                                    <p:column headerText="#{msg['personaRol.rol']}">
+                                        <h:outputText value="#{personaRol.idRol.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="#{msg['personaRol.clinica']}">
+                                        <h:outputText value="#{personaRol.idClinica.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="#{msg['personaRol.fechaCreacion']}">
+                                        <h:outputText value="#{personaRol.fechaCreacion}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy" />
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="#{msg['comun.acciones']}">
+                                        <p:commandButton icon="pi pi-pencil"
+                                                         title="#{msg['crud.editar']}"
+                                                         action="#{personaRolModel.seleccionarParaPersona(personaRol, personaModel.seleccionado)}"
+                                                         process="@this"
+                                                         update="rolesContenido" />
+                                    </p:column>
+                                </p:dataTable>
+
+                                <h:panelGroup rendered="#{personaRolModel.seleccionadoParaPersona(personaModel.seleccionado)}">
+                                    <p:outputPanel id="rolForm"
+                                                   layout="block"
+                                                   styleClass="dialog-form">
+                                        <div class="form-field">
+                                            <p:outputLabel for="rolSeleccionado" value="#{msg['personaRol.rol']}" />
+                                            <p:selectOneMenu id="rolSeleccionado"
+                                                             value="#{personaRolModel.rolSeleccionadoId}"
+                                                             required="true"
+                                                             requiredMessage="#{msg['personaRol.rolRequerido']}">
+                                                <f:selectItem itemLabel="#{msg['selector.seleccione']}"
+                                                              itemValue="#{null}"
+                                                              noSelectionOption="true" />
+                                                <f:selectItems value="#{personaRolModel.roles}"
+                                                               var="rol"
+                                                               itemValue="#{rol.idRol}"
+                                                               itemLabel="#{rol.nombre}" />
+                                            </p:selectOneMenu>
+                                            <p:message for="rolSeleccionado" />
+                                        </div>
+                                        <div class="form-field">
+                                            <p:outputLabel for="clinicaSeleccionada" value="#{msg['personaRol.clinica']}" />
+                                            <p:selectOneMenu id="clinicaSeleccionada"
+                                                             value="#{personaRolModel.clinicaSeleccionadaId}"
+                                                             required="true"
+                                                             requiredMessage="#{msg['personaRol.clinicaRequerida']}">
+                                                <f:selectItem itemLabel="#{msg['selector.seleccione']}"
+                                                              itemValue="#{null}"
+                                                              noSelectionOption="true" />
+                                                <f:selectItems value="#{personaRolModel.clinicas}"
+                                                               var="clinica"
+                                                               itemValue="#{clinica.idClinica}"
+                                                               itemLabel="#{clinica.nombre}" />
+                                            </p:selectOneMenu>
+                                            <p:message for="clinicaSeleccionada" />
+                                        </div>
+                                    </p:outputPanel>
+                                    <div class="dialog-actions">
+                                        <p:commandButton value="#{msg['crud.cancelar']}"
+                                                         action="#{personaRolModel.cancelar()}"
+                                                         process="@this"
+                                                         update="rolesContenido"
+                                                         immediate="true"
+                                                         resetValues="true" />
+                                        <p:commandButton value="#{msg['crud.guardar']}"
+                                                         action="#{personaRolModel.guardar()}"
+                                                         process="rolForm"
+                                                         update=":layoutForm:messages rolesContenido" />
+                                    </div>
+                                </h:panelGroup>
+                            </p:outputPanel>
+                        </p:tab>
+                    </p:tabView>
                 </h:panelGroup>
             </p:outputPanel>
         </p:dialog>
