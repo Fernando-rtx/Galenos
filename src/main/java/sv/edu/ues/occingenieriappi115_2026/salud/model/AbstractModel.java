@@ -20,23 +20,29 @@ import sv.edu.ues.occingenieriappi115_2026.salud.control.OrdenDAO;
 /**
  * Adaptador genérico entre tablas lazy de PrimeFaces y la capa DAO.
  *
- * <p>{@link LazyDataModel} evita cargar una tabla completa de PostgreSQL:
+ * <p>
+ * {@link LazyDataModel} evita cargar una tabla completa de PostgreSQL:
  * PrimeFaces solicita el conteo y únicamente la página visible. Este modelo
  * convierte {@link FilterMeta} y {@link SortMeta} en {@link FiltroDAO} y
  * {@link OrdenDAO}; el DAO concreto delega en {@code DefaultDAO}, que crea la
  * consulta Criteria ejecutada por JPA.</p>
  *
- * <p>Recorrido: PrimeFaces → AbstractModel → DAO concreto → DefaultDAO → JPA
- * → PostgreSQL. También traduce entre el UUID de la entidad y el {@code rowKey}
+ * <p>
+ * Recorrido: PrimeFaces → AbstractModel → DAO concreto → DefaultDAO → JPA →
+ * PostgreSQL. También traduce entre el UUID de la entidad y el {@code rowKey}
  * textual requerido para selección de filas.</p>
  *
  * @param <T> entidad mostrada por la tabla
  */
 public abstract class AbstractModel<T> extends LazyDataModel<T> {
 
-    /** Contrato de persistencia inyectado por el modelo concreto. */
+    /**
+     * Contrato de persistencia inyectado por el modelo concreto.
+     */
     private final DAOInterface<T> dao;
-    /** Estado que decide si la vista lista, crea o edita. */
+    /**
+     * Estado que decide si la vista lista, crea o edita.
+     */
     private ESTADO_CRUD estado = ESTADO_CRUD.LISTADO;
 
     protected AbstractModel(DAOInterface<T> dao) {
@@ -118,23 +124,33 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
         return activos.stream()
                 .filter(meta -> meta.getField() != null && !meta.getField().isBlank())
                 .map(meta -> new OrdenDAO(meta.getField(), meta.getOrder() == SortOrder.DESCENDING
-                        ? DireccionOrden.DESCENDENTE : DireccionOrden.ASCENDENTE))
+                ? DireccionOrden.DESCENDENTE : DireccionOrden.ASCENDENTE))
                 .toList();
     }
 
     private OperadorFiltro convertirOperador(MatchMode modo) {
-        if (modo == null) return OperadorFiltro.IGUAL;
+        if (modo == null) {
+            return OperadorFiltro.IGUAL;
+        }
         return switch (modo) {
-            case CONTAINS -> OperadorFiltro.CONTIENE;
-            case STARTS_WITH -> OperadorFiltro.INICIA_CON;
-            case ENDS_WITH -> OperadorFiltro.TERMINA_CON;
-            case NOT_CONTAINS, NOT_STARTS_WITH, NOT_ENDS_WITH, NOT_EXACT,
-                    NOT_EQUALS -> OperadorFiltro.DISTINTO;
-            case LESS_THAN -> OperadorFiltro.MENOR_QUE;
-            case LESS_THAN_EQUALS -> OperadorFiltro.MENOR_O_IGUAL;
-            case GREATER_THAN -> OperadorFiltro.MAYOR_QUE;
-            case GREATER_THAN_EQUALS -> OperadorFiltro.MAYOR_O_IGUAL;
-            default -> OperadorFiltro.IGUAL;
+            case CONTAINS ->
+                OperadorFiltro.CONTIENE;
+            case STARTS_WITH ->
+                OperadorFiltro.INICIA_CON;
+            case ENDS_WITH ->
+                OperadorFiltro.TERMINA_CON;
+            case NOT_CONTAINS, NOT_STARTS_WITH, NOT_ENDS_WITH, NOT_EXACT, NOT_EQUALS ->
+                OperadorFiltro.DISTINTO;
+            case LESS_THAN ->
+                OperadorFiltro.MENOR_QUE;
+            case LESS_THAN_EQUALS ->
+                OperadorFiltro.MENOR_O_IGUAL;
+            case GREATER_THAN ->
+                OperadorFiltro.MAYOR_QUE;
+            case GREATER_THAN_EQUALS ->
+                OperadorFiltro.MAYOR_O_IGUAL;
+            default ->
+                OperadorFiltro.IGUAL;
         };
     }
 

@@ -19,6 +19,7 @@
         <maven.compiler.release>21</maven.compiler.release>
         <jakartaee.version>11.0.0</jakartaee.version>
         <openliberty.version>26.0.0.8</openliberty.version>
+        <liberty.install.dir>${user.home}/openliberty/wlp</liberty.install.dir>
         <liberty.maven.plugin.version>3.12.1</liberty.maven.plugin.version>
         <liberty.server.name>GalenosSV</liberty.server.name>
         <postgresql.jdbc.version>42.7.4</postgresql.jdbc.version>
@@ -106,7 +107,7 @@
             </plugin>
 
             <!-- JaCoCo instrumenta las pruebas y genera el reporte de cobertura. -->
-            <!-- Copia PrimeFaces a target/primefaces para la biblioteca común de Liberty. -->
+            <!-- Copia PrimeFaces a la biblioteca común de la instalación existente de Liberty. -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -128,8 +129,8 @@
             </plugin>
 
             <!--
-            Descarga/prepara Open Liberty, copia el driver PostgreSQL y permite
-            arrancar con mvn liberty:run. Comandos principales:
+            Utiliza una instalación existente de Open Liberty, copia el driver
+            PostgreSQL y permite arrancar con mvn liberty:run. Comandos principales:
             mvn test ejecuta pruebas; mvn clean package limpia y crea el WAR;
             mvn liberty:run inicia el servidor y despliega la aplicación.
             -->
@@ -152,7 +153,7 @@
                                     <version>15.0.17</version>
                                     <classifier>jakarta</classifier>
                                     <type>jar</type>
-                                    <outputDirectory>${project.build.directory}/liberty/wlp/usr/shared/resources/primefaces</outputDirectory>
+                                    <outputDirectory>${liberty.install.dir}/usr/shared/resources/primefaces</outputDirectory>
                                     <destFileName>primefaces-15.0.17-jakarta.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>
@@ -167,13 +168,8 @@
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>${liberty.maven.plugin.version}</version>
                 <configuration>
+                    <installDirectory>${liberty.install.dir}</installDirectory>
                     <serverName>${liberty.server.name}</serverName>
-                    <runtimeArtifact>
-                        <groupId>io.openliberty</groupId>
-                        <artifactId>openliberty-runtime</artifactId>
-                        <version>${openliberty.version}</version>
-                        <type>zip</type>
-                    </runtimeArtifact>
                     <copyDependencies>
                         <dependencyGroup>
                             <location>jdbc</location>
