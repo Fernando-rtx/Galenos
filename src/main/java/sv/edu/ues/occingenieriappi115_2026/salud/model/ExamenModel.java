@@ -8,6 +8,7 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import org.primefaces.event.SelectEvent;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Examen;
 
@@ -39,6 +40,10 @@ public class ExamenModel extends AbstractModel<Examen> implements Serializable {
     public void seleccionar(Examen seleccionado) {
         this.seleccionado = seleccionado;
         setEstado(ESTADO_CRUD.EDICION);
+    }
+
+    public void seleccionarFila(SelectEvent<Examen> evento) {
+        seleccionar(evento.getObject());
     }
 
     public void validarNombre(FacesContext contexto, UIComponent componente, Object valor) {

@@ -13,8 +13,7 @@
     </f:metadata>
     <ui:define name="titulo">#{msg['persona.titulo']} | #{msg['app.nombre']}</ui:define>
     <ui:define name="head">
-        <h:outputStylesheet library="estilos"
-                            name="persona.css" />
+        <h:outputStylesheet library="estilos" name="persona.css" />
     </ui:define>
     <ui:define name="contenido">
         <!-- Encabezado y navegación contextual -->
@@ -30,6 +29,7 @@
                         <div>
                             <crud:botones-top model="#{personaModel}"
                                               actualizar="messages personaTable edicionDialog"
+                                              resetNuevo="true"
                                               oncompleteNuevo="PF('personaDialog').show()" />
                         </div>
                     </div>
@@ -40,6 +40,8 @@
 
                     <!-- Tabla principal -->
                     <div class="table-title">#{msg['persona.lista']}</div>
+                    <h:outputText value="#{msg['crud.dobleClicEditar']}"
+                                  styleClass="page-subtitle" />
                     <p:dataTable id="personaTable"
                                  value="#{personaModel}"
                                  var="item"
@@ -52,9 +54,9 @@
                                  rowKey="#{personaModel.getRowKey(item)}"
                                  emptyMessage="#{msg['persona.sinRegistros']}"
                                  styleClass="clinical-table persona-table">
-                        <p:ajax event="rowSelect"
-                                listener="#{personaModel.seleccionar(item)}"
-                                update="edicionDialog @form"
+                        <p:ajax event="rowDblselect"
+                                listener="#{personaModel.seleccionarFila}"
+                                update="edicionDialog"
                                 oncomplete="PF('personaDialog').show()" />
                         <p:column headerText="#{msg['persona.nombres']}"
                                   field="nombres"
@@ -78,16 +80,6 @@
                                 <f:convertDateTime pattern="dd/MM/yyyy" />
                             </h:outputText>
                         </p:column>
-                        <p:column headerText="#{msg['comun.acciones']}"
-                                  styleClass="action-cell">
-                            <p:commandButton icon="pi pi-pencil"
-                                             title="#{msg['crud.editar']}"
-                                             action="#{personaModel.seleccionar(item)}"
-                                             process="@this"
-                                             update="edicionDialog @form"
-                                             oncomplete="PF('personaDialog').show()"
-                                             styleClass="edit-button" />
-                        </p:column>
                     </p:dataTable>
                 </div>
             </section>
@@ -102,6 +94,11 @@
                   resizable="false"
                   width="900"
                   styleClass="clinical-dialog">
+            <p:ajax event="close"
+                    listener="#{personaModel.cancelar}"
+                    process="@this"
+                    update="edicionDialog"
+                    resetValues="true" />
             <p:outputPanel id="edicionContenido">
                 <h:panelGroup rendered="#{personaModel.seleccionado ne null}">
                     <p:tabView id="personaTabs">
@@ -164,16 +161,24 @@
                         <p:tab title="Documentos"
                                disabled="#{personaModel.seleccionado.idPersona eq null}">
                             <p:outputPanel id="documentosContenido">
-                                <p:commandButton value="+ #{msg['documento.nuevo']}"
+                                <p:commandButton value="#{msg['documento.nuevo']}"
                                                  icon="pi pi-plus"
                                                  action="#{documentoModel.nuevoParaPersona(personaModel.seleccionado)}"
                                                  process="@this"
                                                  update="documentosContenido" />
                                 <p:dataTable id="documentosTable"
-                                             value="#{documentoModel.documentosPorPersona(personaModel.seleccionado)}"
+                                             value="#{documentoModel.getDocumentosPorPersona(personaModel.seleccionado)}"
                                              var="documento"
+                                             selectionMode="single"
+                                             selection="#{documentoModel.seleccionado}"
+                                             rowKey="#{documento.idDocumento}"
                                              emptyMessage="#{msg['documento.sinRegistros']}"
                                              styleClass="clinical-table">
+                                    <p:ajax event="rowDblselect"
+                                            listener="#{documentoModel.seleccionarParaPersona(documentoModel.seleccionado, personaModel.seleccionado)}"
+                                            process="@this"
+                                            update="documentosContenido"
+                                            resetValues="true" />
                                     <p:column headerText="#{msg['documento.tipo']}">
                                         <h:outputText value="#{documento.idTipoDocumento.nombre}" />
                                     </p:column>
@@ -183,16 +188,9 @@
                                     <p:column headerText="#{msg['documento.rutaFisica']}">
                                         <h:outputText value="#{empty documento.rutaFisica ? msg['comun.sinDato'] : documento.rutaFisica}" />
                                     </p:column>
-                                    <p:column headerText="#{msg['comun.acciones']}">
-                                        <p:commandButton icon="pi pi-pencil"
-                                                         title="#{msg['crud.editar']}"
-                                                         action="#{documentoModel.seleccionarParaPersona(documento, personaModel.seleccionado)}"
-                                                         process="@this"
-                                                         update="documentosContenido" />
-                                    </p:column>
                                 </p:dataTable>
 
-                                <h:panelGroup rendered="#{documentoModel.seleccionadoParaPersona(personaModel.seleccionado)}">
+                                <h:panelGroup rendered="#{documentoModel.isSeleccionadoParaPersona(personaModel.seleccionado)}">
                                     <p:outputPanel id="documentoForm"
                                                    layout="block"
                                                    styleClass="dialog-form">
@@ -245,32 +243,33 @@
                         <p:tab title="Contactos"
                                disabled="#{personaModel.seleccionado.idPersona eq null}">
                             <p:outputPanel id="contactosContenido">
-                                <p:commandButton value="+ #{msg['medioContacto.nuevo']}"
+                                <p:commandButton value="#{msg['medioContacto.nuevo']}"
                                                  icon="pi pi-plus"
                                                  action="#{medioContactoModel.nuevoParaPersona(personaModel.seleccionado)}"
                                                  process="@this"
                                                  update="contactosContenido" />
                                 <p:dataTable id="contactosTable"
-                                             value="#{medioContactoModel.contactosPorPersona(personaModel.seleccionado)}"
+                                             value="#{medioContactoModel.getContactosPorPersona(personaModel.seleccionado)}"
                                              var="contacto"
+                                             selectionMode="single"
+                                             selection="#{medioContactoModel.seleccionado}"
+                                             rowKey="#{contacto.idMedioContacto}"
                                              emptyMessage="#{msg['medioContacto.sinRegistros']}"
                                              styleClass="clinical-table">
+                                    <p:ajax event="rowDblselect"
+                                            listener="#{medioContactoModel.seleccionarParaPersona(medioContactoModel.seleccionado, personaModel.seleccionado)}"
+                                            process="@this"
+                                            update="contactosContenido"
+                                            resetValues="true" />
                                     <p:column headerText="#{msg['medioContacto.tipo']}">
                                         <h:outputText value="#{contacto.idTipoMedioContacto.nombre}" />
                                     </p:column>
                                     <p:column headerText="#{msg['medioContacto.valor']}">
                                         <h:outputText value="#{contacto.valor}" />
                                     </p:column>
-                                    <p:column headerText="#{msg['comun.acciones']}">
-                                        <p:commandButton icon="pi pi-pencil"
-                                                         title="#{msg['crud.editar']}"
-                                                         action="#{medioContactoModel.seleccionarParaPersona(contacto, personaModel.seleccionado)}"
-                                                         process="@this"
-                                                         update="contactosContenido" />
-                                    </p:column>
                                 </p:dataTable>
 
-                                <h:panelGroup rendered="#{medioContactoModel.seleccionadoParaPersona(personaModel.seleccionado)}">
+                                <h:panelGroup rendered="#{medioContactoModel.isSeleccionadoParaPersona(personaModel.seleccionado)}">
                                     <p:outputPanel id="contactoForm"
                                                    layout="block"
                                                    styleClass="dialog-form">
@@ -318,16 +317,24 @@
                         <p:tab title="Roles"
                                disabled="#{personaModel.seleccionado.idPersona eq null}">
                             <p:outputPanel id="rolesContenido">
-                                <p:commandButton value="+ #{msg['personaRol.nuevo']}"
+                                <p:commandButton value="#{msg['personaRol.nuevo']}"
                                                  icon="pi pi-plus"
                                                  action="#{personaRolModel.nuevoParaPersona(personaModel.seleccionado)}"
                                                  process="@this"
                                                  update="rolesContenido" />
                                 <p:dataTable id="rolesTable"
-                                             value="#{personaRolModel.rolesPorPersona(personaModel.seleccionado)}"
+                                             value="#{personaRolModel.getRolesPorPersona(personaModel.seleccionado)}"
                                              var="personaRol"
+                                             selectionMode="single"
+                                             selection="#{personaRolModel.seleccionado}"
+                                             rowKey="#{personaRol.idPersonaRol}"
                                              emptyMessage="#{msg['personaRol.sinRegistros']}"
                                              styleClass="clinical-table">
+                                    <p:ajax event="rowDblselect"
+                                            listener="#{personaRolModel.seleccionarParaPersona(personaRolModel.seleccionado, personaModel.seleccionado)}"
+                                            process="@this"
+                                            update="rolesContenido"
+                                            resetValues="true" />
                                     <p:column headerText="#{msg['personaRol.rol']}">
                                         <h:outputText value="#{personaRol.idRol.nombre}" />
                                     </p:column>
@@ -339,16 +346,9 @@
                                             <f:convertDateTime pattern="dd/MM/yyyy" />
                                         </h:outputText>
                                     </p:column>
-                                    <p:column headerText="#{msg['comun.acciones']}">
-                                        <p:commandButton icon="pi pi-pencil"
-                                                         title="#{msg['crud.editar']}"
-                                                         action="#{personaRolModel.seleccionarParaPersona(personaRol, personaModel.seleccionado)}"
-                                                         process="@this"
-                                                         update="rolesContenido" />
-                                    </p:column>
                                 </p:dataTable>
 
-                                <h:panelGroup rendered="#{personaRolModel.seleccionadoParaPersona(personaModel.seleccionado)}">
+                                <h:panelGroup rendered="#{personaRolModel.isSeleccionadoParaPersona(personaModel.seleccionado)}">
                                     <p:outputPanel id="rolForm"
                                                    layout="block"
                                                    styleClass="dialog-form">
