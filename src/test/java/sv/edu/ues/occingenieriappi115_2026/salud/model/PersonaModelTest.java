@@ -9,6 +9,7 @@ import java.util.ListResourceBundle;
 import java.util.ResourceBundle;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.primefaces.event.SelectEvent;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Persona;
 import static org.junit.jupiter.api.Assertions.*;
@@ -122,6 +123,19 @@ class PersonaModelTest {
         m.seleccionar(p);
         assertSame(p, m.getSeleccionado());
         assertEquals(ESTADO_CRUD.EDICION, m.getEstado());
+    }
+
+    @Test
+    void dobleClicSeleccionaPersonaDelEvento() {
+        PersonaModel modelo = new PersonaModel(mock(PersonaDAO.class));
+        Persona persona = new Persona();
+        SelectEvent<Persona> evento = mock(SelectEvent.class);
+        when(evento.getObject()).thenReturn(persona);
+
+        modelo.seleccionarFila(evento);
+
+        assertSame(persona, modelo.getSeleccionado());
+        assertEquals(ESTADO_CRUD.EDICION, modelo.getEstado());
     }
 
     @Test

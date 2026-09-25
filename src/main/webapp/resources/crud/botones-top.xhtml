@@ -11,10 +11,21 @@
     -->
 
     <cc:interface>
-        <cc:attribute name="model" required="true" />
-        <cc:attribute name="actualizar" required="false" default="@form" />
-        <cc:attribute name="oncompleteNuevo" required="false" default="" />
-        <cc:attribute name="oncompleteCancelar" required="false" default="" />
+        <cc:attribute name="resetNuevo"
+                      required="false"
+                      default="false"
+                      type="java.lang.Boolean" />
+        <cc:attribute name="model"
+                      required="true" />
+        <cc:attribute name="actualizar"
+                      required="false"
+                      default="@form" />
+        <cc:attribute name="oncompleteNuevo"
+                      required="false"
+                      default="" />
+        <cc:attribute name="oncompleteCancelar"
+                      required="false"
+                      default="" />
     </cc:interface>
 
     <cc:implementation>
@@ -26,6 +37,7 @@
                 action="#{cc.attrs.model.nuevo}"
                 process="@this"
                 update="#{cc.attrs.actualizar}"
+                resetValues="#{cc.attrs.resetNuevo}"
                 rendered="#{cc.attrs.model.estado eq 'LISTADO'}"
                 oncomplete="#{cc.attrs.oncompleteNuevo}"
                 styleClass="clinical-primary" />
