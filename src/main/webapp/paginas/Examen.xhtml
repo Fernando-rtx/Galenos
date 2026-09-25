@@ -17,6 +17,8 @@
                          rendered="#{examenModel.estado eq 'LISTADO'}"
                          oncomplete="PF('examenDialog').show()" />
         <p:messages id="messages" showDetail="true" closable="true" />
+        <h:outputText value="#{msg['crud.dobleClicEditar']}"
+                      styleClass="page-subtitle" />
 
         <p:remoteCommand name="cargarTiposExamen"
                          action="#{examenTipoExamenModel.cargarPorExamen(examenModel.seleccionado)}"
@@ -35,8 +37,8 @@
                      selection="#{examenModel.seleccionado}"
                      rowKey="#{examenModel.getRowKey(item)}"
                      emptyMessage="#{msg['examen.sinRegistros']}">
-            <p:ajax event="rowSelect"
-                    listener="#{examenModel.seleccionar(item)}"
+            <p:ajax event="rowDblselect"
+                    listener="#{examenModel.seleccionarFila}"
                     update="edicionDialog"
                     oncomplete="cargarTiposExamen()" />
             <p:column headerText="#{msg['examen.nombre']}"
@@ -51,13 +53,6 @@
             </p:column>
             <p:column headerText="#{msg['examen.estado']}">
                 <h:outputText value="#{item.activo eq true ? msg['examen.activo'] : msg['examen.inactivo']}" />
-            </p:column>
-            <p:column headerText="#{msg['comun.acciones']}">
-                <p:commandButton value="#{msg['crud.editar']}"
-                                 action="#{examenModel.seleccionar(item)}"
-                                 process="@this"
-                                 update="edicionDialog"
-                                 oncomplete="cargarTiposExamen()" />
             </p:column>
         </p:dataTable>
 
