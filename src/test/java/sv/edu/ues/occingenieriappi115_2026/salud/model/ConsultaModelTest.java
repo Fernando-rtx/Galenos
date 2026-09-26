@@ -123,4 +123,30 @@ class ConsultaModelTest {
 
         assertEquals(1, model.getPersonasRoles().size());
     }
+
+    @Test
+    void editarSeleccionadoCambiaEstadoAEdicionConLaSeleccionEnlazada() {
+        ConsultaModel model = new ConsultaModel(
+                mock(ConsultaDAO.class),
+                mock(PersonaRolDAO.class));
+        Consulta consulta = new Consulta();
+        model.setSeleccionado(consulta);
+
+        model.editarSeleccionado();
+
+        assertSame(consulta, model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.EDICION, model.getEstado());
+    }
+
+    @Test
+    void editarSeleccionadoSinSeleccionNoRompeNiCambiaElEstado() {
+        ConsultaModel model = new ConsultaModel(
+                mock(ConsultaDAO.class),
+                mock(PersonaRolDAO.class));
+
+        assertDoesNotThrow(model::editarSeleccionado);
+
+        assertNull(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+    }
 }

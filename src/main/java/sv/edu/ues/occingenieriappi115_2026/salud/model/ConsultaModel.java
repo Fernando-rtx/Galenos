@@ -47,6 +47,17 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
         setEstado(ESTADO_CRUD.EDICION);
     }
 
+    /**
+     * Abre la edición del registro ya seleccionado por la tabla. La tabla enlaza
+     * la selección a {@link #seleccionado} antes de disparar el evento de fila,
+     * por lo que este método solo cambia el estado a edición.
+     */
+    public void editarSeleccionado() {
+        if (seleccionado != null) {
+            setEstado(ESTADO_CRUD.EDICION);
+        }
+    }
+
     public void guardar() {
         if (seleccionado == null) {
             return;

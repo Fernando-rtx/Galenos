@@ -88,7 +88,7 @@
 
                             <p:ajax
                                 event="rowSelect"
-                                listener="#{consultaModel.seleccionar(item)}"
+                                listener="#{consultaModel.editarSeleccionado}"
                                 update="edicionDialog"
                                 oncomplete="PF('consultaDialog').show()" />
 
@@ -153,20 +153,6 @@
                                 <h:outputText
                                     value="#{item.idPersonaRol.idPersona.nombres} #{item.idPersonaRol.idPersona.apellidos} - #{item.idPersonaRol.idRol.nombre}"
                                     styleClass="personarol-name" />
-                            </p:column>
-
-                            <p:column
-                                headerText="#{msg['consulta.acciones']}"
-                                styleClass="action-cell">
-
-                                <p:commandButton
-                                    icon="pi pi-pencil"
-                                    title="#{msg['crud.editar']}"
-                                    styleClass="edit-button"
-                                    action="#{consultaModel.seleccionar(item)}"
-                                    process="@this"
-                                    update="edicionDialog"
-                                    oncomplete="PF('consultaDialog').show()" />
                             </p:column>
                         </p:dataTable>
                     </div>
