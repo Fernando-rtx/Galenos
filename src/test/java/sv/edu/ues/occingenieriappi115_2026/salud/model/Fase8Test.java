@@ -73,8 +73,15 @@ class Fase8Test {
     }
 
     private static class TestModel extends AbstractModel<Persona> {
+        private final DAOInterface<Persona> dao;
+
         TestModel(DAOInterface<Persona> dao) {
-            super(dao);
+            this.dao = dao;
+        }
+
+        @Override
+        protected DAOInterface<Persona> getDao() {
+            return dao;
         }
     }
 

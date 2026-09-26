@@ -1,5 +1,6 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
@@ -25,11 +26,23 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
     private static final Pattern PATRON_NOMBRE
             = Pattern.compile("^[\\p{L}][\\p{L}\\p{M}' -]*$");
 
+    @EJB
+    private PersonaDAO personaDAO;
     private Persona seleccionado;
 
+    public PersonaModel() {
+    }
+
+    public PersonaModel(PersonaDAO personaDAO) {
+        this.personaDAO = personaDAO;
+    }
+
     @Inject
-    public PersonaModel(PersonaDAO dao) {
-        super(dao);
+    transient FacesContext facesContext;
+
+    @Override
+    protected PersonaDAO getDao() {
+        return personaDAO;
     }
 
     public Persona getSeleccionado() {

@@ -1,7 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.List;
@@ -16,13 +17,30 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private ConsultaProcedimientoDAO consultaProcedimientoDAO;
+    @EJB
+    private ConsultaDAO consultaDAO;
     private ConsultaProcedimiento seleccionado;
     private List<Consulta> consultas;
 
-    @Inject
+    public ConsultaProcedimientoModel() {
+    }
+
     public ConsultaProcedimientoModel(ConsultaProcedimientoDAO consultaProcedimientoDAO, ConsultaDAO consultaDAO) {
-        super(consultaProcedimientoDAO);
+        this.consultaProcedimientoDAO = consultaProcedimientoDAO;
+        this.consultaDAO = consultaDAO;
+        inicializar();
+    }
+
+    @PostConstruct
+    public void inicializar() {
         this.consultas = consultaDAO.obtenerTodos();
+    }
+
+    @Override
+    protected ConsultaProcedimientoDAO getDao() {
+        return consultaProcedimientoDAO;
     }
 
     public ConsultaProcedimiento getSeleccionado() {
