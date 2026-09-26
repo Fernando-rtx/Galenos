@@ -169,6 +169,7 @@
             modal="true"
             responsive="true"
             resizable="false"
+            focus=":layoutForm:edicionDialog"
             width="900"
             styleClass="clinical-dialog">
 
@@ -211,7 +212,7 @@
                                         value="#{consultaModel.seleccionado.fechaInicio}"
                                         showIcon="true"
                                         pattern="dd/MM/yyyy HH:mm"
-                                        showTime="true"
+                                        showTime="true" timeInput="true"
                                         required="true"
                                         requiredMessage="#{msg['mensajes.error']}" />
                                 </div>
@@ -227,7 +228,7 @@
                                         value="#{consultaModel.seleccionado.fechaFin}"
                                         showIcon="true"
                                         pattern="dd/MM/yyyy HH:mm"
-                                        showTime="true" />
+                                        showTime="true" timeInput="true" />
                                 </div>
 
                                 <div class="form-field">
@@ -388,7 +389,7 @@
                                                 value="#{consultaProcedimientoModel.seleccionado.fechaInicio}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true"
+                                                showTime="true" timeInput="true"
                                                 required="true"
                                                 requiredMessage="#{msg['mensajes.error']}" />
                                         </div>
@@ -404,7 +405,7 @@
                                                 value="#{consultaProcedimientoModel.seleccionado.fechaFin}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" />
+                                                showTime="true" timeInput="true" />
                                         </div>
 
                                         <div class="form-field">
@@ -569,7 +570,7 @@
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.fechaInicio}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true"
+                                                showTime="true" timeInput="true"
                                                 required="true"
                                                 requiredMessage="#{msg['mensajes.error']}" />
                                         </div>
@@ -585,7 +586,7 @@
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.fechaFin}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" />
+                                                showTime="true" timeInput="true" />
                                         </div>
 
                                         <div class="form-field">
