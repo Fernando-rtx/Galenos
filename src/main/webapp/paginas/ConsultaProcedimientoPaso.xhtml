@@ -65,6 +65,10 @@
                             </div>
                         </div>
 
+                        <h:outputText
+                            value="#{msg['crud.dobleClicEditar']}"
+                            styleClass="page-subtitle" />
+
                         <p:dataTable
                             id="consultaProcedimientoPasoTable"
                             value="#{consultaProcedimientoPasoModel}"
@@ -77,10 +81,10 @@
                             selection="#{consultaProcedimientoPasoModel.seleccionado}"
                             rowKey="#{consultaProcedimientoPasoModel.getRowKey(item)}"
                             emptyMessage="#{msg['consultaProcedimientoPaso.sinRegistros']}"
-                            styleClass="consulta-procedimiento-paso-table">
+                            styleClass="clinical-table">
 
                             <p:ajax
-                                event="rowSelect"
+                                event="rowDblselect"
                                 listener="#{consultaProcedimientoPasoModel.seleccionar(item)}"
                                 update="edicionDialog"
                                 oncomplete="PF('consultaProcedimientoPasoDialog').show()" />
@@ -213,6 +217,8 @@
                                     itemLabel="#{cp.idConsulta.referenciaExterna} - #{cp.idProcedimiento}"
                                     itemValue="#{cp}" />
                             </p:selectOneMenu>
+
+                            <p:message for="consultaProcedimiento" />
                         </div>
 
                         <div class="form-field">
@@ -238,6 +244,8 @@
                                     itemLabel="#{pr.idPersona.nombres} #{pr.idPersona.apellidos} - #{pr.idRol.nombre}"
                                     itemValue="#{pr}" />
                             </p:selectOneMenu>
+
+                            <p:message for="personaRol" />
                         </div>
 
                         <div class="form-field">
@@ -254,6 +262,8 @@
                                 showTime="true"
                                 required="true"
                                 requiredMessage="#{msg['mensajes.error']}" />
+
+                            <p:message for="fechaInicio" />
                         </div>
 
                         <div class="form-field">
@@ -267,7 +277,10 @@
                                 value="#{consultaProcedimientoPasoModel.seleccionado.fechaFin}"
                                 showIcon="true"
                                 pattern="dd/MM/yyyy HH:mm"
-                                showTime="true" />
+                                showTime="true"
+                                validator="#{consultaProcedimientoPasoModel.validarFechaFin}" />
+
+                            <p:message for="fechaFin" />
                         </div>
 
                         <div class="form-field">
@@ -298,6 +311,8 @@
                                     itemLabel="COMPLETADO"
                                     itemValue="COMPLETADO" />
                             </p:selectOneMenu>
+
+                            <p:message for="estado" />
                         </div>
                     </div>
 

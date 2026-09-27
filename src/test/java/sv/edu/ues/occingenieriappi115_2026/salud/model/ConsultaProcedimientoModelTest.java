@@ -1,6 +1,13 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.faces.application.Application;
+import jakarta.faces.component.UIComponent;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.validator.ValidatorException;
+import java.util.Date;
 import java.util.List;
+import java.util.ListResourceBundle;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaDAO;
@@ -18,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -307,5 +315,66 @@ class ConsultaProcedimientoModelTest {
         consultaProcedimiento.setIdProcedimiento(idProcedimiento);
 
         assertEquals(idProcedimiento.toString(), model.getNombreProcedimiento(consultaProcedimiento));
+    }
+
+    @Test
+    void fechaFinAnteriorAInicioEsRechazada() {
+        ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
+                mock(ConsultaProcedimientoDAO.class), mock(ConsultaDAO.class), mock(ProcedimientoDAO.class));
+        ConsultaProcedimiento seleccionado = new ConsultaProcedimiento();
+        seleccionado.setFechaInicio(new Date(2_000L));
+        model.seleccionar(seleccionado);
+
+        assertThrows(ValidatorException.class, () -> model.validarFechaFin(
+                contexto(), componente("fechaFin"), new Date(1_000L)));
+    }
+
+    @Test
+    void fechaFinNulaEsAceptada() {
+        ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
+                mock(ConsultaProcedimientoDAO.class), mock(ConsultaDAO.class), mock(ProcedimientoDAO.class));
+        ConsultaProcedimiento seleccionado = new ConsultaProcedimiento();
+        seleccionado.setFechaInicio(new Date(1_000L));
+        model.seleccionar(seleccionado);
+
+        assertDoesNotThrow(() -> model.validarFechaFin(
+                contexto(), componente("fechaFin"), null));
+    }
+
+    @Test
+    void guardarRecortaObservaciones() {
+        ConsultaProcedimientoDAO dao = mock(ConsultaProcedimientoDAO.class);
+        ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
+                dao, mock(ConsultaDAO.class), mock(ProcedimientoDAO.class));
+        model.nuevo();
+        ConsultaProcedimiento seleccionado = model.getSeleccionado();
+        seleccionado.setObservaciones("  revision  ");
+
+        model.guardar();
+
+        assertEquals("revision", seleccionado.getObservaciones());
+        verify(dao).guardar(seleccionado);
+    }
+
+    private UIComponent componente(String id) {
+        UIComponent componente = mock(UIComponent.class);
+        when(componente.getId()).thenReturn(id);
+        return componente;
+    }
+
+    private FacesContext contexto() {
+        FacesContext contexto = mock(FacesContext.class);
+        Application aplicacion = mock(Application.class);
+        ResourceBundle bundle = new ListResourceBundle() {
+            @Override
+            protected Object[][] getContents() {
+                return new Object[][]{
+                    {"consultaProcedimiento.fechaFinAnterior", "Fecha fin anterior"}
+                };
+            }
+        };
+        when(contexto.getApplication()).thenReturn(aplicacion);
+        when(aplicacion.getResourceBundle(contexto, "msg")).thenReturn(bundle);
+        return contexto;
     }
 }

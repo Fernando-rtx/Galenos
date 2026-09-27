@@ -1,9 +1,12 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.faces.component.UIComponent;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,6 +158,7 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
         if (seleccionado == null) {
             return;
         }
+        seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
         switch (getEstado()) {
             case CREACION -> getDao().guardar(seleccionado);
             case EDICION -> seleccionado = getDao().actualizar(seleccionado);
@@ -167,5 +171,32 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
     public void cancelar() {
         seleccionado = null;
         setEstado(ESTADO_CRUD.LISTADO);
+    }
+
+    /**
+     * Valida que la fecha de fin no sea anterior a la de inicio. La fecha de fin
+     * es opcional, por lo que un valor nulo se acepta.
+     *
+     * @param contexto contexto Faces activo
+     * @param componente componente que dispara la validación
+     * @param valor fecha de fin ingresada
+     */
+    public void validarFechaFin(FacesContext contexto, UIComponent componente, Object valor) {
+        if (!(valor instanceof Date fechaFin)) {
+            return;
+        }
+        if (seleccionado == null || seleccionado.getFechaInicio() == null) {
+            return;
+        }
+        if (fechaFin.before(seleccionado.getFechaInicio())) {
+            lanzarValidacion(contexto, "consultaProcedimiento.fechaFinAnterior");
+        }
+    }
+
+    private String normalizar(String valor) {
+        if (valor == null) {
+            return null;
+        }
+        return valor.trim();
     }
 }

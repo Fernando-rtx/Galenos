@@ -1,5 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.validator.ValidatorException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -156,5 +159,27 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
 
     private int limitarConteo(long conteo) {
         return conteo > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) conteo;
+    }
+
+    /**
+     * Lanza una validación con el mensaje i18n indicado. Centraliza el acceso al
+     * bundle {@code msg} para que los modelos concretos solo definan la regla.
+     *
+     * @param contexto contexto Faces activo
+     * @param clave clave del bundle de mensajes
+     * @throws ValidatorException siempre, con el mensaje resuelto
+     */
+    protected void lanzarValidacion(FacesContext contexto, String clave) {
+        String mensaje = contexto
+                .getApplication()
+                .getResourceBundle(contexto, "msg")
+                .getString(clave);
+        throw new ValidatorException(
+                new FacesMessage(
+                        FacesMessage.SEVERITY_ERROR,
+                        mensaje,
+                        mensaje
+                )
+        );
     }
 }

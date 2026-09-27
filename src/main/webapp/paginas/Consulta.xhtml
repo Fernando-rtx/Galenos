@@ -10,6 +10,11 @@
     xmlns:ui="jakarta.faces.facelets"
     template="/WEB-INF/plantillas/general.xhtml">
 
+    <f:metadata>
+        <f:viewParam name="idConsulta"
+                     value="#{consultaModel.idConsultaContexto}" />
+    </f:metadata>
+
     <ui:define name="titulo">
         #{msg['consulta.titulo']} | #{msg['app.nombre']}
     </ui:define>
@@ -18,9 +23,6 @@
         <h:outputStylesheet
             library="estilos"
             name="consulta.css"/>
-        <h:outputStylesheet
-            library="estilos"
-            name="consulta-procedimiento.css"/>
         <h:outputStylesheet
             library="estilos"
             name="consulta-procedimiento-paso.css"/>
@@ -72,6 +74,10 @@
                             </div>
                         </div>
 
+                        <h:outputText
+                            value="#{msg['crud.dobleClicEditar']}"
+                            styleClass="page-subtitle" />
+
                         <p:dataTable
                             id="consultasTable"
                             value="#{consultaModel}"
@@ -84,10 +90,10 @@
                             selection="#{consultaModel.seleccionado}"
                             rowKey="#{consultaModel.getRowKey(item)}"
                             emptyMessage="#{msg['consulta.sinRegistros']}"
-                            styleClass="consulta-table">
+                            styleClass="clinical-table">
 
                             <p:ajax
-                                event="rowSelect"
+                                event="rowDblselect"
                                 listener="#{consultaModel.editarSeleccionado}"
                                 update="edicionDialog"
                                 oncomplete="PF('consultaDialog').show()" />
@@ -215,6 +221,8 @@
                                         showTime="true" timeInput="true"
                                         required="true"
                                         requiredMessage="#{msg['mensajes.error']}" />
+
+                                    <p:message for="consultaFechaInicio" />
                                 </div>
 
                                 <div class="form-field">
@@ -228,7 +236,10 @@
                                         value="#{consultaModel.seleccionado.fechaFin}"
                                         showIcon="true"
                                         pattern="dd/MM/yyyy HH:mm"
-                                        showTime="true" timeInput="true" />
+                                        showTime="true" timeInput="true"
+                                        validator="#{consultaModel.validarFechaFin}" />
+
+                                    <p:message for="consultaFechaFin" />
                                 </div>
 
                                 <div class="form-field">
@@ -280,6 +291,8 @@
                                             itemLabel="#{pr.idPersona.nombres} #{pr.idPersona.apellidos} - #{pr.idRol.nombre}"
                                             itemValue="#{pr}" />
                                     </p:selectOneMenu>
+
+                                    <p:message for="consultaPersonaRol" />
                                 </div>
                             </p:outputPanel>
 
@@ -311,7 +324,7 @@
                                     selection="#{consultaProcedimientoModel.seleccionado}"
                                     rowKey="#{consultaProcedimientoModel.getRowKey(procedimiento)}"
                                     emptyMessage="#{msg['consultaProcedimiento.sinRegistros']}"
-                                    styleClass="consulta-procedimiento-table">
+                                    styleClass="clinical-table">
                                     <p:ajax
                                         event="rowDblselect"
                                         listener="#{consultaProcedimientoModel.seleccionarParaConsulta(consultaProcedimientoModel.seleccionado, consultaModel.seleccionado)}"
@@ -376,6 +389,8 @@
                                                     itemLabel="#{p.nombre}"
                                                     itemValue="#{p.idProcedimiento}" />
                                             </p:selectOneMenu>
+
+                                            <p:message for="procedimientoIdProcedimiento" />
                                         </div>
 
                                         <div class="form-field">
@@ -392,6 +407,8 @@
                                                 showTime="true" timeInput="true"
                                                 required="true"
                                                 requiredMessage="#{msg['mensajes.error']}" />
+
+                                            <p:message for="procedimientoFechaInicio" />
                                         </div>
 
                                         <div class="form-field">
@@ -405,7 +422,10 @@
                                                 value="#{consultaProcedimientoModel.seleccionado.fechaFin}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" timeInput="true" />
+                                                showTime="true" timeInput="true"
+                                                validator="#{consultaProcedimientoModel.validarFechaFin}" />
+
+                                            <p:message for="procedimientoFechaFin" />
                                         </div>
 
                                         <div class="form-field">
@@ -459,7 +479,7 @@
                                     selection="#{consultaProcedimientoPasoModel.seleccionado}"
                                     rowKey="#{consultaProcedimientoPasoModel.getRowKey(paso)}"
                                     emptyMessage="#{msg['consultaProcedimientoPaso.sinRegistros']}"
-                                    styleClass="consulta-procedimiento-paso-table">
+                                    styleClass="clinical-table">
                                     <p:ajax
                                         event="rowDblselect"
                                         listener="#{consultaProcedimientoPasoModel.seleccionarParaConsulta(consultaProcedimientoPasoModel.seleccionado, consultaModel.seleccionado)}"
@@ -532,6 +552,8 @@
                                                     itemLabel="#{consultaProcedimientoModel.getNombreProcedimiento(cp)}"
                                                     itemValue="#{cp}" />
                                             </p:selectOneMenu>
+
+                                            <p:message for="pasoConsultaProcedimiento" />
                                         </div>
 
                                         <div class="form-field">
@@ -557,6 +579,8 @@
                                                     itemLabel="#{pr.idPersona.nombres} #{pr.idPersona.apellidos} - #{pr.idRol.nombre}"
                                                     itemValue="#{pr}" />
                                             </p:selectOneMenu>
+
+                                            <p:message for="pasoPersonaRol" />
                                         </div>
 
                                         <div class="form-field">
@@ -573,6 +597,8 @@
                                                 showTime="true" timeInput="true"
                                                 required="true"
                                                 requiredMessage="#{msg['mensajes.error']}" />
+
+                                            <p:message for="pasoFechaInicio" />
                                         </div>
 
                                         <div class="form-field">
@@ -586,7 +612,10 @@
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.fechaFin}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" timeInput="true" />
+                                                showTime="true" timeInput="true"
+                                                validator="#{consultaProcedimientoPasoModel.validarFechaFin}" />
+
+                                            <p:message for="pasoFechaFin" />
                                         </div>
 
                                         <div class="form-field">
@@ -617,6 +646,8 @@
                                                     itemLabel="COMPLETADO"
                                                     itemValue="COMPLETADO" />
                                             </p:selectOneMenu>
+
+                                            <p:message for="pasoEstado" />
                                         </div>
                                     </p:outputPanel>
 

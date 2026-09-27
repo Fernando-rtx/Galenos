@@ -1,6 +1,14 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.faces.application.Application;
+import jakarta.faces.component.UIComponent;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.validator.ValidatorException;
+import java.util.Date;
 import java.util.List;
+import java.util.ListResourceBundle;
+import java.util.ResourceBundle;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaRolDAO;
@@ -12,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -148,5 +157,120 @@ class ConsultaModelTest {
 
         assertNull(model.getSeleccionado());
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+    }
+
+    @Test
+    void idDeContextoValidoSeleccionaLaConsulta() {
+        ConsultaDAO dao = mock(ConsultaDAO.class);
+        Consulta consulta = new Consulta(UUID.randomUUID());
+        when(dao.buscarPorId(consulta.getIdConsulta())).thenReturn(consulta);
+        ConsultaModel model = new ConsultaModel(dao, mock(PersonaRolDAO.class));
+
+        model.setIdConsultaContexto(consulta.getIdConsulta().toString());
+
+        assertSame(consulta, model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.EDICION, model.getEstado());
+    }
+
+    @Test
+    void idDeContextoInvalidoLimpiaLaSeleccion() {
+        ConsultaDAO dao = mock(ConsultaDAO.class);
+        ConsultaModel model = new ConsultaModel(dao, mock(PersonaRolDAO.class));
+        model.seleccionar(new Consulta());
+
+        model.setIdConsultaContexto("id-invalido");
+
+        assertNull(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+        verifyNoInteractions(dao);
+    }
+
+    @Test
+    void idDeContextoNuloNoModificaElEstado() {
+        ConsultaModel model = new ConsultaModel(
+                mock(ConsultaDAO.class),
+                mock(PersonaRolDAO.class));
+
+        assertDoesNotThrow(() -> model.setIdConsultaContexto("  "));
+
+        assertNull(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+    }
+
+    @Test
+    void fechaFinAnteriorAInicioEsRechazada() {
+        ConsultaModel model = new ConsultaModel(
+                mock(ConsultaDAO.class),
+                mock(PersonaRolDAO.class));
+        Consulta consulta = new Consulta();
+        consulta.setFechaInicio(new Date(2_000L));
+        model.seleccionar(consulta);
+
+        assertThrows(ValidatorException.class, () -> model.validarFechaFin(
+                contexto(), componente("consultaFechaFin"), new Date(1_000L)));
+    }
+
+    @Test
+    void fechaFinIgualAInicioEsAceptada() {
+        ConsultaModel model = new ConsultaModel(
+                mock(ConsultaDAO.class),
+                mock(PersonaRolDAO.class));
+        Consulta consulta = new Consulta();
+        consulta.setFechaInicio(new Date(1_000L));
+        model.seleccionar(consulta);
+
+        assertDoesNotThrow(() -> model.validarFechaFin(
+                contexto(), componente("consultaFechaFin"), new Date(1_000L)));
+    }
+
+    @Test
+    void fechaFinNulaEsAceptada() {
+        ConsultaModel model = new ConsultaModel(
+                mock(ConsultaDAO.class),
+                mock(PersonaRolDAO.class));
+        Consulta consulta = new Consulta();
+        consulta.setFechaInicio(new Date(1_000L));
+        model.seleccionar(consulta);
+
+        assertDoesNotThrow(() -> model.validarFechaFin(
+                contexto(), componente("consultaFechaFin"), null));
+    }
+
+    @Test
+    void guardarRecortaReferenciaYObservaciones() {
+        ConsultaDAO dao = mock(ConsultaDAO.class);
+        ConsultaModel model = new ConsultaModel(dao, mock(PersonaRolDAO.class));
+        model.nuevo();
+        Consulta consulta = model.getSeleccionado();
+        consulta.setReferenciaExterna("  REF-1  ");
+        consulta.setObservaciones("  nota  ");
+
+        model.guardar();
+
+        assertEquals("REF-1", consulta.getReferenciaExterna());
+        assertEquals("nota", consulta.getObservaciones());
+        verify(dao).guardar(consulta);
+    }
+
+    private UIComponent componente(String id) {
+        UIComponent componente = mock(UIComponent.class);
+        when(componente.getId()).thenReturn(id);
+        return componente;
+    }
+
+    private FacesContext contexto() {
+        FacesContext contexto = mock(FacesContext.class);
+        Application aplicacion = mock(Application.class);
+        ResourceBundle bundle = new ListResourceBundle() {
+            @Override
+            protected Object[][] getContents() {
+                return new Object[][]{
+                    {"consulta.fechaFinAnterior", "Fecha fin anterior"}
+                };
+            }
+        };
+        when(contexto.getApplication()).thenReturn(aplicacion);
+        when(aplicacion.getResourceBundle(contexto, "msg")).thenReturn(bundle);
+        return contexto;
     }
 }

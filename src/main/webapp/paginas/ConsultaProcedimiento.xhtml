@@ -65,6 +65,10 @@
                             </div>
                         </div>
 
+                        <h:outputText
+                            value="#{msg['crud.dobleClicEditar']}"
+                            styleClass="page-subtitle" />
+
                         <p:dataTable
                             id="consultaProcedimientoTable"
                             value="#{consultaProcedimientoModel}"
@@ -77,10 +81,10 @@
                             selection="#{consultaProcedimientoModel.seleccionado}"
                             rowKey="#{consultaProcedimientoModel.getRowKey(item)}"
                             emptyMessage="#{msg['consultaProcedimiento.sinRegistros']}"
-                            styleClass="consulta-procedimiento-table">
+                            styleClass="clinical-table">
 
                             <p:ajax
-                                event="rowSelect"
+                                event="rowDblselect"
                                 listener="#{consultaProcedimientoModel.seleccionar(item)}"
                                 update="edicionDialog"
                                 oncomplete="PF('consultaProcedimientoDialog').show()" />
@@ -217,6 +221,8 @@
                                     itemLabel="#{c.referenciaExterna}"
                                     itemValue="#{c}" />
                             </p:selectOneMenu>
+
+                            <p:message for="consulta" />
                         </div>
 
                         <div class="form-field">
@@ -230,6 +236,8 @@
                                 value="#{consultaProcedimientoModel.seleccionado.idProcedimiento}"
                                 required="true"
                                 requiredMessage="#{msg['mensajes.error']}" />
+
+                            <p:message for="idProcedimiento" />
                         </div>
 
                         <div class="form-field">
@@ -246,6 +254,8 @@
                                 showTime="true"
                                 required="true"
                                 requiredMessage="#{msg['mensajes.error']}" />
+
+                            <p:message for="fechaInicio" />
                         </div>
 
                         <div class="form-field">
@@ -259,7 +269,10 @@
                                 value="#{consultaProcedimientoModel.seleccionado.fechaFin}"
                                 showIcon="true"
                                 pattern="dd/MM/yyyy HH:mm"
-                                showTime="true" />
+                                showTime="true"
+                                validator="#{consultaProcedimientoModel.validarFechaFin}" />
+
+                            <p:message for="fechaFin" />
                         </div>
 
                         <div class="form-field">
