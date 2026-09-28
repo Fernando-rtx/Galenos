@@ -491,6 +491,13 @@
                                     </p:column>
 
                                     <p:column
+                                        headerText="#{msg['consultaProcedimientoPaso.procedimientoPaso']}"
+                                        styleClass="consulta-proc-cell">
+                                        <h:outputText
+                                            value="#{paso.idProcedimientoPaso != null ? paso.idProcedimientoPaso.nombre : '-'}" />
+                                    </p:column>
+
+                                    <p:column
                                         headerText="#{msg['consultaProcedimientoPaso.personaRol']}"
                                         styleClass="persona-rol-cell">
                                         <h:outputText
