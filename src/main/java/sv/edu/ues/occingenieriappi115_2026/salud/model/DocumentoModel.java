@@ -1,5 +1,6 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.component.UIInput;
@@ -25,8 +26,12 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoDocumento;
 @ViewScoped
 public class DocumentoModel extends AbstractModel<Documento> implements Serializable {
     private static final long serialVersionUID = 1L;
-    private final PersonaDAO personaDAO;
-    private final TipoDocumentoDAO tipoDocumentoDAO;
+    @EJB
+    private DocumentoDAO documentoDAO;
+    @EJB
+    private PersonaDAO personaDAO;
+    @EJB
+    private TipoDocumentoDAO tipoDocumentoDAO;
     @Inject
     private transient FacesContext facesContext;
     private Documento seleccionado;
@@ -34,11 +39,18 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     private List<Persona> personas;
     private List<TipoDocumento> tiposDocumento;
 
-    @Inject
-    public DocumentoModel(DocumentoDAO dao, PersonaDAO personaDAO, TipoDocumentoDAO tipoDocumentoDAO) {
-        super(dao);
+    public DocumentoModel() {
+    }
+
+    public DocumentoModel(DocumentoDAO documentoDAO, PersonaDAO personaDAO, TipoDocumentoDAO tipoDocumentoDAO) {
+        this.documentoDAO = documentoDAO;
         this.personaDAO = personaDAO;
         this.tipoDocumentoDAO = tipoDocumentoDAO;
+    }
+
+    @Override
+    protected DocumentoDAO getDao() {
+        return documentoDAO;
     }
 
     public Documento getSeleccionado() {

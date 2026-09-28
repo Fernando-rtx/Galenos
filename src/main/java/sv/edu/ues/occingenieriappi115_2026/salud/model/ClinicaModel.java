@@ -1,7 +1,7 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ClinicaDAO;
@@ -16,11 +16,21 @@ public class ClinicaModel extends AbstractModel<Clinica> implements Serializable
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private ClinicaDAO clinicaDAO;
+
     private Clinica seleccionado;
 
-    @Inject
+    public ClinicaModel() {
+    }
+
     public ClinicaModel(ClinicaDAO clinicaDAO) {
-        super(clinicaDAO);
+        this.clinicaDAO = clinicaDAO;
+    }
+
+    @Override
+    protected ClinicaDAO getDao() {
+        return clinicaDAO;
     }
 
     public Clinica getSeleccionado() {

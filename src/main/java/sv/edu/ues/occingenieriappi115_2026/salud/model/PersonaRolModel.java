@@ -1,5 +1,6 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.component.UIInput;
@@ -18,9 +19,14 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.*;
 @ViewScoped
 public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serializable {
     private static final long serialVersionUID = 1L;
-    private final PersonaDAO personaDAO;
-    private final RolDAO rolDAO;
-    private final ClinicaDAO clinicaDAO;
+    @EJB
+    private PersonaRolDAO personaRolDAO;
+    @EJB
+    private PersonaDAO personaDAO;
+    @EJB
+    private RolDAO rolDAO;
+    @EJB
+    private ClinicaDAO clinicaDAO;
     @Inject
     private transient FacesContext facesContext;
     private PersonaRol seleccionado;
@@ -29,12 +35,20 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     private List<Rol> roles;
     private List<Clinica> clinicas;
 
-    @Inject
-    public PersonaRolModel(PersonaRolDAO dao, PersonaDAO personaDAO, RolDAO rolDAO, ClinicaDAO clinicaDAO) {
-        super(dao);
+    public PersonaRolModel() {
+    }
+
+    public PersonaRolModel(PersonaRolDAO personaRolDAO, PersonaDAO personaDAO,
+            RolDAO rolDAO, ClinicaDAO clinicaDAO) {
+        this.personaRolDAO = personaRolDAO;
         this.personaDAO = personaDAO;
         this.rolDAO = rolDAO;
         this.clinicaDAO = clinicaDAO;
+    }
+
+    @Override
+    protected PersonaRolDAO getDao() {
+        return personaRolDAO;
     }
 
     public PersonaRol getSeleccionado() {

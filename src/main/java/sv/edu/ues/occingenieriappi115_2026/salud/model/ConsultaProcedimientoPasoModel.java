@@ -1,7 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.List;
@@ -18,18 +19,36 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private ConsultaProcedimientoPasoDAO consultaProcedimientoPasoDAO;
+    @EJB
+    private ConsultaProcedimientoDAO consultaProcedimientoDAO;
+    @EJB
+    private PersonaRolDAO personaRolDAO;
     private ConsultaProcedimientoPaso seleccionado;
     private List<ConsultaProcedimiento> consultaProcedimientos;
     private List<PersonaRol> personasRoles;
 
-    @Inject
-    public ConsultaProcedimientoPasoModel(
-            ConsultaProcedimientoPasoDAO consultaProcedimientoPasoDAO,
-            ConsultaProcedimientoDAO consultaProcedimientoDAO,
-            PersonaRolDAO personaRolDAO) {
-        super(consultaProcedimientoPasoDAO);
+    public ConsultaProcedimientoPasoModel() {
+    }
+
+    public ConsultaProcedimientoPasoModel(ConsultaProcedimientoPasoDAO consultaProcedimientoPasoDAO,
+            ConsultaProcedimientoDAO consultaProcedimientoDAO, PersonaRolDAO personaRolDAO) {
+        this.consultaProcedimientoPasoDAO = consultaProcedimientoPasoDAO;
+        this.consultaProcedimientoDAO = consultaProcedimientoDAO;
+        this.personaRolDAO = personaRolDAO;
+        inicializar();
+    }
+
+    @PostConstruct
+    public void inicializar() {
         this.consultaProcedimientos = consultaProcedimientoDAO.obtenerTodos();
         this.personasRoles = personaRolDAO.obtenerTodos();
+    }
+
+    @Override
+    protected ConsultaProcedimientoPasoDAO getDao() {
+        return consultaProcedimientoPasoDAO;
     }
 
     public ConsultaProcedimientoPaso getSeleccionado() {

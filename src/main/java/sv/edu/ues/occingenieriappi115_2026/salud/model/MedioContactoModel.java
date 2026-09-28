@@ -1,5 +1,6 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.component.UIInput;
@@ -26,8 +27,12 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoMedioContacto;
 @ViewScoped
 public class MedioContactoModel extends AbstractModel<MedioContacto> implements Serializable {
     private static final long serialVersionUID = 1L;
-    private final PersonaDAO personaDAO;
-    private final TipoMedioContactoDAO tipoMedioContactoDAO;
+    @EJB
+    private MedioContactoDAO medioContactoDAO;
+    @EJB
+    private PersonaDAO personaDAO;
+    @EJB
+    private TipoMedioContactoDAO tipoMedioContactoDAO;
     @Inject
     private transient FacesContext facesContext;
     private MedioContacto seleccionado;
@@ -35,11 +40,19 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
     private List<Persona> personas;
     private List<TipoMedioContacto> tiposMedioContacto;
 
-    @Inject
-    public MedioContactoModel(MedioContactoDAO dao, PersonaDAO personaDAO, TipoMedioContactoDAO tipoDAO) {
-        super(dao);
+    public MedioContactoModel() {
+    }
+
+    public MedioContactoModel(MedioContactoDAO medioContactoDAO, PersonaDAO personaDAO,
+            TipoMedioContactoDAO tipoMedioContactoDAO) {
+        this.medioContactoDAO = medioContactoDAO;
         this.personaDAO = personaDAO;
-        this.tipoMedioContactoDAO = tipoDAO;
+        this.tipoMedioContactoDAO = tipoMedioContactoDAO;
+    }
+
+    @Override
+    protected MedioContactoDAO getDao() {
+        return medioContactoDAO;
     }
 
     public MedioContacto getSeleccionado() {

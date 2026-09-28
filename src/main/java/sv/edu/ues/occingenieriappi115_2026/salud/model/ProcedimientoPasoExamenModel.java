@@ -1,7 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.Date;
@@ -22,19 +23,37 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private ProcedimientoPasoExamenDAO procedimientoPasoExamenDAO;
+    @EJB
+    private ProcedimientoPasoDAO procedimientoPasoDAO;
+    @EJB
+    private ExamenDAO examenDAO;
     private ProcedimientoPasoExamen seleccionado;
 
     private List<ProcedimientoPaso> procedimientosPaso;
     private List<Examen> examenes;
 
-    @Inject
-    public ProcedimientoPasoExamenModel(
-            ProcedimientoPasoExamenDAO ppeDAO,
-            ProcedimientoPasoDAO procedimientoPasoDAO,
-            ExamenDAO examenDAO) {
-        super(ppeDAO);
+    public ProcedimientoPasoExamenModel() {
+    }
+
+    public ProcedimientoPasoExamenModel(ProcedimientoPasoExamenDAO procedimientoPasoExamenDAO,
+            ProcedimientoPasoDAO procedimientoPasoDAO, ExamenDAO examenDAO) {
+        this.procedimientoPasoExamenDAO = procedimientoPasoExamenDAO;
+        this.procedimientoPasoDAO = procedimientoPasoDAO;
+        this.examenDAO = examenDAO;
+        inicializar();
+    }
+
+    @PostConstruct
+    public void inicializar() {
         this.procedimientosPaso = procedimientoPasoDAO.obtenerTodos();
         this.examenes = examenDAO.obtenerTodos();
+    }
+
+    @Override
+    protected ProcedimientoPasoExamenDAO getDao() {
+        return procedimientoPasoExamenDAO;
     }
 
     public ProcedimientoPasoExamen getSeleccionado() {

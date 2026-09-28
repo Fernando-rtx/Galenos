@@ -1,7 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.List;
@@ -21,19 +22,37 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private ProcedimientoPasoDAO procedimientoPasoDAO;
+    @EJB
+    private ProcedimientoDAO procedimientoDAO;
+    @EJB
+    private RolDAO rolDAO;
     private ProcedimientoPaso seleccionado;
 
     private List<Procedimiento> procedimientos;
     private List<Rol> roles;
 
-    @Inject
-    public ProcedimientoPasoModel(
-            ProcedimientoPasoDAO procedimientoPasoDAO,
-            ProcedimientoDAO procedimientoDAO,
-            RolDAO rolDAO) {
-        super(procedimientoPasoDAO);
+    public ProcedimientoPasoModel() {
+    }
+
+    public ProcedimientoPasoModel(ProcedimientoPasoDAO procedimientoPasoDAO,
+            ProcedimientoDAO procedimientoDAO, RolDAO rolDAO) {
+        this.procedimientoPasoDAO = procedimientoPasoDAO;
+        this.procedimientoDAO = procedimientoDAO;
+        this.rolDAO = rolDAO;
+        inicializar();
+    }
+
+    @PostConstruct
+    public void inicializar() {
         this.procedimientos = procedimientoDAO.obtenerTodos();
         this.roles = rolDAO.obtenerTodos();
+    }
+
+    @Override
+    protected ProcedimientoPasoDAO getDao() {
+        return procedimientoPasoDAO;
     }
 
     public ProcedimientoPaso getSeleccionado() {
