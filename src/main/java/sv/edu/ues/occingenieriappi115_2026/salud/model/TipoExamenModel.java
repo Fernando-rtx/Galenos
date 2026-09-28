@@ -81,4 +81,3 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
         setEstado(ESTADO_CRUD.LISTADO);
     }
 }
-import jakarta.ejb.EJB;
