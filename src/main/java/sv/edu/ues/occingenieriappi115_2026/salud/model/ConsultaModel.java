@@ -91,6 +91,7 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
 
     public void nuevo() {
         seleccionado = new Consulta();
+        seleccionado.setFechaInicio(new Date());
         setEstado(ESTADO_CRUD.CREACION);
     }
 

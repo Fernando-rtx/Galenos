@@ -64,6 +64,7 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
 
     public void nuevo() {
         seleccionado = new ConsultaProcedimientoPaso();
+        seleccionado.setFechaInicio(new Date());
         setEstado(ESTADO_CRUD.CREACION);
     }
 

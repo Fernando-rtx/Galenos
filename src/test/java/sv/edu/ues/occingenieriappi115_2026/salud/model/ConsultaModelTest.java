@@ -37,6 +37,7 @@ class ConsultaModelTest {
         model.nuevo();
 
         assertNotNull(model.getSeleccionado());
+        assertNotNull(model.getSeleccionado().getFechaInicio());
         assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
     }
 
