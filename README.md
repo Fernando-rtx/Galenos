@@ -14,6 +14,21 @@ contiene el modelo JPA y DAO de otras áreas clínicas, pero eso no significa qu
 existan todavía pantallas o flujos completos para pacientes, citas, expedientes,
 pagos o inventario.
 
+El flujo de consulta quedó cerrado con el modelo de datos:
+`consulta_procedimiento_paso` enlaza cada paso registrado con su plantilla de
+procedimiento mediante `id_procedimiento_paso` (FK a
+`procedimiento_paso`). Los selectores de procedimiento, paso y rol usan los
+converters CDI `procedimientoConverter`, `procedimientoPasoConverter` y
+`rolConverter`, y desde la consulta se navega a las órdenes generadas
+(`OrdenExamen`).
+
+El enlace paso→plantilla se aplica con el script `clinica_migracion_2026_09_27.sql`
+(raíz del repositorio):
+
+```bash
+cat clinica_migracion_2026_09_27.sql | docker exec -i postgres-local psql -U fernando -d clinica
+```
+
 ## Recorrido principal
 
 ```text
@@ -29,6 +44,11 @@ XHTML/PrimeFaces
 `DefaultDAO` centraliza el EntityManager y las operaciones CRUD. Los DAO
 concretos identifican su entidad; los especializados añaden únicamente sus
 consultas propias.
+
+En el flujo de consulta, los `p:selectOneMenu` de procedimiento, paso y rol
+convierten entidades con `procedimientoConverter`, `procedimientoPasoConverter`
+y `rolConverter`, y la vista enlaza hacia `OrdenExamen` para consultar las
+órdenes generadas (los resultados se registran en `ExamenResultado`).
 
 ## Comandos
 
