@@ -127,7 +127,7 @@
 
                                 required="true" requiredMessage="#{msg['mensajes.error']}"
                                 styleClass="full-width">
-                                <f:selectItem itemLabel="#{msg['ppe.seleccionarExamen']}" itemValue="" />
+                                <f:selectItem itemLabel="#{msg['ppe.seleccionarExamen']}" itemValue="#{null}" />
                                 <f:selectItems value="#{ppeModel.examenes}" var="examen"
                                     itemLabel="#{examen.nombre}" itemValue="#{examen}" />
                             </p:selectOneMenu>
@@ -141,7 +141,7 @@
 
                                 required="true" requiredMessage="#{msg['mensajes.error']}"
                                 styleClass="full-width">
-                                <f:selectItem itemLabel="#{msg['ppe.seleccionarPaso']}" itemValue="" />
+                                <f:selectItem itemLabel="#{msg['ppe.seleccionarPaso']}" itemValue="#{null}" />
                                 <f:selectItems value="#{ppeModel.procedimientosPaso}" var="paso"
                                     itemLabel="#{paso.nombre}" itemValue="#{paso}" />
                             </p:selectOneMenu>
