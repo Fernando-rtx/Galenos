@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaProcedimientoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
@@ -27,17 +26,15 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
     private static final long serialVersionUID = 1L;
 
     private ConsultaProcedimiento seleccionado;
-    private List<Consulta> consultas;
     private List<Procedimiento> procedimientos;
     private final ProcedimientoDAO procedimientoDAO;
     private final Map<UUID, String> nombresProcedimientos = new HashMap<>();
 
     @Inject
-    public ConsultaProcedimientoModel(ConsultaProcedimientoDAO consultaProcedimientoDAO, ConsultaDAO consultaDAO,
+    public ConsultaProcedimientoModel(ConsultaProcedimientoDAO consultaProcedimientoDAO,
             ProcedimientoDAO procedimientoDAO) {
         super(consultaProcedimientoDAO);
         this.procedimientoDAO = procedimientoDAO;
-        this.consultas = consultaDAO.obtenerTodos();
         this.procedimientos = procedimientoDAO.obtenerTodos().stream()
                 .filter(p -> p.getActivo() == null || p.getActivo())
                 .toList();
@@ -49,10 +46,6 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
 
     public void setSeleccionado(ConsultaProcedimiento seleccionado) {
         this.seleccionado = seleccionado;
-    }
-
-    public List<Consulta> getConsultas() {
-        return consultas;
     }
 
     public List<Procedimiento> getProcedimientos() {
