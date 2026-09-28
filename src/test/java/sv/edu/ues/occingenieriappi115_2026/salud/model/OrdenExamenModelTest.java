@@ -163,4 +163,17 @@ class OrdenExamenModelTest {
 
         assertEquals(List.of(paso), model.getConsultaProcedimientoPasos());
     }
+
+    @Test
+    void nuevoConContextoPreseleccionaElPaso() {
+        ConsultaProcedimientoPasoDAO dao = mock(ConsultaProcedimientoPasoDAO.class);
+        ConsultaProcedimientoPaso paso = new ConsultaProcedimientoPaso(UUID.randomUUID());
+        when(dao.buscarPorId(paso.getIdConsultaProcedimientoPaso())).thenReturn(paso);
+        OrdenExamenModel model = new OrdenExamenModel(mock(OrdenExamenDAO.class), dao);
+        model.setIdPasoContexto(paso.getIdConsultaProcedimientoPaso().toString());
+
+        model.nuevo();
+
+        assertSame(paso, model.getSeleccionado().getIdConsultaProcedimientoPaso());
+    }
 }

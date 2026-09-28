@@ -21,6 +21,7 @@ public class OrdenExamenModel extends AbstractModel<OrdenExamen> implements Seri
     private List<ConsultaProcedimientoPaso> consultaProcedimientoPasos;
     private final ConsultaProcedimientoPasoDAO consultaProcedimientoPasoDAO;
     private String idPasoContexto;
+    private ConsultaProcedimientoPaso pasoContexto;
 
     @Inject
     public OrdenExamenModel(
@@ -43,6 +44,7 @@ public class OrdenExamenModel extends AbstractModel<OrdenExamen> implements Seri
         try {
             ConsultaProcedimientoPaso paso =
                     consultaProcedimientoPasoDAO.buscarPorId(UUID.fromString(id));
+            pasoContexto = paso;
             consultaProcedimientoPasos = paso == null ? List.of() : List.of(paso);
         } catch (IllegalArgumentException ex) {
             // id inválido: se conserva la lista completa cargada en el constructor
@@ -63,6 +65,9 @@ public class OrdenExamenModel extends AbstractModel<OrdenExamen> implements Seri
 
     public void nuevo() {
         seleccionado = new OrdenExamen();
+        if (pasoContexto != null && pasoContexto.getIdConsultaProcedimientoPaso() != null) {
+            seleccionado.setIdConsultaProcedimientoPaso(pasoContexto);
+        }
         setEstado(ESTADO_CRUD.CREACION);
     }
 
