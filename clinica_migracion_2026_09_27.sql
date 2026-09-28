@@ -14,4 +14,11 @@ ALTER TABLE public.consulta_procedimiento_paso
 
 CREATE INDEX IF NOT EXISTS fki_fk_cpp_paso ON public.consulta_procedimiento_paso (id_procedimiento_paso);
 
+ALTER TABLE public.consulta_procedimiento_paso
+    DROP CONSTRAINT IF EXISTS ck_consulta_procedimiento_paso_estado;
+
+ALTER TABLE public.consulta_procedimiento_paso
+    ADD CONSTRAINT ck_consulta_procedimiento_paso_estado
+    CHECK (estado IN ('PENDIENTE', 'EN_CURSO', 'COMPLETADO'));
+
 COMMIT;

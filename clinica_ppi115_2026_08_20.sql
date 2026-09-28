@@ -265,6 +265,9 @@ ALTER TABLE ONLY public.consulta_procedimiento_paso
 
 CREATE INDEX fki_fk_cpp_paso ON public.consulta_procedimiento_paso USING btree (id_procedimiento_paso);
 
+ALTER TABLE ONLY public.consulta_procedimiento_paso
+    ADD CONSTRAINT ck_consulta_procedimiento_paso_estado CHECK (estado IN ('PENDIENTE', 'EN_CURSO', 'COMPLETADO'));
+
 ALTER TABLE ONLY public.documento
     ADD CONSTRAINT fk_documento_persona FOREIGN KEY (id_persona) REFERENCES public.persona(id_persona) ON UPDATE CASCADE ON DELETE RESTRICT;
 
