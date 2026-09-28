@@ -33,14 +33,15 @@ CREATE TABLE public.consulta_procedimiento (
 );
 
 -- Ejecución de un paso: registra responsable, fechas y estado.
--- Sus FKs apuntan a consulta_procedimiento y persona_rol.
+-- Sus FKs apuntan a consulta_procedimiento, persona_rol y a la plantilla procedimiento_paso.
 CREATE TABLE public.consulta_procedimiento_paso (
     id_consulta_procedimiento_paso uuid NOT NULL,
     id_consulta_procedimiento uuid,
     id_persona_rol uuid,
     fecha_inicio timestamp with time zone DEFAULT now(),
     fecha_fin timestamp with time zone,
-    estado character varying(20)
+    estado character varying(20),
+    id_procedimiento_paso uuid
 );
 
 -- Documento de una persona clasificado por tipo. PK UUID y dos FKs.
@@ -258,6 +259,11 @@ ALTER TABLE ONLY public.consulta_procedimiento_paso
 
 ALTER TABLE ONLY public.consulta_procedimiento_paso
     ADD CONSTRAINT fk_consulta_procedimiento_paso_persona_rol FOREIGN KEY (id_persona_rol) REFERENCES public.persona_rol(id_persona_rol) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.consulta_procedimiento_paso
+    ADD CONSTRAINT fk_consulta_procedimiento_paso_procedimiento_paso FOREIGN KEY (id_procedimiento_paso) REFERENCES public.procedimiento_paso(id_procedimiento_paso) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+CREATE INDEX fki_fk_cpp_paso ON public.consulta_procedimiento_paso USING btree (id_procedimiento_paso);
 
 ALTER TABLE ONLY public.documento
     ADD CONSTRAINT fk_documento_persona FOREIGN KEY (id_persona) REFERENCES public.persona(id_persona) ON UPDATE CASCADE ON DELETE RESTRICT;
