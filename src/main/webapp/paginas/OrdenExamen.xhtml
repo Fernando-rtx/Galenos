@@ -120,6 +120,15 @@
                             </p:column>
 
                             <p:column
+                                headerText="#{msg['ordenExamen.resultados']}"
+                                styleClass="action-cell">
+
+                                <h:link outcome="/paginas/ExamenResultado" value="#{msg['crud.ver']}">
+                                    <f:param name="idOrden" value="#{item.idOrdenExamen}" />
+                                </h:link>
+                            </p:column>
+
+                            <p:column
                                 headerText="#{msg['ordenExamen.acciones']}"
                                 styleClass="action-cell">
 

@@ -1,6 +1,7 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenResultadoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OrdenExamenDAO;
@@ -122,5 +123,46 @@ class ExamenResultadoModelTest {
                 mock(ExamenResultadoDAO.class), ordenExamenDAO);
 
         assertEquals(1, model.getOrdenExamenes().size());
+    }
+
+    @Test
+    void idOrdenContextoValidoFiltraLaListaDeOrdenes() {
+        OrdenExamenDAO dao = mock(OrdenExamenDAO.class);
+        OrdenExamen orden = new OrdenExamen();
+        orden.setIdOrdenExamen(UUID.randomUUID());
+        when(dao.buscarPorId(orden.getIdOrdenExamen())).thenReturn(orden);
+        ExamenResultadoModel model = new ExamenResultadoModel(mock(ExamenResultadoDAO.class), dao);
+
+        model.setIdOrdenContexto(orden.getIdOrdenExamen().toString());
+
+        assertEquals(orden.getIdOrdenExamen().toString(), model.getIdOrdenContexto());
+        assertEquals(List.of(orden), model.getOrdenExamenes());
+    }
+
+    @Test
+    void idOrdenContextoInvalidoConservaLaListaCompleta() {
+        OrdenExamenDAO dao = mock(OrdenExamenDAO.class);
+        OrdenExamen orden = new OrdenExamen();
+        orden.setIdOrdenExamen(UUID.randomUUID());
+        when(dao.obtenerTodos()).thenReturn(List.of(orden));
+        ExamenResultadoModel model = new ExamenResultadoModel(mock(ExamenResultadoDAO.class), dao);
+
+        model.setIdOrdenContexto("no-es-uuid");
+
+        assertEquals(List.of(orden), model.getOrdenExamenes());
+    }
+
+    @Test
+    void nuevoConContextoPreseleccionaLaOrden() {
+        OrdenExamenDAO dao = mock(OrdenExamenDAO.class);
+        OrdenExamen orden = new OrdenExamen();
+        orden.setIdOrdenExamen(UUID.randomUUID());
+        when(dao.buscarPorId(orden.getIdOrdenExamen())).thenReturn(orden);
+        ExamenResultadoModel model = new ExamenResultadoModel(mock(ExamenResultadoDAO.class), dao);
+        model.setIdOrdenContexto(orden.getIdOrdenExamen().toString());
+
+        model.nuevo();
+
+        assertSame(orden, model.getSeleccionado().getIdOrdenExamen());
     }
 }
