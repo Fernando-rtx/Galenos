@@ -20,6 +20,7 @@ public class OrdenExamenModel extends AbstractModel<OrdenExamen> implements Seri
     private OrdenExamen seleccionado;
     private List<ConsultaProcedimientoPaso> consultaProcedimientoPasos;
     private final ConsultaProcedimientoPasoDAO consultaProcedimientoPasoDAO;
+    private String idPasoContexto;
 
     @Inject
     public OrdenExamenModel(
@@ -30,10 +31,15 @@ public class OrdenExamenModel extends AbstractModel<OrdenExamen> implements Seri
         this.consultaProcedimientoPasos = consultaProcedimientoPasoDAO.obtenerTodos();
     }
 
+    public String getIdPasoContexto() {
+        return idPasoContexto;
+    }
+
     public void setIdPasoContexto(String id) {
         if (id == null || id.isBlank()) {
             return;
         }
+        this.idPasoContexto = id;
         try {
             ConsultaProcedimientoPaso paso =
                     consultaProcedimientoPasoDAO.buscarPorId(UUID.fromString(id));

@@ -134,6 +134,21 @@ class OrdenExamenModelTest {
 
         model.setIdPasoContexto(paso.getIdConsultaProcedimientoPaso().toString());
 
+        assertEquals(paso.getIdConsultaProcedimientoPaso().toString(), model.getIdPasoContexto());
+        assertEquals(List.of(paso), model.getConsultaProcedimientoPasos());
+    }
+
+    @Test
+    void idPasoContextoExponeRoundTripParaViewParam() {
+        ConsultaProcedimientoPasoDAO dao = mock(ConsultaProcedimientoPasoDAO.class);
+        ConsultaProcedimientoPaso paso = new ConsultaProcedimientoPaso(UUID.randomUUID());
+        when(dao.obtenerTodos()).thenReturn(List.of(paso));
+        when(dao.buscarPorId(paso.getIdConsultaProcedimientoPaso())).thenReturn(paso);
+        OrdenExamenModel model = new OrdenExamenModel(mock(OrdenExamenDAO.class), dao);
+
+        model.setIdPasoContexto(paso.getIdConsultaProcedimientoPaso().toString());
+
+        assertEquals(paso.getIdConsultaProcedimientoPaso().toString(), model.getIdPasoContexto());
         assertEquals(List.of(paso), model.getConsultaProcedimientoPasos());
     }
 
