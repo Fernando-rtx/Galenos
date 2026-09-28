@@ -469,7 +469,8 @@
                                     icon="pi pi-plus"
                                     action="#{consultaProcedimientoPasoModel.nuevo()}"
                                     process="@this"
-                                    update="pasosContenido" />
+                                    update="pasosContenido"
+                                    disabled="#{consultaProcedimientoModel.getProcedimientosPorConsulta(consultaModel.seleccionado).isEmpty()}" />
 
                                 <p:dataTable
                                     id="consultaProcedimientoPasoTable"
@@ -551,9 +552,44 @@
                                                     var="cp"
                                                     itemLabel="#{consultaProcedimientoModel.getNombreProcedimiento(cp)}"
                                                     itemValue="#{cp}" />
+
+                                                <p:ajax event="change"
+                                                        listener="#{consultaProcedimientoPasoModel.limpiarResponsableInvalido}"
+                                                        process="@this"
+                                                        update="pasoProcedimientoPaso pasoPersonaRol" />
                                             </p:selectOneMenu>
 
                                             <p:message for="pasoConsultaProcedimiento" />
+                                        </div>
+
+                                        <div class="form-field">
+                                            <p:outputLabel
+                                                for="pasoProcedimientoPaso"
+                                                value="#{msg['consultaProcedimientoPaso.procedimientoPaso']}"
+                                                styleClass="form-label" />
+
+                                            <p:selectOneMenu
+                                                id="pasoProcedimientoPaso"
+                                                value="#{consultaProcedimientoPasoModel.seleccionado.idProcedimientoPaso}"
+                                                converter="#{procedimientoPasoConverter}">
+
+                                                <f:selectItem
+                                                    itemLabel="#{msg['crud.seleccionar']}"
+                                                    itemValue="#{null}" />
+
+                                                <f:selectItems
+                                                    value="#{consultaProcedimientoPasoModel.getPasosDeProcedimiento(consultaProcedimientoPasoModel.seleccionado.idConsultaProcedimiento)}"
+                                                    var="pp"
+                                                    itemLabel="#{pp.nombre}"
+                                                    itemValue="#{pp}" />
+
+                                                <p:ajax event="change"
+                                                        listener="#{consultaProcedimientoPasoModel.limpiarResponsableInvalido}"
+                                                        process="@this"
+                                                        update="pasoPersonaRol" />
+                                            </p:selectOneMenu>
+
+                                            <p:message for="pasoProcedimientoPaso" />
                                         </div>
 
                                         <div class="form-field">
@@ -567,14 +603,15 @@
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.idPersonaRol}"
                                                 converter="#{personaRolConverter}"
                                                 required="true"
-                                                requiredMessage="#{msg['mensajes.error']}">
+                                                requiredMessage="#{msg['mensajes.error']}"
+                                                validator="#{consultaProcedimientoPasoModel.validarResponsable}">
 
                                                 <f:selectItem
                                                     itemLabel="#{msg['crud.seleccionar']}"
                                                     itemValue="#{null}" />
 
                                                 <f:selectItems
-                                                    value="#{consultaProcedimientoPasoModel.personasRoles}"
+                                                    value="#{consultaProcedimientoPasoModel.getPersonasRolesParaPaso()}"
                                                     var="pr"
                                                     itemLabel="#{pr.idPersona.nombres} #{pr.idPersona.apellidos} - #{pr.idRol.nombre}"
                                                     itemValue="#{pr}" />
