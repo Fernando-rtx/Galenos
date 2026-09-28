@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaProcedimientoPasoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OrdenExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.ConsultaProcedimientoPaso;
@@ -18,13 +19,28 @@ public class OrdenExamenModel extends AbstractModel<OrdenExamen> implements Seri
 
     private OrdenExamen seleccionado;
     private List<ConsultaProcedimientoPaso> consultaProcedimientoPasos;
+    private final ConsultaProcedimientoPasoDAO consultaProcedimientoPasoDAO;
 
     @Inject
     public OrdenExamenModel(
             OrdenExamenDAO ordenExamenDAO,
             ConsultaProcedimientoPasoDAO consultaProcedimientoPasoDAO) {
         super(ordenExamenDAO);
+        this.consultaProcedimientoPasoDAO = consultaProcedimientoPasoDAO;
         this.consultaProcedimientoPasos = consultaProcedimientoPasoDAO.obtenerTodos();
+    }
+
+    public void setIdPasoContexto(String id) {
+        if (id == null || id.isBlank()) {
+            return;
+        }
+        try {
+            ConsultaProcedimientoPaso paso =
+                    consultaProcedimientoPasoDAO.buscarPorId(UUID.fromString(id));
+            consultaProcedimientoPasos = paso == null ? List.of() : List.of(paso);
+        } catch (IllegalArgumentException ex) {
+            // id inválido: se conserva la lista completa cargada en el constructor
+        }
     }
 
     public OrdenExamen getSeleccionado() {

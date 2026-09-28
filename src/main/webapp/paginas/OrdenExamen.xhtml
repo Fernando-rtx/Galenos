@@ -10,6 +10,10 @@
     xmlns:ui="jakarta.faces.facelets"
     template="/WEB-INF/plantillas/general.xhtml">
 
+    <f:metadata>
+        <f:viewParam name="idPaso" value="#{ordenExamenModel.idPasoContexto}" />
+    </f:metadata>
+
     <ui:define name="titulo">
         #{msg['ordenExamen.titulo']} | #{msg['app.nombre']}
     </ui:define>
