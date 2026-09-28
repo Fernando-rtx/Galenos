@@ -5,9 +5,11 @@ import jakarta.faces.context.FacesContext;
 import jakarta.faces.convert.Converter;
 import jakarta.faces.convert.FacesConverter;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Examen;
 
+@Named
 @FacesConverter(forClass = Examen.class)
 public class ExamenConverter implements Converter<Examen> {
 
