@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.ListResourceBundle;
 import java.util.ResourceBundle;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaRolDAO;
@@ -155,44 +154,6 @@ class ConsultaModelTest {
                 mock(PersonaRolDAO.class));
 
         assertDoesNotThrow(model::editarSeleccionado);
-
-        assertNull(model.getSeleccionado());
-        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
-    }
-
-    @Test
-    void idDeContextoValidoSeleccionaLaConsulta() {
-        ConsultaDAO dao = mock(ConsultaDAO.class);
-        Consulta consulta = new Consulta(UUID.randomUUID());
-        when(dao.buscarPorId(consulta.getIdConsulta())).thenReturn(consulta);
-        ConsultaModel model = new ConsultaModel(dao, mock(PersonaRolDAO.class));
-
-        model.setIdConsultaContexto(consulta.getIdConsulta().toString());
-
-        assertSame(consulta, model.getSeleccionado());
-        assertEquals(ESTADO_CRUD.EDICION, model.getEstado());
-    }
-
-    @Test
-    void idDeContextoInvalidoLimpiaLaSeleccion() {
-        ConsultaDAO dao = mock(ConsultaDAO.class);
-        ConsultaModel model = new ConsultaModel(dao, mock(PersonaRolDAO.class));
-        model.seleccionar(new Consulta());
-
-        model.setIdConsultaContexto("id-invalido");
-
-        assertNull(model.getSeleccionado());
-        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
-        verifyNoInteractions(dao);
-    }
-
-    @Test
-    void idDeContextoNuloNoModificaElEstado() {
-        ConsultaModel model = new ConsultaModel(
-                mock(ConsultaDAO.class),
-                mock(PersonaRolDAO.class));
-
-        assertDoesNotThrow(() -> model.setIdConsultaContexto("  "));
 
         assertNull(model.getSeleccionado());
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());

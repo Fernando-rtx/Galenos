@@ -10,11 +10,6 @@
     xmlns:ui="jakarta.faces.facelets"
     template="/WEB-INF/plantillas/general.xhtml">
 
-    <f:metadata>
-        <f:viewParam name="idConsulta"
-                     value="#{consultaModel.idConsultaContexto}" />
-    </f:metadata>
-
     <ui:define name="titulo">
         #{msg['consulta.titulo']} | #{msg['app.nombre']}
     </ui:define>
