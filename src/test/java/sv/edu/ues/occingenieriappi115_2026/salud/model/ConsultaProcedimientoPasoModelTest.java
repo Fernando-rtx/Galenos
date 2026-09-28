@@ -140,17 +140,15 @@ class ConsultaProcedimientoPasoModelTest {
     }
 
     @Test
-    void constructorCargaProcedimientosYPersonasRoles() {
-        ConsultaProcedimientoDAO procDao = mock(ConsultaProcedimientoDAO.class);
+    void constructorCargaPersonasRoles() {
         PersonaRolDAO personaRolDao = mock(PersonaRolDAO.class);
-        when(procDao.obtenerTodos()).thenReturn(List.of(new ConsultaProcedimiento()));
         when(personaRolDao.obtenerTodos()).thenReturn(List.of(new PersonaRol()));
 
         ConsultaProcedimientoPasoModel model = new ConsultaProcedimientoPasoModel(
-                mock(ConsultaProcedimientoPasoDAO.class), procDao, personaRolDao, mock(ProcedimientoPasoDAO.class));
+                mock(ConsultaProcedimientoPasoDAO.class), mock(ConsultaProcedimientoDAO.class),
+                personaRolDao, mock(ProcedimientoPasoDAO.class));
 
-        assertEquals(1, model.getConsultaProcedimientos().size());
-        assertEquals(1, model.getPersonasRoles().size());
+        assertEquals(1, model.getPersonasRolesParaPaso().size());
     }
 
     @Test

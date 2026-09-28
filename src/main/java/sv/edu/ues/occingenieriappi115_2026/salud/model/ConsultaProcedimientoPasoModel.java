@@ -28,7 +28,6 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
     private static final long serialVersionUID = 1L;
 
     private ConsultaProcedimientoPaso seleccionado;
-    private List<ConsultaProcedimiento> consultaProcedimientos;
     private List<PersonaRol> personasRoles;
     private final ConsultaProcedimientoDAO consultaProcedimientoDAO;
     private final ProcedimientoPasoDAO procedimientoPasoDAO;
@@ -42,7 +41,6 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
         super(consultaProcedimientoPasoDAO);
         this.consultaProcedimientoDAO = consultaProcedimientoDAO;
         this.procedimientoPasoDAO = procedimientoPasoDAO;
-        this.consultaProcedimientos = consultaProcedimientoDAO.obtenerTodos();
         this.personasRoles = personaRolDAO.obtenerTodos();
     }
 
@@ -52,14 +50,6 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
 
     public void setSeleccionado(ConsultaProcedimientoPaso seleccionado) {
         this.seleccionado = seleccionado;
-    }
-
-    public List<ConsultaProcedimiento> getConsultaProcedimientos() {
-        return consultaProcedimientos;
-    }
-
-    public List<PersonaRol> getPersonasRoles() {
-        return personasRoles;
     }
 
     public void nuevo() {
