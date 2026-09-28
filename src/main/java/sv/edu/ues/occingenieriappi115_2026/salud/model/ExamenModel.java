@@ -1,10 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
-import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
-import jakarta.faces.validator.ValidatorException;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -90,10 +88,5 @@ public class ExamenModel extends AbstractModel<Examen> implements Serializable {
 
     private String normalizar(String valor) {
         return valor == null ? null : valor.trim();
-    }
-
-    private void lanzarValidacion(FacesContext contexto, String clave) {
-        String mensaje = contexto.getApplication().getResourceBundle(contexto, "msg").getString(clave);
-        throw new ValidatorException(new FacesMessage(FacesMessage.SEVERITY_ERROR, mensaje, mensaje));
     }
 }
