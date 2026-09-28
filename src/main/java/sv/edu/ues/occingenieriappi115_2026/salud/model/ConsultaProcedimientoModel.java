@@ -38,7 +38,9 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
         super(consultaProcedimientoDAO);
         this.procedimientoDAO = procedimientoDAO;
         this.consultas = consultaDAO.obtenerTodos();
-        this.procedimientos = procedimientoDAO.obtenerTodos();
+        this.procedimientos = procedimientoDAO.obtenerTodos().stream()
+                .filter(p -> p.getActivo() == null || p.getActivo())
+                .toList();
     }
 
     public ConsultaProcedimiento getSeleccionado() {

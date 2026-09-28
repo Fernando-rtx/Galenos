@@ -154,6 +154,21 @@ class ConsultaProcedimientoModelTest {
     }
 
     @Test
+    void constructorFiltraProcedimientosInactivos() {
+        ProcedimientoDAO dao = mock(ProcedimientoDAO.class);
+        Procedimiento activo = new Procedimiento();
+        activo.setActivo(true);
+        Procedimiento inactivo = new Procedimiento();
+        inactivo.setActivo(false);
+        when(dao.obtenerTodos()).thenReturn(List.of(activo, inactivo));
+
+        ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
+                mock(ConsultaProcedimientoDAO.class), mock(ConsultaDAO.class), dao);
+
+        assertEquals(List.of(activo), model.getProcedimientos());
+    }
+
+    @Test
     void getProcedimientosPorConsultaSinIdDevuelveListaVaciaYNoConsultaDao() {
         ConsultaProcedimientoDAO dao = mock(ConsultaProcedimientoDAO.class);
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
