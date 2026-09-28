@@ -186,6 +186,7 @@
                             <p:selectOneMenu
                                 id="idProcedimientoPaso"
                                 value="#{secuenciaModel.seleccionado.idProcedimientoPaso}"
+                                converter="#{procedimientoPasoConverter}"
                                 
                                 required="true"
                                 requiredMessage="#{msg['mensajes.error']}"

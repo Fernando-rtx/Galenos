@@ -123,6 +123,7 @@
                             <p:outputLabel for="idExamen" value="#{msg['ppe.examen']}" styleClass="form-label" />
                             <p:selectOneMenu id="idExamen"
                                 value="#{ppeModel.seleccionado.idExamen}"
+                                converter="#{examenConverter}"
                                 
                                 required="true" requiredMessage="#{msg['mensajes.error']}"
                                 styleClass="full-width">
@@ -136,6 +137,7 @@
                             <p:outputLabel for="idProcedimientoPaso" value="#{msg['ppe.paso']}" styleClass="form-label" />
                             <p:selectOneMenu id="idProcedimientoPaso"
                                 value="#{ppeModel.seleccionado.idProcedimientoPaso}"
+                                converter="#{procedimientoPasoConverter}"
                                 
                                 required="true" requiredMessage="#{msg['mensajes.error']}"
                                 styleClass="full-width">
