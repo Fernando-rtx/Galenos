@@ -71,6 +71,8 @@
                             </div>
                         </div>
 
+                        <p class="page-subtitle tipo-documento-hint">#{msg['crud.dobleClicEditar']}</p>
+
                         <!--
                         Tabla paginada lazy. PrimeFaces entrega filtros y límites a
                         AbstractModel; selection y rowKey identifican la fila mediante UUID.
@@ -89,11 +91,13 @@
                             emptyMessage="#{msg['tipoDocumento.sinRegistros']}"
                             styleClass="tipo-table">
 
-                            <!-- Seleccionar una fila cambia el modelo a EDICION y abre el formulario. -->
+                            <!-- El doble clic selecciona la fila, cambia el modelo a EDICION y abre el formulario. -->
                             <p:ajax
-                                event="rowSelect"
-                                listener="#{tipoDocumentoModel.seleccionar(item)}"
+                                event="rowDblselect"
+                                listener="#{tipoDocumentoModel.seleccionar(tipoDocumentoModel.seleccionado)}"
+                                process="@this"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('tipoDocumentoDialog').show()" />
 
                             <!-- El filtro por nombre se convierte en Predicate LIKE desde DefaultDAO. -->
@@ -132,19 +136,6 @@
                                                   : ''}" />
                             </p:column>
 
-                            <p:column
-                                headerText="#{msg['tipoDocumento.acciones']}"
-                                styleClass="action-cell">
-
-                                <p:commandButton
-                                    icon="pi pi-pencil"
-                                    title="#{msg['crud.editar']}"
-                                    styleClass="edit-button"
-                                    action="#{tipoDocumentoModel.seleccionar(item)}"
-                                    process="@this"
-                                    update="edicionDialog"
-                                    oncomplete="PF('tipoDocumentoDialog').show()" />
-                            </p:column>
                         </p:dataTable>
                     </div>
                 </div>
