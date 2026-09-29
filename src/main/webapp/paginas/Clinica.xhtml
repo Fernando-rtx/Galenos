@@ -79,9 +79,10 @@
                             styleClass="clinica-table">
 
                             <p:ajax
-                                event="rowSelect"
-                                listener="#{clinicaModel.seleccionar(item)}"
+                                event="rowDblselect"
+                                listener="#{clinicaModel.seleccionarFila()}"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('clinicaDialog').show()" />
 
                             <p:column
@@ -137,19 +138,6 @@
                                                 : 'secondary'}" />
                             </p:column>
 
-                            <p:column
-                                headerText="#{msg['clinica.acciones']}"
-                                styleClass="action-cell">
-
-                                <p:commandButton
-                                    icon="pi pi-pencil"
-                                    title="#{msg['crud.editar']}"
-                                    styleClass="edit-button"
-                                    action="#{clinicaModel.seleccionar(item)}"
-                                    process="@this"
-                                    update="edicionDialog"
-                                    oncomplete="PF('clinicaDialog').show()" />
-                            </p:column>
                         </p:dataTable>
                     </div>
                 </div>

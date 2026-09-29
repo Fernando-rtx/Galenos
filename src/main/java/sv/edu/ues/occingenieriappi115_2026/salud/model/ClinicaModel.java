@@ -66,6 +66,12 @@ public class ClinicaModel extends AbstractModel<Clinica> implements Serializable
         setEstado(ESTADO_CRUD.EDICION);
     }
 
+    public void seleccionarFila() {
+        if (seleccionado != null) {
+            setEstado(ESTADO_CRUD.EDICION);
+        }
+    }
+
     public void guardar() {
         if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
             return;
