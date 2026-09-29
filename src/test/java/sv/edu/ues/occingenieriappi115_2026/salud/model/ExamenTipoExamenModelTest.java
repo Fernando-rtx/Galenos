@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -142,6 +143,33 @@ class ExamenTipoExamenModelTest {
 
         assertNull(model.getSeleccionado());
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+    }
+
+    @Test
+    void quitarAsociacionEliminaElPuenteYRecarga() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        ExamenTipoExamenModel model = model(dao);
+        Examen examen = examenPersistido();
+        model.cargarPorExamen(examen);
+        ExamenTipoExamen asociacion = new ExamenTipoExamen(UUID.randomUUID());
+        when(dao.eliminar(asociacion.getIdExamenTipoExamen())).thenReturn(true);
+        when(dao.findByIdExamen(examen.getIdExamen(), 0, Integer.MAX_VALUE))
+                .thenReturn(List.of());
+
+        model.quitarAsociacion(asociacion);
+
+        verify(dao).eliminar(asociacion.getIdExamenTipoExamen());
+        verify(dao, times(2)).findByIdExamen(examen.getIdExamen(), 0, Integer.MAX_VALUE);
+    }
+
+    @Test
+    void quitarAsociacionNulaNoHaceNada() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        ExamenTipoExamenModel model = model(dao);
+
+        model.quitarAsociacion(null);
+
+        verify(dao, never()).eliminar(any());
     }
 
     @Test

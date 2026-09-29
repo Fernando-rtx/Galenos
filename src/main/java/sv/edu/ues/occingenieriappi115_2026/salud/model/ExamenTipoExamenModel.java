@@ -1,5 +1,6 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.faces.application.FacesMessage;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -98,6 +99,7 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
                 || seleccionado.getIdExamen().getIdExamen() == null
                 || seleccionado.getIdTipoExamen() == null
                 || seleccionado.getIdTipoExamen().getIdTipoExamen() == null) {
+            agregarMensaje(FacesMessage.SEVERITY_WARN, "examen.seleccioneTipo");
             return;
         }
 
@@ -105,6 +107,7 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
                 seleccionado.getIdExamen().getIdExamen(),
                 seleccionado.getIdTipoExamen().getIdTipoExamen());
         if (existentes > 0) {
+            agregarMensaje(FacesMessage.SEVERITY_WARN, "examen.tipoDuplicado");
             return;
         }
 
@@ -115,6 +118,23 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
         idTipoExamenSeleccionado = null;
         setEstado(ESTADO_CRUD.LISTADO);
         recargarAsociaciones();
+        agregarMensaje(FacesMessage.SEVERITY_INFO, "examen.asociacionCreada");
+    }
+
+    /**
+     * Quita una asociación existente. Elimina solo la fila puente; nunca borra
+     * el examen ni el tipo de examen.
+     *
+     * @param asociacion fila de la tabla de unión a eliminar
+     */
+    public void quitarAsociacion(ExamenTipoExamen asociacion) {
+        if (asociacion == null || asociacion.getIdExamenTipoExamen() == null) {
+            return;
+        }
+        if (getDao().eliminar(asociacion.getIdExamenTipoExamen())) {
+            recargarAsociaciones();
+            agregarMensaje(FacesMessage.SEVERITY_INFO, "examen.asociacionQuitada");
+        }
     }
 
     public void cancelarAsociacion() {

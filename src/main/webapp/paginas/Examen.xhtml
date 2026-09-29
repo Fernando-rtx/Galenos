@@ -16,7 +16,7 @@
                          update="messages examenTable edicionDialog"
                          rendered="#{examenModel.estado eq 'LISTADO'}"
                          oncomplete="PF('examenDialog').show()" />
-        <p:messages id="messages" showDetail="true" closable="true" />
+        <p:messages id="messages" showDetail="false" closable="true" />
         <h:outputText value="#{msg['crud.dobleClicEditar']}"
                       styleClass="page-subtitle" />
 
@@ -159,6 +159,13 @@
                                     </p:column>
                                     <p:column headerText="#{msg['examen.observaciones']}">
                                         <h:outputText value="#{empty asociacion.observaciones ? msg['examen.sinObservaciones'] : asociacion.observaciones}" />
+                                    </p:column>
+                                    <p:column headerText="#{msg['examen.acciones']}">
+                                        <p:commandButton icon="pi pi-times"
+                                                         title="#{msg['crud.quitar']}"
+                                                         action="#{examenTipoExamenModel.quitarAsociacion(asociacion)}"
+                                                         process="@this"
+                                                         update=":layoutForm:messages tiposContenido" />
                                     </p:column>
                                 </p:dataTable>
 

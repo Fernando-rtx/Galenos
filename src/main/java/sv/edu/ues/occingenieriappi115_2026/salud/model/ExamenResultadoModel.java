@@ -4,6 +4,7 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenResultadoDAO;
@@ -64,6 +65,7 @@ public class ExamenResultadoModel extends AbstractModel<ExamenResultado> impleme
 
     public void nuevo() {
         seleccionado = new ExamenResultado();
+        seleccionado.setFechaCreacion(new Date());
         if (ordenContexto != null && ordenContexto.getIdOrdenExamen() != null) {
             seleccionado.setIdOrdenExamen(ordenContexto);
         }
