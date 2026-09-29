@@ -103,7 +103,7 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
     }
 
     public void guardar() {
-        if (seleccionado == null) {
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
             return;
         }
         seleccionado.setNombre(normalizar(seleccionado.getNombre()));
@@ -116,10 +116,11 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
                     getDao().guardar(seleccionado);
                     agregarMensaje("procedimientoPaso.creadoCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
-                case EDICION, LISTADO -> {
+                case EDICION -> {
                     seleccionado = getDao().actualizar(seleccionado);
                     agregarMensaje("procedimientoPaso.actualizadoCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
+                case LISTADO -> { }
             }
         } catch (RuntimeException ex) {
             if (facesContext == null) {

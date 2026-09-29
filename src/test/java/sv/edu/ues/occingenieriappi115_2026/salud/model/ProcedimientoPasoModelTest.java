@@ -198,20 +198,18 @@ class ProcedimientoPasoModelTest {
     }
 
     @Test
-    void guardarEnListadoActualizaElPaso() {
+    void guardarEnListadoNoPersisteElPaso() {
         ProcedimientoPasoDAO dao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoDAO procDao = mock(ProcedimientoDAO.class);
         ProcedimientoPasoModel model = new ProcedimientoPasoModel(
                 dao, procDao, mock(RolDAO.class));
         model.nuevo();
         model.getSeleccionado().setNombre("Preparación");
-        prepararProcedimientoValido(procDao, model);
-        ProcedimientoPaso seleccionado = model.getSeleccionado();
         model.setEstado(ESTADO_CRUD.LISTADO);
 
         model.guardar();
 
-        verify(dao).actualizar(seleccionado);
+        verifyNoInteractions(dao);
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
 

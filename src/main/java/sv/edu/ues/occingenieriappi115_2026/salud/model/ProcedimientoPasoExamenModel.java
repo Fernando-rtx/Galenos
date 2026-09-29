@@ -94,7 +94,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
     }
 
     public void guardar() {
-        if (seleccionado == null) {
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
             return;
         }
         seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
@@ -107,10 +107,11 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
                     getDao().guardar(seleccionado);
                     agregarMensaje("ppe.creadaCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
-                case EDICION, LISTADO -> {
+                case EDICION -> {
                     seleccionado = getDao().actualizar(seleccionado);
                     agregarMensaje("ppe.actualizadaCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
+                case LISTADO -> { }
             }
         } catch (RuntimeException ex) {
             if (facesContext == null) {

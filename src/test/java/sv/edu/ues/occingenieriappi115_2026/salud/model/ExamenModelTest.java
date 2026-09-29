@@ -77,6 +77,18 @@ class ExamenModelTest {
         assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
     }
 
+    @Test void nombreDuplicadoEsRechazado() {
+        ExamenDAO dao = mock(ExamenDAO.class);
+        Examen existente = new Examen(UUID.randomUUID());
+        existente.setNombre("Hemograma");
+        when(dao.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
+                .thenReturn(java.util.List.of(existente));
+        ExamenModel modelo = new ExamenModel(dao);
+
+        assertThrows(ValidatorException.class,
+                () -> modelo.validarNombre(contexto(), null, "Hemograma"));
+    }
+
     private FacesContext contexto() {
         FacesContext contexto = mock(FacesContext.class);
         Application aplicacion = mock(Application.class);
@@ -86,7 +98,8 @@ class ExamenModelTest {
                 return new Object[][] {
                     {"examen.nombreRequerido", "Nombre requerido"},
                     {"examen.nombreMinimo", "Nombre demasiado corto"},
-                    {"examen.nombreMaximo", "Nombre demasiado largo"}
+                    {"examen.nombreMaximo", "Nombre demasiado largo"},
+                    {"examen.nombreDuplicado", "Nombre duplicado"}
                 };
             }
         };

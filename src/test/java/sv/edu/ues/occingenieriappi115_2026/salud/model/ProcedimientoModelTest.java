@@ -190,7 +190,7 @@ class ProcedimientoModelTest {
     }
 
     @Test
-    void guardarEnListadoActualizaElProcedimiento() {
+    void guardarEnListadoNoPersisteElProcedimiento() {
         ProcedimientoDAO dao = mock(ProcedimientoDAO.class);
         ProcedimientoModel model = new ProcedimientoModel(
                 dao,
@@ -198,12 +198,11 @@ class ProcedimientoModelTest {
                 mock(ConsultaProcedimientoDAO.class));
         model.nuevo();
         model.getSeleccionado().setNombre("Biopsia");
-        Procedimiento seleccionado = model.getSeleccionado();
         model.setEstado(ESTADO_CRUD.LISTADO);
 
         model.guardar();
 
-        verify(dao).actualizar(seleccionado);
+        verifyNoInteractions(dao);
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
 

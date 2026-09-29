@@ -190,7 +190,7 @@ class RolModelTest {
     }
 
     @Test
-    void guardarEnListadoActualizaElRol() {
+    void guardarEnListadoNoPersisteElRol() {
         RolDAO dao = mock(RolDAO.class);
         RolModel model = new RolModel(
                 dao,
@@ -198,12 +198,11 @@ class RolModelTest {
                 mock(ProcedimientoPasoDAO.class));
         model.nuevo();
         model.getSeleccionado().setNombre("Doctor");
-        Rol seleccionado = model.getSeleccionado();
         model.setEstado(ESTADO_CRUD.LISTADO);
 
         model.guardar();
 
-        verify(dao).actualizar(seleccionado);
+        verifyNoInteractions(dao);
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
 

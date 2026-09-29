@@ -7,8 +7,12 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.List;
+import java.util.UUID;
 import org.primefaces.event.SelectEvent;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Examen;
 
 @Named
@@ -65,6 +69,20 @@ public class ExamenModel extends AbstractModel<Examen> implements Serializable {
         if (nombre.length() > 255) {
             lanzarValidacion(contexto, "examen.nombreMaximo");
         }
+        if (nombreDuplicado(nombre)) {
+            lanzarValidacion(contexto, "examen.nombreDuplicado");
+        }
+    }
+
+    private boolean nombreDuplicado(String nombre) {
+        List<Examen> existentes = getDao().obtenerPagina(0, Integer.MAX_VALUE,
+                List.of(new FiltroDAO("nombre", OperadorFiltro.IGUAL, nombre)), List.of());
+        if (existentes == null || existentes.isEmpty()) {
+            return false;
+        }
+        UUID idActual = seleccionado == null ? null : seleccionado.getIdExamen();
+        return existentes.stream().anyMatch(examen -> examen.getIdExamen() == null
+                || !examen.getIdExamen().equals(idActual));
     }
 
     public void guardar() {

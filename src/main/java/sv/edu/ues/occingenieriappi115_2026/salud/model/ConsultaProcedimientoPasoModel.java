@@ -14,13 +14,10 @@ import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaProcedimientoPa
 import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaRolDAO;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.ProcedimientoPasoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Consulta;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.ConsultaProcedimiento;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.ConsultaProcedimientoPaso;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.PersonaRol;
-import sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPaso;
-import sv.edu.ues.occingenieriappi115_2026.salud.entity.Rol;
 
 @Named
 @ViewScoped
@@ -34,8 +31,6 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
     private ConsultaProcedimientoDAO consultaProcedimientoDAO;
     @EJB
     private PersonaRolDAO personaRolDAO;
-    @EJB
-    private ProcedimientoPasoDAO procedimientoPasoDAO;
     private ConsultaProcedimientoPaso seleccionado;
     private List<PersonaRol> personasRoles;
 
@@ -43,12 +38,10 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
     }
 
     public ConsultaProcedimientoPasoModel(ConsultaProcedimientoPasoDAO consultaProcedimientoPasoDAO,
-            ConsultaProcedimientoDAO consultaProcedimientoDAO, PersonaRolDAO personaRolDAO,
-            ProcedimientoPasoDAO procedimientoPasoDAO) {
+            ConsultaProcedimientoDAO consultaProcedimientoDAO, PersonaRolDAO personaRolDAO) {
         this.consultaProcedimientoPasoDAO = consultaProcedimientoPasoDAO;
         this.consultaProcedimientoDAO = consultaProcedimientoDAO;
         this.personaRolDAO = personaRolDAO;
-        this.procedimientoPasoDAO = procedimientoPasoDAO;
         inicializar();
     }
 
@@ -68,6 +61,10 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
 
     public void setSeleccionado(ConsultaProcedimientoPaso seleccionado) {
         this.seleccionado = seleccionado;
+    }
+
+    public List<PersonaRol> getPersonasRoles() {
+        return personasRoles;
     }
 
     public void nuevo() {
@@ -185,59 +182,9 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
     }
 
     /**
-     * Devuelve la plantilla de pasos del procedimiento elegido.
-     *
-     * @param consultaProcedimiento procedimiento cuyo catálogo de pasos se lista
-     * @return pasos del procedimiento o lista vacía si aún no tiene uno
-     */
-    public List<ProcedimientoPaso> getPasosDeProcedimiento(ConsultaProcedimiento consultaProcedimiento) {
-        if (consultaProcedimiento == null || consultaProcedimiento.getIdProcedimiento() == null) {
-            return List.of();
-        }
-        return procedimientoPasoDAO.findByIdProcedimiento(
-                consultaProcedimiento.getIdProcedimiento(), 0, Integer.MAX_VALUE);
-    }
-
-    /**
-     * Devuelve el rol requerido por el paso seleccionado.
-     *
-     * @return rol de la plantilla elegida o {@code null} si no hay paso
-     */
-    public Rol getRolRequerido() {
-        ProcedimientoPaso plantilla = seleccionado == null ? null : seleccionado.getIdProcedimientoPaso();
-        return plantilla == null ? null : plantilla.getIdRol();
-    }
-
-    /**
-     * Filtra los responsables por el rol requerido del paso seleccionado.
-     *
-     * @return personas con el rol requerido o todas si el paso no exige rol
-     */
-    public List<PersonaRol> getPersonasRolesParaPaso() {
-        Rol rolRequerido = getRolRequerido();
-        if (rolRequerido == null || rolRequerido.getIdRol() == null) {
-            return personasRoles;
-        }
-        return personasRoles.stream()
-                .filter(pr -> pr.getIdRol() != null
-                        && rolRequerido.getIdRol().equals(pr.getIdRol().getIdRol()))
-                .toList();
-    }
-
-    /**
-     * Limpia el responsable cuando su rol ya no corresponde al paso.
-     */
-    public void limpiarResponsableInvalido() {
-        if (seleccionado == null || seleccionado.getIdPersonaRol() == null) {
-            return;
-        }
-        if (!getPersonasRolesParaPaso().contains(seleccionado.getIdPersonaRol())) {
-            seleccionado.setIdPersonaRol(null);
-        }
-    }
-
-    /**
-     * Valida que el responsable tenga el rol requerido por el paso.
+     * Valida que el responsable elegido exista en el catálogo cargado. La
+     * relación con la plantilla de paso no existe en la base, así que no se
+     * infiere un rol a partir de ella.
      *
      * @param contexto contexto Faces activo
      * @param componente componente que dispara la validación
@@ -247,11 +194,8 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
         if (!(valor instanceof PersonaRol responsable)) {
             return;
         }
-        Rol rolRequerido = getRolRequerido();
-        if (rolRequerido != null && rolRequerido.getIdRol() != null
-                && (responsable.getIdRol() == null
-                || !rolRequerido.getIdRol().equals(responsable.getIdRol().getIdRol()))) {
-            lanzarValidacion(contexto, "consultaProcedimientoPaso.rolNoCorresponde");
+        if (!personasRoles.contains(responsable)) {
+            lanzarValidacion(contexto, "consultaProcedimientoPaso.responsableNoExiste");
         }
     }
 

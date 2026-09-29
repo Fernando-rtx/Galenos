@@ -172,4 +172,30 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
                 )
         );
     }
+
+    /**
+     * Añade un mensaje global resuelto desde el bundle {@code msg}. No hace nada
+     * fuera de una petición Faces, lo que mantiene los modelos tolerantes a las
+     * pruebas unitarias.
+     *
+     * @param severidad severidad del mensaje
+     * @param clave clave del bundle de mensajes
+     */
+    protected void agregarMensaje(FacesMessage.Severity severidad, String clave) {
+        FacesContext contexto;
+        try {
+            contexto = FacesContext.getCurrentInstance();
+        } catch (LinkageError ex) {
+            // El entorno de pruebas no incluye la implementación de Faces.
+            return;
+        }
+        if (contexto == null) {
+            return;
+        }
+        String mensaje = contexto
+                .getApplication()
+                .getResourceBundle(contexto, "msg")
+                .getString(clave);
+        contexto.addMessage(null, new FacesMessage(severidad, mensaje, null));
+    }
 }

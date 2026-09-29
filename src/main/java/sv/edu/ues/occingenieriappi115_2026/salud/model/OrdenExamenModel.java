@@ -5,6 +5,7 @@ import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaProcedimientoPasoDAO;
@@ -80,6 +81,7 @@ public class OrdenExamenModel extends AbstractModel<OrdenExamen> implements Seri
 
     public void nuevo() {
         seleccionado = new OrdenExamen();
+        seleccionado.setFechaCreacion(new Date());
         if (pasoContexto != null && pasoContexto.getIdConsultaProcedimientoPaso() != null) {
             seleccionado.setIdConsultaProcedimientoPaso(pasoContexto);
         }

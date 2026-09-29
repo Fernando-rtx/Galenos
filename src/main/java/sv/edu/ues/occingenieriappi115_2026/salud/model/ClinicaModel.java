@@ -67,7 +67,7 @@ public class ClinicaModel extends AbstractModel<Clinica> implements Serializable
     }
 
     public void guardar() {
-        if (seleccionado == null) {
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
             return;
         }
         seleccionado.setNombre(normalizar(seleccionado.getNombre()));
@@ -82,10 +82,11 @@ public class ClinicaModel extends AbstractModel<Clinica> implements Serializable
                     getDao().guardar(seleccionado);
                     agregarMensaje("clinica.creadoCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
-                case EDICION, LISTADO -> {
+                case EDICION -> {
                     seleccionado = getDao().actualizar(seleccionado);
                     agregarMensaje("clinica.actualizadoCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
+                case LISTADO -> { }
             }
         } catch (RuntimeException ex) {
             if (facesContext == null) {

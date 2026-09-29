@@ -332,20 +332,18 @@ class ProcedimientoPasoSecuenciaModelTest {
     }
 
     @Test
-    void guardarEnListadoActualizaLaSecuencia() {
+    void guardarEnListadoNoPersisteLaSecuencia() {
         ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
         ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
                 dao, mock(ProcedimientoPasoDAO.class));
         model.nuevo();
         model.getSeleccionado().setIdProcedimientoPaso(
                 new ProcedimientoPaso(UUID.randomUUID()));
-        model.getSeleccionado().setTipoSecuencia("ANTES");
-        ProcedimientoPasoSecuencia seleccionado = model.getSeleccionado();
         model.setEstado(ESTADO_CRUD.LISTADO);
 
         model.guardar();
 
-        verify(dao).actualizar(seleccionado);
+        verifyNoInteractions(dao);
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
 

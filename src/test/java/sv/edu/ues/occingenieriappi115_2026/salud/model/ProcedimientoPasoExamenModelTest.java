@@ -286,7 +286,7 @@ class ProcedimientoPasoExamenModelTest {
     }
 
     @Test
-    void guardarEnListadoActualizaLaRelacion() {
+    void guardarEnListadoNoPersisteLaRelacion() {
         ProcedimientoPasoExamenDAO dao = mock(ProcedimientoPasoExamenDAO.class);
         ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
         ExamenDAO examenDao = mock(ExamenDAO.class);
@@ -302,12 +302,11 @@ class ProcedimientoPasoExamenModelTest {
         model.getSeleccionado().setIdExamen(examen);
         when(ppDao.buscarPorId(idPaso)).thenReturn(paso);
         when(examenDao.buscarPorId(idExamen)).thenReturn(examen);
-        ProcedimientoPasoExamen seleccionado = model.getSeleccionado();
         model.setEstado(ESTADO_CRUD.LISTADO);
 
         model.guardar();
 
-        verify(dao).actualizar(seleccionado);
+        verifyNoInteractions(dao);
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
 

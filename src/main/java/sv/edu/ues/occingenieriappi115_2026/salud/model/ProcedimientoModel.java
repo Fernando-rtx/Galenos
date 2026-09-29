@@ -73,7 +73,7 @@ public class ProcedimientoModel extends AbstractModel<Procedimiento> implements 
     }
 
     public void guardar() {
-        if (seleccionado == null) {
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
             return;
         }
         seleccionado.setNombre(normalizar(seleccionado.getNombre()));
@@ -87,10 +87,11 @@ public class ProcedimientoModel extends AbstractModel<Procedimiento> implements 
                     getDao().guardar(seleccionado);
                     agregarMensaje("procedimiento.creadoCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
-                case EDICION, LISTADO -> {
+                case EDICION -> {
                     seleccionado = getDao().actualizar(seleccionado);
                     agregarMensaje("procedimiento.actualizadoCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
+                case LISTADO -> { }
             }
         } catch (RuntimeException ex) {
             if (facesContext == null) {

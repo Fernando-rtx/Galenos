@@ -161,17 +161,16 @@ class ClinicaModelTest {
     }
 
     @Test
-    void guardarEnListadoActualizaLaClinica() {
+    void guardarEnListadoNoPersisteLaClinica() {
         ClinicaDAO dao = mock(ClinicaDAO.class);
         ClinicaModel model = new ClinicaModel(dao, mock(PersonaRolDAO.class));
         model.nuevo();
         model.getSeleccionado().setNombre("Clínica Central");
-        Clinica seleccionada = model.getSeleccionado();
         model.setEstado(ESTADO_CRUD.LISTADO);
 
         model.guardar();
 
-        verify(dao).actualizar(seleccionada);
+        verifyNoInteractions(dao);
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
 
