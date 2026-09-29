@@ -95,16 +95,66 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
         if (!validarAntesDeGuardar()) {
             return;
         }
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION, LISTADO -> seleccionado = getDao().actualizar(seleccionado);
+        try {
+            switch (getEstado()) {
+                case CREACION -> {
+                    getDao().guardar(seleccionado);
+                    agregarMensaje("secuencia.creadaCorrectamente", FacesMessage.SEVERITY_INFO);
+                }
+                case EDICION, LISTADO -> {
+                    seleccionado = getDao().actualizar(seleccionado);
+                    agregarMensaje("secuencia.actualizadaCorrectamente", FacesMessage.SEVERITY_INFO);
+                }
+            }
+        } catch (RuntimeException ex) {
+            if (facesContext == null) {
+                throw ex;
+            }
+            agregarMensaje("secuencia.errorGuardar", FacesMessage.SEVERITY_ERROR);
+            facesContext.validationFailed();
+            return;
         }
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
     public void cancelar() {
+        volverAlListado();
+        agregarMensaje("secuencia.cancelado", FacesMessage.SEVERITY_INFO);
+    }
+
+    private void volverAlListado() {
         seleccionado = null;
         setEstado(ESTADO_CRUD.LISTADO);
+    }
+
+    /**
+     * Retira el vínculo de secuencia indicado sin tocar los pasos que
+     * enlaza: solo elimina la fila de la tabla de unión.
+     *
+     * @param fila secuencia seleccionada en la tabla
+     */
+    public void quitar(ProcedimientoPasoSecuencia fila) {
+        if (fila == null || fila.getIdProcedimientoPasoSecuencia() == null) {
+            agregarError("secuencia.errorQuitar");
+            return;
+        }
+        try {
+            ProcedimientoPasoSecuencia persistida
+                    = getDao().buscarPorId(fila.getIdProcedimientoPasoSecuencia());
+            if (persistida == null
+                    || !getDao().eliminar(persistida.getIdProcedimientoPasoSecuencia())) {
+                agregarError("secuencia.errorQuitar");
+                return;
+            }
+        } catch (RuntimeException ex) {
+            agregarError("secuencia.errorQuitar");
+            return;
+        }
+        if (seleccionado != null && fila.getIdProcedimientoPasoSecuencia().equals(
+                seleccionado.getIdProcedimientoPasoSecuencia())) {
+            volverAlListado();
+        }
+        agregarMensaje("secuencia.quitada", FacesMessage.SEVERITY_INFO);
     }
 
     /**
@@ -120,6 +170,15 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
             return false;
         }
         seleccionado.setTipoSecuencia(normalizar(seleccionado.getTipoSecuencia()));
+        if (seleccionado.getTipoSecuencia() == null
+                || seleccionado.getTipoSecuencia().isEmpty()) {
+            agregarError("secuencia.tipoRequerido");
+            return false;
+        }
+        if (seleccionado.getTipoSecuencia().length() > 20) {
+            agregarError("secuencia.tipoMaximo");
+            return false;
+        }
 
         UUID destino = seleccionado.getIdProcedimientoPasoReferencia();
         if (destino != null) {

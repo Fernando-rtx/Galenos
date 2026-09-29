@@ -365,6 +365,106 @@ class ProcedimientoModelTest {
         verificarError(contexto, "procedimiento.eliminacionBloqueada");
     }
 
+    @Test
+    void guardarConNombreDuplicadoNoDelega() {
+        ProcedimientoDAO dao = mock(ProcedimientoDAO.class);
+        ProcedimientoModel model = new ProcedimientoModel(
+                dao,
+                mock(ProcedimientoPasoDAO.class),
+                mock(ConsultaProcedimientoDAO.class));
+        Procedimiento existente = new Procedimiento(UUID.randomUUID());
+        existente.setNombre("  biopsia  ");
+        when(dao.obtenerTodos()).thenReturn(List.of(existente));
+        model.nuevo();
+        model.getSeleccionado().setNombre("Biopsia");
+
+        model.guardar();
+
+        verify(dao, never()).guardar(any());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+        assertNotNull(model.getSeleccionado());
+    }
+
+    @Test
+    void guardarAlEditarElMismoRegistroNoSeConsideraDuplicado() {
+        ProcedimientoDAO dao = mock(ProcedimientoDAO.class);
+        ProcedimientoModel model = new ProcedimientoModel(
+                dao,
+                mock(ProcedimientoPasoDAO.class),
+                mock(ConsultaProcedimientoDAO.class));
+        Procedimiento existente = new Procedimiento(UUID.randomUUID());
+        existente.setNombre("Biopsia");
+        when(dao.obtenerTodos()).thenReturn(List.of(existente));
+        when(dao.actualizar(existente)).thenReturn(existente);
+        model.seleccionar(existente);
+
+        model.guardar();
+
+        verify(dao).actualizar(existente);
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+    }
+
+    @Test
+    void guardarConErrorDeDaoPublicaErrorGuardarYConservaEstado() {
+        ProcedimientoDAO dao = mock(ProcedimientoDAO.class);
+        ProcedimientoModel model = new ProcedimientoModel(
+                dao,
+                mock(ProcedimientoPasoDAO.class),
+                mock(ConsultaProcedimientoDAO.class));
+        FacesContext contexto = contexto("procedimiento.errorGuardar");
+        model.facesContext = contexto;
+        model.nuevo();
+        model.getSeleccionado().setNombre("Biopsia");
+        Procedimiento seleccionado = model.getSeleccionado();
+        doThrow(new IllegalStateException("fallo")).when(dao).guardar(seleccionado);
+
+        model.guardar();
+
+        assertSame(seleccionado, model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+        verificarError(contexto, "procedimiento.errorGuardar");
+    }
+
+    @Test
+    void guardarEnCreacionPublicaMensajeDeExito() {
+        ProcedimientoDAO dao = mock(ProcedimientoDAO.class);
+        ProcedimientoModel model = new ProcedimientoModel(
+                dao,
+                mock(ProcedimientoPasoDAO.class),
+                mock(ConsultaProcedimientoDAO.class));
+        FacesContext contexto = contexto("procedimiento.creadoCorrectamente");
+        model.facesContext = contexto;
+        model.nuevo();
+        model.getSeleccionado().setNombre("Biopsia");
+
+        model.guardar();
+
+        verify(contexto, never()).validationFailed();
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                FacesMessage.SEVERITY_INFO.equals(mensaje.getSeverity())
+                && ("Mensaje procedimiento.creadoCorrectamente").equals(mensaje.getSummary())));
+    }
+
+    @Test
+    void cancelarPublicaMensajeDeCancelacion() {
+        ProcedimientoModel model = new ProcedimientoModel(
+                mock(ProcedimientoDAO.class),
+                mock(ProcedimientoPasoDAO.class),
+                mock(ConsultaProcedimientoDAO.class));
+        FacesContext contexto = contexto("procedimiento.cancelado");
+        model.facesContext = contexto;
+        model.nuevo();
+
+        model.cancelar();
+
+        assertNull(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+        verify(contexto, never()).validationFailed();
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                FacesMessage.SEVERITY_INFO.equals(mensaje.getSeverity())
+                && ("Mensaje procedimiento.cancelado").equals(mensaje.getSummary())));
+    }
+
     private FacesContext contexto(String... claves) {
         FacesContext contexto = mock(FacesContext.class);
         Application aplicacion = mock(Application.class);

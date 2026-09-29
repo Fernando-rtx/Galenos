@@ -76,14 +76,34 @@ public class ClinicaModel extends AbstractModel<Clinica> implements Serializable
         if (!validarAntesDeGuardar()) {
             return;
         }
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION, LISTADO -> seleccionado = getDao().actualizar(seleccionado);
+        try {
+            switch (getEstado()) {
+                case CREACION -> {
+                    getDao().guardar(seleccionado);
+                    agregarMensaje("clinica.creadoCorrectamente", FacesMessage.SEVERITY_INFO);
+                }
+                case EDICION, LISTADO -> {
+                    seleccionado = getDao().actualizar(seleccionado);
+                    agregarMensaje("clinica.actualizadoCorrectamente", FacesMessage.SEVERITY_INFO);
+                }
+            }
+        } catch (RuntimeException ex) {
+            if (facesContext == null) {
+                throw ex;
+            }
+            agregarMensaje("clinica.errorGuardar", FacesMessage.SEVERITY_ERROR);
+            facesContext.validationFailed();
+            return;
         }
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
     public void cancelar() {
+        volverAlListado();
+        agregarMensaje("clinica.cancelado", FacesMessage.SEVERITY_INFO);
+    }
+
+    private void volverAlListado() {
         seleccionado = null;
         setEstado(ESTADO_CRUD.LISTADO);
     }
@@ -103,7 +123,7 @@ public class ClinicaModel extends AbstractModel<Clinica> implements Serializable
         }
         try {
             if (getDao().eliminar(seleccionado.getIdClinica())) {
-                cancelar();
+                volverAlListado();
                 agregarMensaje("clinica.eliminado", FacesMessage.SEVERITY_INFO);
             } else {
                 agregarError("clinica.errorEliminar");
@@ -134,7 +154,23 @@ public class ClinicaModel extends AbstractModel<Clinica> implements Serializable
             agregarError("clinica.nombreMaximo");
             return false;
         }
+        if (tieneNombreDuplicado()) {
+            agregarError("clinica.nombreDuplicado");
+            return false;
+        }
         return true;
+    }
+
+    private boolean tieneNombreDuplicado() {
+        UUID idPropio = seleccionado.getIdClinica();
+        return getDao().obtenerTodos().stream()
+                .filter(existente -> existente != null && existente != seleccionado)
+                .filter(existente -> idPropio == null
+                        || !idPropio.equals(existente.getIdClinica()))
+                .anyMatch(existente -> seleccionado.getNombre() != null
+                        && existente.getNombre() != null
+                        && seleccionado.getNombre().trim()
+                                .equalsIgnoreCase(existente.getNombre().trim()));
     }
 
     private String normalizar(String valor) {

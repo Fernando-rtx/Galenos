@@ -80,14 +80,34 @@ public class RolModel extends AbstractModel<Rol> implements Serializable {
         if (!validarAntesDeGuardar()) {
             return;
         }
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION, LISTADO -> seleccionado = getDao().actualizar(seleccionado);
+        try {
+            switch (getEstado()) {
+                case CREACION -> {
+                    getDao().guardar(seleccionado);
+                    agregarMensaje("rol.creadoCorrectamente", FacesMessage.SEVERITY_INFO);
+                }
+                case EDICION, LISTADO -> {
+                    seleccionado = getDao().actualizar(seleccionado);
+                    agregarMensaje("rol.actualizadoCorrectamente", FacesMessage.SEVERITY_INFO);
+                }
+            }
+        } catch (RuntimeException ex) {
+            if (facesContext == null) {
+                throw ex;
+            }
+            agregarMensaje("rol.errorGuardar", FacesMessage.SEVERITY_ERROR);
+            facesContext.validationFailed();
+            return;
         }
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
     public void cancelar() {
+        volverAlListado();
+        agregarMensaje("rol.cancelado", FacesMessage.SEVERITY_INFO);
+    }
+
+    private void volverAlListado() {
         seleccionado = null;
         setEstado(ESTADO_CRUD.LISTADO);
     }
@@ -107,7 +127,7 @@ public class RolModel extends AbstractModel<Rol> implements Serializable {
         }
         try {
             if (getDao().eliminar(seleccionado.getIdRol())) {
-                cancelar();
+                volverAlListado();
                 agregarMensaje("rol.eliminado", FacesMessage.SEVERITY_INFO);
             } else {
                 agregarError("rol.errorEliminar");
@@ -140,11 +160,27 @@ public class RolModel extends AbstractModel<Rol> implements Serializable {
             agregarError("rol.nombreMinimo");
             return false;
         }
-        if (nombre.length() > 255) {
+        if (nombre.length() > 155) {
             agregarError("rol.nombreMaximo");
             return false;
         }
+        if (tieneNombreDuplicado()) {
+            agregarError("rol.nombreDuplicado");
+            return false;
+        }
         return true;
+    }
+
+    private boolean tieneNombreDuplicado() {
+        UUID idPropio = seleccionado.getIdRol();
+        return getDao().obtenerTodos().stream()
+                .filter(existente -> existente != null && existente != seleccionado)
+                .filter(existente -> idPropio == null
+                        || !idPropio.equals(existente.getIdRol()))
+                .anyMatch(existente -> seleccionado.getNombre() != null
+                        && existente.getNombre() != null
+                        && seleccionado.getNombre().trim()
+                                .equalsIgnoreCase(existente.getNombre().trim()));
     }
 
     private String normalizar(String valor) {

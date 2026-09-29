@@ -379,6 +379,79 @@ class RolModelTest {
         verificarError(contexto, "rol.eliminacionBloqueada");
     }
 
+    @Test
+    void guardarConNombreDuplicadoNoDelega() {
+        RolDAO dao = mock(RolDAO.class);
+        RolModel model = new RolModel(dao, mock(PersonaRolDAO.class),
+                mock(ProcedimientoPasoDAO.class));
+        Rol existente = new Rol();
+        existente.setNombre("DOCTOR");
+        when(dao.obtenerTodos()).thenReturn(List.of(existente));
+        model.nuevo();
+        model.getSeleccionado().setNombre("Doctor");
+
+        model.guardar();
+
+        verify(dao, never()).guardar(any());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+        assertNotNull(model.getSeleccionado());
+    }
+
+    @Test
+    void guardarConErrorDeDaoPublicaErrorGuardarYConservaEstado() {
+        RolDAO dao = mock(RolDAO.class);
+        RolModel model = new RolModel(dao, mock(PersonaRolDAO.class),
+                mock(ProcedimientoPasoDAO.class));
+        FacesContext contexto = contexto("rol.errorGuardar");
+        model.facesContext = contexto;
+        model.nuevo();
+        model.getSeleccionado().setNombre("Doctor");
+        Rol seleccionado = model.getSeleccionado();
+        doThrow(new IllegalStateException("fallo")).when(dao).guardar(seleccionado);
+
+        model.guardar();
+
+        assertSame(seleccionado, model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+        verificarError(contexto, "rol.errorGuardar");
+    }
+
+    @Test
+    void guardarEnCreacionPublicaMensajeDeExito() {
+        RolDAO dao = mock(RolDAO.class);
+        RolModel model = new RolModel(dao, mock(PersonaRolDAO.class),
+                mock(ProcedimientoPasoDAO.class));
+        FacesContext contexto = contexto("rol.creadoCorrectamente");
+        model.facesContext = contexto;
+        model.nuevo();
+        model.getSeleccionado().setNombre("Doctor");
+
+        model.guardar();
+
+        verify(contexto, never()).validationFailed();
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                FacesMessage.SEVERITY_INFO.equals(mensaje.getSeverity())
+                && ("Mensaje rol.creadoCorrectamente").equals(mensaje.getSummary())));
+    }
+
+    @Test
+    void cancelarPublicaMensajeDeCancelacion() {
+        RolModel model = new RolModel(mock(RolDAO.class), mock(PersonaRolDAO.class),
+                mock(ProcedimientoPasoDAO.class));
+        FacesContext contexto = contexto("rol.cancelado");
+        model.facesContext = contexto;
+        model.nuevo();
+
+        model.cancelar();
+
+        assertNull(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+        verify(contexto, never()).validationFailed();
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                FacesMessage.SEVERITY_INFO.equals(mensaje.getSeverity())
+                && ("Mensaje rol.cancelado").equals(mensaje.getSummary())));
+    }
+
     private FacesContext contexto(String... claves) {
         FacesContext contexto = mock(FacesContext.class);
         Application aplicacion = mock(Application.class);

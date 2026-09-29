@@ -81,14 +81,34 @@ public class ProcedimientoModel extends AbstractModel<Procedimiento> implements 
         if (!validarAntesDeGuardar()) {
             return;
         }
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION, LISTADO -> seleccionado = getDao().actualizar(seleccionado);
+        try {
+            switch (getEstado()) {
+                case CREACION -> {
+                    getDao().guardar(seleccionado);
+                    agregarMensaje("procedimiento.creadoCorrectamente", FacesMessage.SEVERITY_INFO);
+                }
+                case EDICION, LISTADO -> {
+                    seleccionado = getDao().actualizar(seleccionado);
+                    agregarMensaje("procedimiento.actualizadoCorrectamente", FacesMessage.SEVERITY_INFO);
+                }
+            }
+        } catch (RuntimeException ex) {
+            if (facesContext == null) {
+                throw ex;
+            }
+            agregarMensaje("procedimiento.errorGuardar", FacesMessage.SEVERITY_ERROR);
+            facesContext.validationFailed();
+            return;
         }
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
     public void cancelar() {
+        volverAlListado();
+        agregarMensaje("procedimiento.cancelado", FacesMessage.SEVERITY_INFO);
+    }
+
+    private void volverAlListado() {
         seleccionado = null;
         setEstado(ESTADO_CRUD.LISTADO);
     }
@@ -108,7 +128,7 @@ public class ProcedimientoModel extends AbstractModel<Procedimiento> implements 
         }
         try {
             if (getDao().eliminar(seleccionado.getIdProcedimiento())) {
-                cancelar();
+                volverAlListado();
                 agregarMensaje("procedimiento.eliminado", FacesMessage.SEVERITY_INFO);
             } else {
                 agregarError("procedimiento.errorEliminar");
@@ -140,11 +160,32 @@ public class ProcedimientoModel extends AbstractModel<Procedimiento> implements 
             agregarError("procedimiento.nombreMinimo");
             return false;
         }
-        if (nombre.length() > 255) {
+        if (nombre.length() > 155) {
             agregarError("procedimiento.nombreMaximo");
             return false;
         }
+        if (tieneNombreDuplicado()) {
+            agregarError("procedimiento.nombreDuplicado");
+            return false;
+        }
         return true;
+    }
+
+    private boolean tieneNombreDuplicado() {
+        UUID idPropio = seleccionado.getIdProcedimiento();
+        return getDao().obtenerTodos().stream()
+                .filter(existente -> existente != null && existente != seleccionado)
+                .filter(existente -> idPropio == null
+                        || !idPropio.equals(existente.getIdProcedimiento()))
+                .anyMatch(existente -> nombreEquals(existente));
+    }
+
+    private boolean nombreEquals(Procedimiento existente) {
+        return seleccionado.getNombre() != null
+                && existente != null
+                && existente.getNombre() != null
+                && seleccionado.getNombre().trim()
+                        .equalsIgnoreCase(existente.getNombre().trim());
     }
 
     private String normalizar(String valor) {

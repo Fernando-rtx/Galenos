@@ -165,6 +165,18 @@
                     </div>
 
                     <div class="dialog-actions">
+                        <p:commandButton value="#{msg['crud.quitar']}"
+                            icon="pi pi-trash"
+                            styleClass="ui-button-danger ui-button-outlined"
+                            rendered="#{procedimientoPasoExamenModel.estado eq 'EDICION'}"
+                            action="#{procedimientoPasoExamenModel.quitar(procedimientoPasoExamenModel.seleccionado)}"
+                            process="@this" update="messages ppeTable edicionDialog"
+                            resetValues="true"
+                            oncomplete="if (!args.validationFailed) PF('ppeDialog').hide()">
+                            <p:confirm header="#{msg['crud.confirmar']}"
+                                message="#{msg['ppe.confirmarQuitar']}"
+                                icon="pi pi-exclamation-triangle" />
+                        </p:commandButton>
                         <crud:botones-bottom model="#{procedimientoPasoExamenModel}"
                             procesar="@this edicionContenido"
                             actualizar="messages ppeTable edicionDialog"
@@ -173,6 +185,12 @@
                     </div>
                 </h:panelGroup>
             </p:outputPanel>
+            <p:confirmDialog global="true" responsive="true">
+                <p:commandButton value="#{msg['crud.no']}" type="button"
+                    styleClass="ui-confirmdialog-no ui-button-flat" />
+                <p:commandButton value="#{msg['crud.si']}" type="button"
+                    styleClass="ui-confirmdialog-yes ui-button-danger" />
+            </p:confirmDialog>
         </p:dialog>
     </ui:define>
 </ui:composition>

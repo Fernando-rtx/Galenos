@@ -307,6 +307,76 @@ class ClinicaModelTest {
         verificarError(contexto, "clinica.eliminacionBloqueada");
     }
 
+    @Test
+    void guardarConNombreDuplicadoNoDelega() {
+        ClinicaDAO dao = mock(ClinicaDAO.class);
+        ClinicaModel model = new ClinicaModel(dao, mock(PersonaRolDAO.class));
+        Clinica existente = new Clinica();
+        existente.setNombre("CLINICA CENTRAL");
+        when(dao.obtenerTodos()).thenReturn(List.of(existente));
+        model.nuevo();
+        model.getSeleccionado().setNombre("Clinica Central");
+
+        model.guardar();
+
+        verify(dao, never()).guardar(any());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+        assertNotNull(model.getSeleccionado());
+    }
+
+    @Test
+    void guardarConErrorDeDaoPublicaErrorGuardarYConservaEstado() {
+        ClinicaDAO dao = mock(ClinicaDAO.class);
+        ClinicaModel model = new ClinicaModel(dao, mock(PersonaRolDAO.class));
+        FacesContext contexto = contexto("clinica.errorGuardar");
+        model.facesContext = contexto;
+        model.nuevo();
+        model.getSeleccionado().setNombre("Clinica Central");
+        Clinica seleccionado = model.getSeleccionado();
+        doThrow(new IllegalStateException("fallo")).when(dao).guardar(seleccionado);
+
+        model.guardar();
+
+        assertSame(seleccionado, model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+        verificarError(contexto, "clinica.errorGuardar");
+    }
+
+    @Test
+    void guardarEnCreacionPublicaMensajeDeExito() {
+        ClinicaDAO dao = mock(ClinicaDAO.class);
+        ClinicaModel model = new ClinicaModel(dao, mock(PersonaRolDAO.class));
+        FacesContext contexto = contexto("clinica.creadoCorrectamente");
+        model.facesContext = contexto;
+        model.nuevo();
+        model.getSeleccionado().setNombre("Clinica Central");
+
+        model.guardar();
+
+        verify(contexto, never()).validationFailed();
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                FacesMessage.SEVERITY_INFO.equals(mensaje.getSeverity())
+                && ("Mensaje clinica.creadoCorrectamente").equals(mensaje.getSummary())));
+    }
+
+    @Test
+    void cancelarPublicaMensajeDeCancelacion() {
+        ClinicaModel model = new ClinicaModel(
+                mock(ClinicaDAO.class), mock(PersonaRolDAO.class));
+        FacesContext contexto = contexto("clinica.cancelado");
+        model.facesContext = contexto;
+        model.nuevo();
+
+        model.cancelar();
+
+        assertNull(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+        verify(contexto, never()).validationFailed();
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                FacesMessage.SEVERITY_INFO.equals(mensaje.getSeverity())
+                && ("Mensaje clinica.cancelado").equals(mensaje.getSummary())));
+    }
+
     private FacesContext contexto(String... claves) {
         FacesContext contexto = mock(FacesContext.class);
         Application aplicacion = mock(Application.class);
