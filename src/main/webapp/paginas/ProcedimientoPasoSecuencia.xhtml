@@ -45,7 +45,7 @@
                         </div>
 
                         <crud:botones-top
-                            model="#{secuenciaModel}"
+                            model="#{procedimientoPasoSecuenciaModel}"
                             actualizar="messages secuenciasTable edicionDialog"
                             oncompleteNuevo="PF('secuenciaDialog').show()" />
                     </div>
@@ -67,21 +67,21 @@
 
                         <p:dataTable
                             id="secuenciasTable"
-                            value="#{secuenciaModel}"
+                            value="#{procedimientoPasoSecuenciaModel}"
                             var="item"
                             lazy="true"
                             paginator="true"
                             rows="10"
                             reflow="true"
                             selectionMode="single"
-                            selection="#{secuenciaModel.seleccionado}"
-                            rowKey="#{secuenciaModel.getRowKey(item)}"
+                            selection="#{procedimientoPasoSecuenciaModel.seleccionado}"
+                            rowKey="#{procedimientoPasoSecuenciaModel.getRowKey(item)}"
                             emptyMessage="#{msg['secuencia.sinRegistros']}"
                             styleClass="secuencia-table">
 
                             <p:ajax
                                 event="rowSelect"
-                                listener="#{secuenciaModel.seleccionar(item)}"
+                                listener="#{procedimientoPasoSecuenciaModel.seleccionar(item)}"
                                 update="edicionDialog"
                                 oncomplete="PF('secuenciaDialog').show()" />
 
@@ -132,7 +132,7 @@
                                     icon="pi pi-pencil"
                                     title="#{msg['crud.editar']}"
                                     styleClass="edit-button"
-                                    action="#{secuenciaModel.seleccionar(item)}"
+                                    action="#{procedimientoPasoSecuenciaModel.seleccionar(item)}"
                                     process="@this"
                                     update="edicionDialog"
                                     oncomplete="PF('secuenciaDialog').show()" />
@@ -146,7 +146,7 @@
         <p:dialog
             id="edicionDialog"
             widgetVar="secuenciaDialog"
-            header="#{secuenciaModel.estado eq 'CREACION'
+            header="#{procedimientoPasoSecuenciaModel.estado eq 'CREACION'
                       ? msg['secuencia.nueva']
                       : msg['secuencia.editar']}"
             modal="true"
@@ -159,7 +159,7 @@
                 id="edicionContenido"
                 layout="block">
 
-                <h:panelGroup rendered="#{secuenciaModel.seleccionado ne null}">
+                <h:panelGroup rendered="#{procedimientoPasoSecuenciaModel.seleccionado ne null}">
                     <div class="dialog-intro">
                         <div class="dialog-intro-icon">
                             <i class="pi pi-file-edit"></i>
@@ -185,7 +185,7 @@
 
                             <p:selectOneMenu
                                 id="idProcedimientoPaso"
-                                value="#{secuenciaModel.seleccionado.idProcedimientoPaso}"
+                                value="#{procedimientoPasoSecuenciaModel.seleccionado.idProcedimientoPaso}"
                                 converter="#{procedimientoPasoConverter}"
 
                                 required="true"
@@ -196,7 +196,7 @@
                                     itemLabel="#{msg['secuencia.seleccionarPaso']}"
                                     itemValue="#{null}" />
                                 <f:selectItems
-                                    value="#{secuenciaModel.procedimientosPaso}"
+                                    value="#{procedimientoPasoSecuenciaModel.procedimientosPaso}"
                                     var="paso"
                                     itemLabel="#{paso.nombre}"
                                     itemValue="#{paso}" />
@@ -211,7 +211,7 @@
 
                             <p:inputText
                                 id="tipoSecuencia"
-                                value="#{secuenciaModel.seleccionado.tipoSecuencia}"
+                                value="#{procedimientoPasoSecuenciaModel.seleccionado.tipoSecuencia}"
                                 placeholder="#{msg['secuencia.tipoPlaceholder']}"
                                 maxlength="20" />
 
@@ -228,7 +228,7 @@
 
                             <p:inputText
                                 id="idProcedimientoPasoReferencia"
-                                value="#{secuenciaModel.seleccionado.idProcedimientoPasoReferencia}"
+                                value="#{procedimientoPasoSecuenciaModel.seleccionado.idProcedimientoPasoReferencia}"
                                 placeholder="#{msg['secuencia.referenciaPlaceholder']}" />
 
                             <span class="form-helper">
@@ -239,7 +239,7 @@
 
                     <div class="dialog-actions">
                         <crud:botones-bottom
-                            model="#{secuenciaModel}"
+                            model="#{procedimientoPasoSecuenciaModel}"
                             procesar="@this edicionContenido"
                             actualizar="messages secuenciasTable edicionDialog"
                             oncompleteCancelar="PF('secuenciaDialog').hide()"
