@@ -4,7 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Expression;
+
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
@@ -18,9 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.primefaces.model.FilterMeta;
-import org.primefaces.model.SortMeta;
-import org.primefaces.model.SortOrder;
+
 import sv.edu.ues.occingenieriappi115_2026.salud.control.DAOInterface;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.DefaultDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.DireccionOrden;
@@ -44,12 +42,14 @@ import static org.mockito.Mockito.times;
  * Pruebas de integración unitaria entre {@link AbstractModel} y
  * {@link DefaultDAO} usando mocks de Criteria API y PrimeFaces.
  *
- * <p>Verifican offset/límite, orden, filtros, conteo, UUID, rowKey y estados
- * CRUD. No son pruebas contra un servidor ni una base real.</p>
+ * <p>
+ * Verifican offset/límite, orden, filtros, conteo, UUID, rowKey y estados CRUD.
+ * No son pruebas contra un servidor ni una base real.</p>
  */
 class Fase8Test {
 
     private static class TestEntity {
+
         private UUID id;
         private String nombre;
 
@@ -59,6 +59,7 @@ class Fase8Test {
     }
 
     private static class TestDAO extends DefaultDAO<TestEntity> {
+
         private final EntityManager entityManager;
 
         TestDAO(EntityManager entityManager) {

@@ -210,4 +210,78 @@ class DocumentoModelTest {
         assertSame(persona, modelo.getSeleccionado().getIdPersona());
         assertTrue(modelo.isSeleccionadoParaPersona(persona));
     }
+
+    @Test
+    void tipoDuplicadoParaLaMismaPersonaImpideGuardar() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoDocumento dui = new TipoDocumento(UUID.randomUUID());
+        Documento existente = new Documento(UUID.randomUUID());
+        existente.setIdPersona(persona);
+        existente.setIdTipoDocumento(dui);
+        existente.setValor("01234567-8");
+        when(dao.obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList()))
+                .thenReturn(List.of(existente));
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
+        modelo.nuevoParaPersona(persona);
+        modelo.getSeleccionado().setIdTipoDocumento(dui);
+        modelo.getSeleccionado().setValor("06887861-1");
+
+        modelo.guardar();
+
+        verify(dao, never()).guardar(any(Documento.class));
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
+    @Test
+    void editarDocumentoConservandoSuTipoNoSeConsideraDuplicado() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoDocumento dui = new TipoDocumento(UUID.randomUUID());
+        Documento existente = new Documento(UUID.randomUUID());
+        existente.setIdPersona(persona);
+        existente.setIdTipoDocumento(dui);
+        existente.setValor("01234567-8");
+        when(dao.obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList()))
+                .thenReturn(List.of(existente));
+        when(dao.actualizar(existente)).thenReturn(existente);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
+        modelo.seleccionar(existente);
+
+        modelo.guardar();
+
+        verify(dao).actualizar(existente);
+        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+    }
+
+    @Test
+    void eliminaDocumentoSeleccionadoDeLaPersona() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        Documento documento = new Documento(UUID.randomUUID());
+        documento.setIdPersona(persona);
+        when(dao.eliminar(documento.getIdDocumento())).thenReturn(true);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
+        modelo.seleccionar(documento);
+
+        modelo.eliminarSeleccionadoParaPersona(persona);
+
+        verify(dao).eliminar(documento.getIdDocumento());
+        assertNull(modelo.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+    }
+
+    @Test
+    void noEliminaDocumentoDeOtraPersona() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        Documento documento = new Documento(UUID.randomUUID());
+        documento.setIdPersona(new Persona(UUID.randomUUID()));
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
+        modelo.seleccionar(documento);
+
+        modelo.eliminarSeleccionadoParaPersona(new Persona(UUID.randomUUID()));
+
+        verify(dao, never()).eliminar(any());
+        assertSame(documento, modelo.getSeleccionado());
+    }
 }

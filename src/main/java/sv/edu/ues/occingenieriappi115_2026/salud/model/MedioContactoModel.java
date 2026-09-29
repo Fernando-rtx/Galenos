@@ -9,11 +9,13 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import org.primefaces.event.SelectEvent;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.MedioContactoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
@@ -93,6 +95,28 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
         return tiposMedioContacto;
     }
 
+    public List<TipoMedioContacto> getTiposMedioContactoAsignables() {
+        List<TipoMedioContacto> asignables = new ArrayList<>();
+        for (TipoMedioContacto tipo : getTiposMedioContacto()) {
+            if (Boolean.TRUE.equals(tipo.getActivo())) {
+                asignables.add(tipo);
+            }
+        }
+        return asignables;
+    }
+
+    public boolean isTipoSeleccionadoInactivo() {
+        TipoMedioContacto tipo = seleccionado == null ? null : seleccionado.getIdTipoMedioContacto();
+        if (tipo == null || tipo.getIdTipoMedioContacto() == null) {
+            return false;
+        }
+        TipoMedioContacto actualizado = getTiposMedioContacto().stream()
+                .filter(candidato -> mismoTipo(candidato, tipo))
+                .findFirst()
+                .orElse(null);
+        return actualizado == null || !Boolean.TRUE.equals(actualizado.getActivo());
+    }
+
     public String getPersonaSeleccionadaId() {
         return seleccionado == null || seleccionado.getIdPersona() == null
                 ? null : seleccionado.getIdPersona().getIdPersona().toString();
@@ -148,6 +172,7 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
             cancelar();
             return;
         }
+        tiposMedioContacto = tipoMedioContactoDAO.obtenerTodos();
         personaContexto = persona;
         nuevo();
     }
@@ -160,7 +185,15 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
      */
     public void seleccionarParaPersona(MedioContacto contacto, Persona persona) {
         if (perteneceAPersona(contacto, persona)) {
+            tiposMedioContacto = tipoMedioContactoDAO.obtenerTodos();
             seleccionar(contacto);
+        }
+    }
+
+    public void seleccionarFilaParaPersona(SelectEvent<MedioContacto> evento) {
+        if (evento != null && evento.getObject() != null) {
+            tiposMedioContacto = tipoMedioContactoDAO.obtenerTodos();
+            seleccionar(evento.getObject());
         }
     }
 
@@ -200,6 +233,23 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
+    public void eliminarSeleccionadoParaPersona(Persona persona) {
+        if (!perteneceAPersona(seleccionado, persona)
+                || seleccionado.getIdMedioContacto() == null) {
+            return;
+        }
+        try {
+            if (getDao().eliminar(seleccionado.getIdMedioContacto())) {
+                cancelar();
+                agregarMensaje("medioContacto.eliminado", FacesMessage.SEVERITY_INFO);
+            } else {
+                agregarError(null, "medioContacto.errorEliminar");
+            }
+        } catch (RuntimeException ex) {
+            agregarError(null, "medioContacto.errorEliminar");
+        }
+    }
+
     private Persona buscarPersona(String id) {
         try {
             return id == null || id.isBlank()
@@ -221,21 +271,49 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
     private boolean validarAntesDeGuardar() {
         boolean valido = true;
         if (seleccionado.getIdPersona() == null) {
-            agregarError("persona", "medioContacto.personaRequerida");
+            agregarError(null, "medioContacto.personaRequerida");
             valido = false;
         }
         if (seleccionado.getIdTipoMedioContacto() == null) {
-            agregarError("tipo", "medioContacto.tipoRequerido");
+            agregarError("contactoTipo", "medioContacto.tipoRequerido");
+            valido = false;
+        } else if (!esTipoAsignable()) {
+            agregarError("contactoTipo", "medioContacto.tipoInactivo");
             valido = false;
         }
         if (seleccionado.getValor() == null || seleccionado.getValor().isBlank()) {
-            agregarError("valor", "medioContacto.valorRequerido");
+            agregarError("contactoValor", "medioContacto.valorRequerido");
             valido = false;
         } else if (!cumpleExpresionRegular(seleccionado.getValor())) {
-            agregarError("valor", "medioContacto.valorFormato");
+            agregarError("contactoValor", "medioContacto.valorFormato");
             valido = false;
         }
         return valido;
+    }
+
+    private boolean esTipoAsignable() {
+        UUID idTipo = seleccionado.getIdTipoMedioContacto().getIdTipoMedioContacto();
+        TipoMedioContacto tipoActual = idTipo == null ? null : tipoMedioContactoDAO.buscarPorId(idTipo);
+        if (tipoActual == null) {
+            return false;
+        }
+        if (Boolean.TRUE.equals(tipoActual.getActivo())) {
+            return true;
+        }
+
+        if (getEstado() != ESTADO_CRUD.EDICION || seleccionado.getIdMedioContacto() == null) {
+            return false;
+        }
+
+        MedioContacto persistido = medioContactoDAO.buscarPorId(seleccionado.getIdMedioContacto());
+        return persistido != null
+                && persistido.getIdTipoMedioContacto() != null
+                && idTipo.equals(persistido.getIdTipoMedioContacto().getIdTipoMedioContacto());
+    }
+
+    private boolean mismoTipo(TipoMedioContacto primero, TipoMedioContacto segundo) {
+        return primero.getIdTipoMedioContacto() != null
+                && primero.getIdTipoMedioContacto().equals(segundo.getIdTipoMedioContacto());
     }
 
     private boolean cumpleExpresionRegular(String valor) {
@@ -267,18 +345,46 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
     }
 
     private void agregarError(String idComponente, String clave) {
+        agregarMensaje(idComponente, clave, FacesMessage.SEVERITY_ERROR);
+        if (facesContext != null) {
+            facesContext.validationFailed();
+        }
+    }
+
+    private void agregarMensaje(String clave, FacesMessage.Severity severidad) {
+        agregarMensaje(null, clave, severidad);
+    }
+
+    private void agregarMensaje(String idComponente, String clave, FacesMessage.Severity severidad) {
         FacesContext contexto = facesContext;
         if (contexto == null) {
             return;
         }
         String mensaje = contexto.getApplication().getResourceBundle(contexto, "msg").getString(clave);
-        String clientId = "layoutForm:" + idComponente;
-        contexto.addMessage(clientId,
-                new FacesMessage(FacesMessage.SEVERITY_ERROR, mensaje, mensaje));
-        contexto.validationFailed();
-        UIComponent componente = contexto.getViewRoot().findComponent(clientId);
+        UIComponent componente = idComponente == null
+                ? null : buscarComponente(contexto.getViewRoot(), idComponente);
+        String clientId = componente == null ? null : componente.getClientId(contexto);
         if (componente instanceof UIInput entrada) {
             entrada.setValid(false);
         }
+        contexto.addMessage(clientId,
+                new FacesMessage(severidad, mensaje, null));
+    }
+
+    private UIComponent buscarComponente(UIComponent componente, String id) {
+        if (componente == null) {
+            return null;
+        }
+        if (id.equals(componente.getId())) {
+            return componente;
+        }
+        var hijos = componente.getFacetsAndChildren();
+        while (hijos.hasNext()) {
+            UIComponent encontrado = buscarComponente(hijos.next(), id);
+            if (encontrado != null) {
+                return encontrado;
+            }
+        }
+        return null;
     }
 }

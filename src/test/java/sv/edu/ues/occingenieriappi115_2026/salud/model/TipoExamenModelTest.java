@@ -1,5 +1,10 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.faces.application.Application;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.validator.ValidatorException;
+import java.util.ListResourceBundle;
+import java.util.ResourceBundle;
 import org.junit.jupiter.api.Test;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoExamen;
@@ -9,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -29,7 +36,39 @@ class TipoExamenModelTest {
         model.nuevo();
 
         assertNotNull(model.getSeleccionado());
+        assertTrue(model.getSeleccionado().getActivo());
         assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+    }
+
+    @Test
+    void nombreSoloConEspaciosEsRechazado() {
+        TipoExamenModel model = new TipoExamenModel(mock(TipoExamenDAO.class));
+
+        assertThrows(ValidatorException.class,
+                () -> model.validarNombre(contexto(), null, "   "));
+    }
+
+    @Test
+    void nombreValidoEsAceptado() {
+        TipoExamenModel model = new TipoExamenModel(mock(TipoExamenDAO.class));
+
+        assertDoesNotThrow(() -> model.validarNombre(null, null, "Laboratorio"));
+    }
+
+    @Test
+    void guardarRecortaNombreYObservaciones() {
+        TipoExamenDAO dao = mock(TipoExamenDAO.class);
+        TipoExamenModel model = new TipoExamenModel(dao);
+        model.nuevo();
+        TipoExamen seleccionado = model.getSeleccionado();
+        seleccionado.setNombre("  Laboratorio  ");
+        seleccionado.setObservaciones("  Rutina  ");
+
+        model.guardar();
+
+        assertEquals("Laboratorio", seleccionado.getNombre());
+        assertEquals("Rutina", seleccionado.getObservaciones());
+        verify(dao).guardar(seleccionado);
     }
 
     @Test
@@ -91,5 +130,21 @@ class TipoExamenModelTest {
         assertDoesNotThrow(model::guardar);
 
         verifyNoInteractions(dao);
+    }
+
+    private FacesContext contexto() {
+        FacesContext contexto = mock(FacesContext.class);
+        Application aplicacion = mock(Application.class);
+        ResourceBundle mensajes = new ListResourceBundle() {
+            @Override
+            protected Object[][] getContents() {
+                return new Object[][]{
+                    {"tipoExamen.nombreRequerido", "Nombre requerido"}
+                };
+            }
+        };
+        when(contexto.getApplication()).thenReturn(aplicacion);
+        when(aplicacion.getResourceBundle(contexto, "msg")).thenReturn(mensajes);
+        return contexto;
     }
 }

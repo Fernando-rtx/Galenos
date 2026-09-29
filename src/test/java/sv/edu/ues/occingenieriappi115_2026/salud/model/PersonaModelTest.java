@@ -1,6 +1,7 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.faces.application.Application;
+import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.validator.ValidatorException;
@@ -12,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.primefaces.event.SelectEvent;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Persona;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -49,6 +52,7 @@ class PersonaModelTest {
         Persona persona = modelo.getSeleccionado();
         persona.setNombres("  Ana  ");
         persona.setApellidos("  López  ");
+        persona.setFechaNacimiento(fechaValida());
 
         modelo.guardar();
 
@@ -59,11 +63,70 @@ class PersonaModelTest {
     }
 
     @Test
+    void guardarCreacionMuestraMensajeDeExito() {
+        PersonaDAO dao = mock(PersonaDAO.class);
+        PersonaModel modelo = new PersonaModel(dao);
+        FacesContext contexto = contexto();
+        modelo.facesContext = contexto;
+        modelo.nuevo();
+        completarPersona(modelo.getSeleccionado());
+
+        modelo.guardar();
+
+        verify(dao).guardar(modelo.getSeleccionado());
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                "Persona creada correctamente.".equals(mensaje.getSummary())));
+        verify(contexto, never()).validationFailed();
+        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+    }
+
+    @Test
+    void guardarEdicionMuestraMensajeDeExito() {
+        PersonaDAO dao = mock(PersonaDAO.class);
+        PersonaModel modelo = new PersonaModel(dao);
+        FacesContext contexto = contexto();
+        modelo.facesContext = contexto;
+        Persona persona = new Persona(UUID.randomUUID());
+        completarPersona(persona);
+        modelo.seleccionar(persona);
+        when(dao.actualizar(persona)).thenReturn(persona);
+
+        modelo.guardar();
+
+        verify(dao).actualizar(persona);
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                "Persona actualizada correctamente.".equals(mensaje.getSummary())));
+        verify(contexto, never()).validationFailed();
+        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+    }
+
+    @Test
+    void errorDePersistenciaMarcaValidacionYConservaCreacion() {
+        PersonaDAO dao = mock(PersonaDAO.class);
+        PersonaModel modelo = new PersonaModel(dao);
+        FacesContext contexto = contexto();
+        modelo.facesContext = contexto;
+        modelo.nuevo();
+        Persona persona = modelo.getSeleccionado();
+        completarPersona(persona);
+        doThrow(new IllegalStateException("Error de persistencia")).when(dao).guardar(persona);
+
+        assertDoesNotThrow(modelo::guardar);
+
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                "No fue posible guardar la persona. Intente nuevamente.".equals(mensaje.getSummary())));
+        verify(contexto).validationFailed();
+        assertSame(persona, modelo.getSeleccionado());
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
+    @Test
     void errorDelDaoAlGuardarConservaEstadoDeCreacion() {
         PersonaDAO dao = mock(PersonaDAO.class);
         PersonaModel modelo = new PersonaModel(dao);
         modelo.nuevo();
         Persona persona = modelo.getSeleccionado();
+        completarPersona(persona);
         doThrow(new IllegalStateException("Error de persistencia")).when(dao).guardar(persona);
 
         assertThrows(IllegalStateException.class, modelo::guardar);
@@ -77,6 +140,104 @@ class PersonaModelTest {
         PersonaModel modelo = new PersonaModel(mock(PersonaDAO.class));
         assertThrows(ValidatorException.class,
                 () -> modelo.validarNombre(contexto(), componente("nombres"), null));
+    }
+
+    @Test
+    void camposObligatoriosVaciosSonRechazados() {
+        PersonaModel modelo = new PersonaModel(mock(PersonaDAO.class));
+        FacesContext contexto = contexto();
+
+        assertAll(
+                () -> assertThrows(ValidatorException.class,
+                        () -> modelo.validarNombre(contexto, componente("nombres"), null)),
+                () -> assertThrows(ValidatorException.class,
+                        () -> modelo.validarNombre(contexto, componente("apellidos"), "   ")),
+                () -> assertThrows(ValidatorException.class,
+                        () -> modelo.validarFechaNacimiento(contexto,
+                                componente("fechaNacimiento"), null)));
+    }
+
+    @Test
+    void guardarVacioSoloMuestraErrorDeNombres() {
+        PersonaDAO dao = mock(PersonaDAO.class);
+        PersonaModel modelo = new PersonaModel(dao);
+        FacesContext contexto = contexto();
+        modelo.facesContext = contexto;
+        modelo.nuevo();
+
+        modelo.guardar();
+
+        verificarUnicoError(contexto, "nombres", "El nombre es requerido.");
+        verifyNoInteractions(dao);
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
+    @Test
+    void guardarConNombresSoloMuestraErrorDeApellidos() {
+        PersonaDAO dao = mock(PersonaDAO.class);
+        PersonaModel modelo = new PersonaModel(dao);
+        FacesContext contexto = contexto();
+        modelo.facesContext = contexto;
+        modelo.nuevo();
+        modelo.getSeleccionado().setNombres("Ana");
+
+        modelo.guardar();
+
+        verificarUnicoError(contexto, "apellidos", "El apellido es requerido.");
+        verifyNoInteractions(dao);
+    }
+
+    @Test
+    void guardarConNombresYApellidosSoloMuestraErrorDeFecha() {
+        PersonaDAO dao = mock(PersonaDAO.class);
+        PersonaModel modelo = new PersonaModel(dao);
+        FacesContext contexto = contexto();
+        modelo.facesContext = contexto;
+        modelo.nuevo();
+        modelo.getSeleccionado().setNombres("Ana");
+        modelo.getSeleccionado().setApellidos("López");
+
+        modelo.guardar();
+
+        verificarUnicoError(contexto, "fechaNacimiento", "La fecha de nacimiento es requerida.");
+        verifyNoInteractions(dao);
+    }
+
+    @Test
+    void guardarConFechaFuturaNoPersisteYMuestraSoloErrorDeFecha() {
+        PersonaDAO dao = mock(PersonaDAO.class);
+        PersonaModel modelo = new PersonaModel(dao);
+        FacesContext contexto = contexto();
+        modelo.facesContext = contexto;
+        modelo.nuevo();
+        completarPersona(modelo.getSeleccionado());
+        modelo.getSeleccionado().setFechaNacimiento(
+                new Date(System.currentTimeMillis() + 86_400_000L));
+
+        modelo.guardar();
+
+        verificarUnicoError(contexto, "fechaNacimiento", "Fecha futura");
+        verifyNoInteractions(dao);
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
+    @Test
+    void guardarEdicionSinApellidosNoActualiza() {
+        PersonaDAO dao = mock(PersonaDAO.class);
+        PersonaModel modelo = new PersonaModel(dao);
+        FacesContext contexto = contexto();
+        modelo.facesContext = contexto;
+        Persona persona = new Persona(UUID.randomUUID());
+        persona.setNombres("Ana");
+        persona.setFechaNacimiento(fechaValida());
+        modelo.seleccionar(persona);
+
+        modelo.guardar();
+
+        verificarUnicoError(contexto, "apellidos", "El apellido es requerido.");
+        verify(dao, never()).actualizar(any());
+        assertEquals(ESTADO_CRUD.EDICION, modelo.getEstado());
+        assertSame(persona, modelo.getSeleccionado());
     }
 
     @Test
@@ -117,6 +278,24 @@ class PersonaModelTest {
     }
 
     @Test
+    void nuevoDespuesDeEditarCreaUnaPersonaLimpia() {
+        PersonaModel modelo = new PersonaModel(mock(PersonaDAO.class));
+        Persona anterior = new Persona();
+        anterior.setNombres("Alexander");
+        anterior.setApellidos("Itzep");
+        anterior.setFechaNacimiento(new Date());
+        modelo.seleccionar(anterior);
+
+        modelo.nuevo();
+
+        assertNotSame(anterior, modelo.getSeleccionado());
+        assertNull(modelo.getSeleccionado().getNombres());
+        assertNull(modelo.getSeleccionado().getApellidos());
+        assertNull(modelo.getSeleccionado().getFechaNacimiento());
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
+    @Test
     void seleccionarEdita() {
         PersonaModel m = new PersonaModel(mock(PersonaDAO.class));
         Persona p = new Persona();
@@ -148,6 +327,7 @@ class PersonaModelTest {
         }).when(d).guardar(any());
         PersonaModel m = new PersonaModel(d);
         m.nuevo();
+        completarPersona(m.getSeleccionado());
         m.guardar();
         assertNotNull(m.getSeleccionado().getIdPersona());
         verify(d).guardar(m.getSeleccionado());
@@ -157,6 +337,7 @@ class PersonaModelTest {
     void guardarEdicionUsaResultado() {
         PersonaDAO d = mock(PersonaDAO.class);
         Persona a = new Persona(), b = new Persona();
+        completarPersona(a);
         when(d.actualizar(a)).thenReturn(b);
         PersonaModel m = new PersonaModel(d);
         m.seleccionar(a);
@@ -171,6 +352,23 @@ class PersonaModelTest {
         m.cancelar();
         assertNull(m.getSeleccionado());
         assertEquals(ESTADO_CRUD.LISTADO, m.getEstado());
+    }
+
+    @Test
+    void cerrarEdicionLimpiaPersonaYModelosDependientes() {
+        PersonaModel modelo = new PersonaModel(mock(PersonaDAO.class));
+        DocumentoModel documento = mock(DocumentoModel.class);
+        MedioContactoModel contacto = mock(MedioContactoModel.class);
+        PersonaRolModel personaRol = mock(PersonaRolModel.class);
+        modelo.nuevo();
+
+        modelo.cerrarEdicion(documento, contacto, personaRol);
+
+        verify(documento).cancelar();
+        verify(contacto).cancelar();
+        verify(personaRol).cancelar();
+        assertNull(modelo.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
     }
 
     @Test
@@ -232,6 +430,23 @@ class PersonaModelTest {
         return componente;
     }
 
+    private static void completarPersona(Persona persona) {
+        persona.setNombres("Ana");
+        persona.setApellidos("López");
+        persona.setFechaNacimiento(fechaValida());
+    }
+
+    private static Date fechaValida() {
+        return new Date(946_684_800_000L);
+    }
+
+    private void verificarUnicoError(FacesContext contexto, String clientId, String resumen) {
+        verify(contexto).addMessage(eq(clientId), argThat(mensaje ->
+                resumen.equals(mensaje.getSummary())));
+        verify(contexto).validationFailed();
+        verify(contexto, times(1)).addMessage(anyString(), any(FacesMessage.class));
+    }
+
     private FacesContext contexto() {
         FacesContext contexto = mock(FacesContext.class);
         Application aplicacion = mock(Application.class);
@@ -240,12 +455,19 @@ class PersonaModelTest {
             protected Object[][] getContents() {
                 return new Object[][]{
                     {"persona.nombresFormato", "Formato invalido"},
-                    {"persona.nombresRequeridos", "Nombre requerido"},
+                    {"persona.nombresRequeridos", "El nombre es requerido."},
                     {"persona.nombresMinimo", "Nombre demasiado corto"},
                     {"persona.nombresMaximo", "Nombre demasiado largo"},
-                    {"persona.fechaNacimientoRequerida", "Fecha requerida"},
+                    {"persona.apellidosRequeridos", "El apellido es requerido."},
+                    {"persona.apellidosMinimo", "Apellido demasiado corto"},
+                    {"persona.apellidosMaximo", "Apellido demasiado largo"},
+                    {"persona.apellidosFormato", "Formato de apellido invalido"},
+                    {"persona.fechaNacimientoRequerida", "La fecha de nacimiento es requerida."},
                     {"persona.fechaNacimientoMinima", "Fecha antigua"},
-                    {"persona.fechaNacimientoFutura", "Fecha futura"}
+                    {"persona.fechaNacimientoFutura", "Fecha futura"},
+                    {"persona.creadaCorrectamente", "Persona creada correctamente."},
+                    {"persona.actualizadaCorrectamente", "Persona actualizada correctamente."},
+                    {"persona.errorGuardar", "No fue posible guardar la persona. Intente nuevamente."}
                 };
             }
         };

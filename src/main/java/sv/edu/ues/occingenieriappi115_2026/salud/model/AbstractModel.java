@@ -168,7 +168,7 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
                 new FacesMessage(
                         FacesMessage.SEVERITY_ERROR,
                         mensaje,
-                        mensaje
+                        null
                 )
         );
     }
