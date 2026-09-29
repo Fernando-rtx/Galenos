@@ -74,6 +74,8 @@
                             </div>
                         </div>
 
+                        <p class="page-subtitle">#{msg['crud.dobleClicEditar']}</p>
+
                         <!--
                         Tabla lazy: PrimeFaces usa tipoExamenModel como LazyDataModel.
                         Solo solicita la página visible. var="item" representa cada fila;
@@ -94,11 +96,13 @@
                             emptyMessage="#{msg['tipoExamen.sinRegistros']}"
                             styleClass="tipo-table">
 
-                            <!-- Al seleccionar una fila, AJAX ejecuta seleccionar(item), actualiza el diálogo y lo abre. -->
+                            <!-- El doble clic abre la fila seleccionada y limpia valores de ediciones anteriores. -->
                             <p:ajax
-                                event="rowSelect"
-                                listener="#{tipoExamenModel.seleccionar(item)}"
+                                event="rowDblselect"
+                                listener="#{tipoExamenModel.seleccionar(tipoExamenModel.seleccionado)}"
+                                process="@this"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('tipoExamenDialog').show()" />
 
                             <!-- filterBy/sortBy generan FilterMeta y SortMeta que AbstractModel adapta a Criteria. -->
@@ -139,20 +143,6 @@
                                                 : 'secondary'}" />
                             </p:column>
 
-                            <p:column
-                                headerText="#{msg['tipoExamen.acciones']}"
-                                styleClass="action-cell">
-
-                                <!-- process="@this" evita procesar la tabla completa; update refresca el diálogo. -->
-                                <p:commandButton
-                                    icon="pi pi-pencil"
-                                    title="#{msg['crud.editar']}"
-                                    styleClass="edit-button"
-                                    action="#{tipoExamenModel.seleccionar(item)}"
-                                    process="@this"
-                                    update="edicionDialog"
-                                    oncomplete="PF('tipoExamenDialog').show()" />
-                            </p:column>
                         </p:dataTable>
                     </div>
                 </div>
