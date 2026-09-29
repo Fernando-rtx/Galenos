@@ -7,23 +7,43 @@
                 xmlns:ui="jakarta.faces.facelets"
                 template="/WEB-INF/plantillas/general.xhtml">
     <ui:define name="titulo">#{msg['examen.titulo']} | #{msg['app.nombre']}</ui:define>
+    <ui:define name="head">
+        <h:outputStylesheet library="estilos" name="examen.css" />
+    </ui:define>
     <ui:define name="contenido">
         <!-- El formulario y la estructura general pertenecen a la plantilla. -->
-        <h1>#{msg['examen.titulo']}</h1>
-        <p:commandButton value="#{msg['crud.nuevo']}"
-                         action="#{examenModel.nuevo()}"
-                         process="@this"
-                         update="messages examenTable edicionDialog"
-                         rendered="#{examenModel.estado eq 'LISTADO'}"
-                         oncomplete="PF('examenDialog').show()" />
-        <p:messages id="messages" showDetail="false" closable="true" />
-        <h:outputText value="#{msg['crud.dobleClicEditar']}"
-                      styleClass="page-subtitle" />
+        <main class="page-shell examen-page">
+            <section class="clinical-card">
+                <div class="clinical-topbar"></div>
+                <div class="card-content">
+                    <div class="page-header">
+                        <div>
+                            <h1 class="page-title">#{msg['examen.titulo']}</h1>
+                            <p class="page-subtitle">#{msg['examen.subtitulo']}</p>
+                        </div>
+                        <p:commandButton value="#{msg['crud.nuevo']}"
+                                         icon="pi pi-plus"
+                                         styleClass="clinical-primary"
+                                         action="#{examenModel.nuevo()}"
+                                         process="@this"
+                                         update="messages examenTable edicionDialog"
+                                         resetValues="true"
+                                         rendered="#{examenModel.estado eq 'LISTADO'}"
+                                         oncomplete="PF('examenDialog').show()" />
+                    </div>
+                    <div class="section-divider"></div>
+        <p:messages id="messages"
+                    globalOnly="true"
+                    showDetail="false"
+                    closable="true" />
+        <div class="table-title">#{msg['examen.catalogo']}</div>
+        <p class="page-subtitle examen-table-hint">#{msg['crud.dobleClicEditar']}</p>
 
         <p:remoteCommand name="cargarTiposExamen"
                          action="#{examenTipoExamenModel.cargarPorExamen(examenModel.seleccionado)}"
                          process="@this"
                          update="edicionDialog"
+                         resetValues="true"
                          oncomplete="PF('examenDialog').show()" />
 
         <p:dataTable id="examenTable"
@@ -31,15 +51,19 @@
                      var="item"
                      lazy="true"
                      paginator="true"
+                     paginatorPosition="bottom"
                      rows="10"
                      reflow="true"
                      selectionMode="single"
                      selection="#{examenModel.seleccionado}"
                      rowKey="#{examenModel.getRowKey(item)}"
-                     emptyMessage="#{msg['examen.sinRegistros']}">
+                     emptyMessage="#{msg['examen.sinRegistros']}"
+                     styleClass="clinical-table examen-table">
             <p:ajax event="rowDblselect"
                     listener="#{examenModel.seleccionarFila}"
+                    process="@this"
                     update="edicionDialog"
+                    resetValues="true"
                     oncomplete="cargarTiposExamen()" />
             <p:column headerText="#{msg['examen.nombre']}"
                       field="nombre"
@@ -48,13 +72,17 @@
                       filterMatchMode="contains">
                 <h:outputText value="#{item.nombre}" />
             </p:column>
-            <p:column headerText="#{msg['examen.observaciones']}">
+            <p:column headerText="#{msg['examen.observaciones']}" styleClass="observaciones">
                 <h:outputText value="#{empty item.observaciones ? msg['comun.sinDato'] : item.observaciones}" />
             </p:column>
             <p:column headerText="#{msg['examen.estado']}">
-                <h:outputText value="#{item.activo eq true ? msg['examen.activo'] : msg['examen.inactivo']}" />
+                <p:tag value="#{item.activo eq true ? msg['examen.activo'] : msg['examen.inactivo']}"
+                       severity="#{item.activo eq true ? 'success' : 'secondary'}" />
             </p:column>
         </p:dataTable>
+                </div>
+            </section>
+        </main>
 
         <!-- Diálogo de edición -->
         <p:dialog id="edicionDialog"
@@ -63,35 +91,60 @@
                   modal="true"
                   responsive="true"
                   resizable="false"
+                  styleClass="clinical-dialog examen-dialog"
                   width="760">
+            <p:ajax event="close"
+                    listener="#{examenModel.cancelar}"
+                    process="@this"
+                    update="edicionDialog"
+                    resetValues="true" />
             <p:outputPanel id="edicionContenido">
                 <h:panelGroup rendered="#{examenModel.seleccionado ne null}">
                     <p:tabView id="examenTabs">
                         <p:tab title="#{msg['examen.informacion']}">
-                            <p:panelGrid id="detalleGrid" columns="2">
+                            <p class="page-subtitle examen-table-hint">#{msg['examen.completar']}</p>
+                            <p:outputPanel id="detalleGrid" layout="block" styleClass="dialog-form examen-details">
+                                <div class="form-field">
                                 <p:outputLabel for="nombre"
+                                               styleClass="form-label"
                                                value="#{msg['examen.nombre']}" />
                                 <p:inputText id="nombre"
                                              value="#{examenModel.seleccionado.nombre}"
                                              required="true"
                                              requiredMessage="#{msg['examen.nombreRequerido']}"
                                              maxlength="255"
+                                             placeholder="#{msg['examen.nombrePlaceholder']}"
                                              validator="#{examenModel.validarNombre}" />
+                                <p:message for="nombre" showSummary="true" showDetail="false" />
+                                </div>
 
+                                <div class="form-field">
                                 <p:outputLabel for="observaciones"
+                                               styleClass="form-label"
                                                value="#{msg['examen.observaciones']}" />
                                 <p:inputTextarea id="observaciones"
                                                  value="#{examenModel.seleccionado.observaciones}"
+                                                 placeholder="#{msg['examen.observacionesPlaceholder']}"
+                                                 autoResize="false"
                                                  rows="4" />
+                                </div>
 
+                                <div class="examen-status-field">
+                                    <div>
                                 <p:outputLabel for="activo"
+                                               styleClass="form-label"
                                                value="#{msg['examen.activo']}" />
+                                        <p class="page-subtitle">#{msg['examen.usarSistema']}</p>
+                                    </div>
                                 <p:selectBooleanCheckbox id="activo"
                                                          value="#{examenModel.seleccionado.activo}" />
-                            </p:panelGrid>
-                            <p:message for="nombre" />
+                                </div>
+                            </p:outputPanel>
 
+                            <div class="dialog-actions examen-detail-actions">
                             <p:commandButton value="#{msg['crud.cancelar']}"
+                                             icon="pi pi-times"
+                                             styleClass="ui-button-secondary ui-button-outlined"
                                              action="#{examenModel.cancelar()}"
                                              process="@this"
                                              update="messages examenTable edicionDialog"
@@ -99,37 +152,66 @@
                                              resetValues="true"
                                              oncomplete="PF('examenDialog').hide()" />
                             <p:commandButton value="#{msg['crud.guardar']}"
+                                             icon="pi pi-check"
+                                             styleClass="clinical-primary"
                                              action="#{examenModel.guardar()}"
                                              process="@this detalleGrid"
-                                             update="messages examenTable edicionDialog"
+                                             update="messages examenTable edicionContenido"
                                              oncomplete="if (!args.validationFailed) PF('examenDialog').hide()" />
+                            </div>
                         </p:tab>
 
                         <p:tab title="#{msg['examen.tipoExamen']}"
                                disabled="#{examenModel.estado eq 'CREACION' or examenModel.seleccionado.idExamen eq null}">
                             <p:outputPanel id="tiposContenido">
+                                <p:messages id="tiposMessages" globalOnly="true"
+                                            showDetail="false" closable="true" />
                                 <p:commandButton value="#{msg['examen.asociarTipo']}"
                                                  icon="pi pi-plus"
                                                  action="#{examenTipoExamenModel.nuevaAsociacion(examenModel.seleccionado)}"
                                                  process="@this"
-                                                 update="tiposContenido" />
+                                                 update="tiposContenido"
+                                                 resetValues="true" />
 
-                                <h:panelGroup rendered="#{examenTipoExamenModel.estado eq 'CREACION' and examenTipoExamenModel.seleccionado ne null}">
+                                <p class="page-subtitle examen-table-hint">#{msg['crud.dobleClicEditar']}</p>
+                                <p:dataTable id="tiposTable"
+                                             value="#{examenTipoExamenModel.asociaciones}"
+                                             var="asociacion"
+                                             rowKey="#{asociacion.idExamenTipoExamen}"
+                                             selectionMode="single"
+                                             selection="#{examenTipoExamenModel.filaSeleccionada}"
+                                             styleClass="clinical-table"
+                                             emptyMessage="#{msg['examen.sinDetalle']}">
+                                    <p:ajax event="rowDblselect"
+                                            listener="#{examenTipoExamenModel.seleccionarAsociacion}"
+                                            process="@this" update="tiposContenido" resetValues="true" />
+                                    <p:column headerText="#{msg['examen.tipoExamen']}">
+                                        <h:outputText value="#{asociacion.idTipoExamen.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="#{msg['examen.observaciones']}">
+                                        <h:outputText value="#{empty asociacion.observaciones ? msg['examen.sinObservaciones'] : asociacion.observaciones}" />
+                                    </p:column>
+                                </p:dataTable>
+
+                                <h:panelGroup rendered="#{examenTipoExamenModel.estado ne 'LISTADO' and examenTipoExamenModel.seleccionado ne null}">
                                     <p:panelGrid id="asociacionGrid" columns="2">
                                         <p:outputLabel for="tipoExamen"
                                                        value="#{msg['examen.tipoExamen']}" />
-                                        <p:selectOneMenu id="tipoExamen"
-                                                         value="#{examenTipoExamenModel.idTipoExamenSeleccionado}"
-                                                         required="true"
-                                                         requiredMessage="#{msg['examen.seleccioneTipo']}">
-                                            <f:selectItem itemLabel="#{msg['crud.seleccionar']}"
-                                                          itemValue="#{null}"
-                                                          noSelectionOption="true" />
-                                            <f:selectItems value="#{examenTipoExamenModel.tipoExamenes}"
-                                                           var="tipo"
-                                                           itemLabel="#{tipo.nombre}"
-                                                           itemValue="#{tipo.idTipoExamen}" />
-                                        </p:selectOneMenu>
+                                        <p:outputPanel>
+                                            <p:selectOneMenu id="tipoExamen"
+                                                             value="#{examenTipoExamenModel.idTipoExamenSeleccionado}"
+                                                             required="true"
+                                                             requiredMessage="#{msg['examen.seleccioneTipo']}">
+                                                <f:selectItem itemLabel="#{msg['crud.seleccionar']}"
+                                                              itemValue="#{null}"
+                                                              noSelectionOption="true" />
+                                                <f:selectItems value="#{examenTipoExamenModel.tipoExamenes}"
+                                                               var="tipo"
+                                                               itemLabel="#{tipo.nombre}"
+                                                               itemValue="#{tipo.idTipoExamen}" />
+                                            </p:selectOneMenu>
+                                            <p:message for="tipoExamen" />
+                                        </p:outputPanel>
 
                                         <p:outputLabel for="observacionAsociacion"
                                                        value="#{msg['examen.observaciones']}" />
@@ -138,6 +220,17 @@
                                                          rows="3" />
                                     </p:panelGrid>
 
+                                    <div class="dialog-actions">
+                                    <p:commandButton value="#{msg['crud.quitar']}"
+                                                     icon="pi pi-trash"
+                                                     styleClass="ui-button-danger ui-button-outlined"
+                                                     rendered="#{examenTipoExamenModel.estado eq 'EDICION'}"
+                                                     action="#{examenTipoExamenModel.quitarAsociacion(examenTipoExamenModel.seleccionado, examenModel.seleccionado)}"
+                                                     process="@this" update="tiposContenido" resetValues="true">
+                                        <p:confirm header="#{msg['crud.confirmar']}"
+                                                   message="#{msg['examen.confirmarQuitarAsociacion']}"
+                                                   icon="pi pi-exclamation-triangle" />
+                                    </p:commandButton>
                                     <p:commandButton value="#{msg['crud.cancelar']}"
                                                      action="#{examenTipoExamenModel.cancelarAsociacion()}"
                                                      process="@this"
@@ -147,33 +240,21 @@
                                     <p:commandButton value="#{msg['crud.guardar']}"
                                                      action="#{examenTipoExamenModel.guardarAsociacion()}"
                                                      process="@this asociacionGrid"
-                                                     update=":layoutForm:messages tiposContenido" />
+                                                     update="tiposContenido" />
+                                    </div>
                                 </h:panelGroup>
-
-                                <p:dataTable id="tiposTable"
-                                             value="#{examenTipoExamenModel.asociaciones}"
-                                             var="asociacion"
-                                             emptyMessage="#{msg['examen.sinDetalle']}">
-                                    <p:column headerText="#{msg['examen.tipoExamen']}">
-                                        <h:outputText value="#{asociacion.idTipoExamen.nombre}" />
-                                    </p:column>
-                                    <p:column headerText="#{msg['examen.observaciones']}">
-                                        <h:outputText value="#{empty asociacion.observaciones ? msg['examen.sinObservaciones'] : asociacion.observaciones}" />
-                                    </p:column>
-                                    <p:column headerText="#{msg['examen.acciones']}">
-                                        <p:commandButton icon="pi pi-times"
-                                                         title="#{msg['crud.quitar']}"
-                                                         action="#{examenTipoExamenModel.quitarAsociacion(asociacion)}"
-                                                         process="@this"
-                                                         update=":layoutForm:messages tiposContenido" />
-                                    </p:column>
-                                </p:dataTable>
 
                             </p:outputPanel>
                         </p:tab>
                     </p:tabView>
                 </h:panelGroup>
             </p:outputPanel>
+            <p:confirmDialog global="true" responsive="true">
+                <p:commandButton value="#{msg['crud.no']}" type="button"
+                                 styleClass="ui-confirmdialog-no ui-button-flat" />
+                <p:commandButton value="#{msg['crud.si']}" type="button"
+                                 styleClass="ui-confirmdialog-yes ui-button-danger" />
+            </p:confirmDialog>
         </p:dialog>
     </ui:define>
 </ui:composition>

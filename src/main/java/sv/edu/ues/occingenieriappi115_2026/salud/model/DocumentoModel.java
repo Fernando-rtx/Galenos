@@ -1,5 +1,6 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.component.UIInput;
@@ -25,8 +26,12 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoDocumento;
 @ViewScoped
 public class DocumentoModel extends AbstractModel<Documento> implements Serializable {
     private static final long serialVersionUID = 1L;
-    private final PersonaDAO personaDAO;
-    private final TipoDocumentoDAO tipoDocumentoDAO;
+    @EJB
+    private DocumentoDAO documentoDAO;
+    @EJB
+    private PersonaDAO personaDAO;
+    @EJB
+    private TipoDocumentoDAO tipoDocumentoDAO;
     @Inject
     private transient FacesContext facesContext;
     private Documento seleccionado;
@@ -34,11 +39,18 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     private List<Persona> personas;
     private List<TipoDocumento> tiposDocumento;
 
-    @Inject
-    public DocumentoModel(DocumentoDAO dao, PersonaDAO personaDAO, TipoDocumentoDAO tipoDocumentoDAO) {
-        super(dao);
+    public DocumentoModel() {
+    }
+
+    public DocumentoModel(DocumentoDAO documentoDAO, PersonaDAO personaDAO, TipoDocumentoDAO tipoDocumentoDAO) {
+        this.documentoDAO = documentoDAO;
         this.personaDAO = personaDAO;
         this.tipoDocumentoDAO = tipoDocumentoDAO;
+    }
+
+    @Override
+    protected DocumentoDAO getDao() {
+        return documentoDAO;
     }
 
     public Documento getSeleccionado() {
@@ -188,6 +200,23 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
+    public void eliminarSeleccionadoParaPersona(Persona persona) {
+        if (!perteneceAPersona(seleccionado, persona)
+                || seleccionado.getIdDocumento() == null) {
+            return;
+        }
+        try {
+            if (getDao().eliminar(seleccionado.getIdDocumento())) {
+                cancelar();
+                agregarMensaje("documento.eliminado", FacesMessage.SEVERITY_INFO);
+            } else {
+                agregarError(null, "documento.errorEliminar");
+            }
+        } catch (RuntimeException ex) {
+            agregarError(null, "documento.errorEliminar");
+        }
+    }
+
     private Persona buscarPersona(String id) {
         try {
             return id == null || id.isBlank()
@@ -209,21 +238,43 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     private boolean validarAntesDeGuardar() {
         boolean valido = true;
         if (seleccionado.getIdPersona() == null) {
-            agregarError("persona", "documento.personaRequerida");
+            agregarError(null, "documento.personaRequerida");
             valido = false;
         }
         if (seleccionado.getIdTipoDocumento() == null) {
-            agregarError("tipo", "documento.tipoRequerido");
+            agregarError("documentoTipo", "documento.tipoRequerido");
+            valido = false;
+        } else if (tieneTipoDuplicadoParaPersona()) {
+            agregarError("documentoTipo", "documento.tipoDuplicado");
             valido = false;
         }
         if (seleccionado.getValor() == null || seleccionado.getValor().isBlank()) {
-            agregarError("valor", "documento.valorRequerido");
+            agregarError("documentoValor", "documento.valorRequerido");
             valido = false;
         } else if (!cumpleExpresionRegular(seleccionado.getValor())) {
-            agregarError("valor", "documento.valorFormato");
+            agregarError("documentoValor", "documento.valorFormato");
             valido = false;
         }
         return valido;
+    }
+
+    private boolean tieneTipoDuplicadoParaPersona() {
+        if (seleccionado.getIdPersona() == null
+                || seleccionado.getIdPersona().getIdPersona() == null
+                || seleccionado.getIdTipoDocumento() == null
+                || seleccionado.getIdTipoDocumento().getIdTipoDocumento() == null) {
+            return false;
+        }
+
+        UUID idSeleccionado = seleccionado.getIdDocumento();
+        UUID idTipoSeleccionado = seleccionado.getIdTipoDocumento().getIdTipoDocumento();
+        return getDocumentosPorPersona(seleccionado.getIdPersona()).stream()
+                .filter(documento -> documento != null && documento != seleccionado)
+                .filter(documento -> idSeleccionado == null
+                        || !idSeleccionado.equals(documento.getIdDocumento()))
+                .map(Documento::getIdTipoDocumento)
+                .filter(tipo -> tipo != null && tipo.getIdTipoDocumento() != null)
+                .anyMatch(tipo -> idTipoSeleccionado.equals(tipo.getIdTipoDocumento()));
     }
 
     private boolean cumpleExpresionRegular(String valor) {
@@ -255,18 +306,46 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     }
 
     private void agregarError(String idComponente, String clave) {
+        agregarMensaje(idComponente, clave, FacesMessage.SEVERITY_ERROR);
+        if (facesContext != null) {
+            facesContext.validationFailed();
+        }
+    }
+
+    private void agregarMensaje(String clave, FacesMessage.Severity severidad) {
+        agregarMensaje(null, clave, severidad);
+    }
+
+    private void agregarMensaje(String idComponente, String clave, FacesMessage.Severity severidad) {
         FacesContext contexto = facesContext;
         if (contexto == null) {
             return;
         }
         String mensaje = contexto.getApplication().getResourceBundle(contexto, "msg").getString(clave);
-        String clientId = "layoutForm:" + idComponente;
-        contexto.addMessage(clientId,
-                new FacesMessage(FacesMessage.SEVERITY_ERROR, mensaje, mensaje));
-        contexto.validationFailed();
-        UIComponent componente = contexto.getViewRoot().findComponent(clientId);
+        UIComponent componente = idComponente == null
+                ? null : buscarComponente(contexto.getViewRoot(), idComponente);
+        String clientId = componente == null ? null : componente.getClientId(contexto);
         if (componente instanceof UIInput entrada) {
             entrada.setValid(false);
         }
+        contexto.addMessage(clientId,
+                new FacesMessage(severidad, mensaje, null));
+    }
+
+    private UIComponent buscarComponente(UIComponent componente, String id) {
+        if (componente == null) {
+            return null;
+        }
+        if (id.equals(componente.getId())) {
+            return componente;
+        }
+        var hijos = componente.getFacetsAndChildren();
+        while (hijos.hasNext()) {
+            UIComponent encontrado = buscarComponente(hijos.next(), id);
+            if (encontrado != null) {
+                return encontrado;
+            }
+        }
+        return null;
     }
 }

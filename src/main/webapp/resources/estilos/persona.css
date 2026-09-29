@@ -2,3 +2,10 @@
     color: #264b62;
     font-weight: 600;
 }
+
+/* PrimeFaces establece un ancho mínimo inline basado en el campo de entrada. */
+body .ui-datepicker.persona-birthdate-panel {
+    width: 22rem;
+    min-width: 0 !important;
+    max-width: calc(100vw - 2rem);
+}

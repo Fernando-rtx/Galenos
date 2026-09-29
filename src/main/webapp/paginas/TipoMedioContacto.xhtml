@@ -5,6 +5,7 @@
     xmlns="http://www.w3.org/1999/xhtml"
     xmlns:crud="jakarta.faces.composite/crud"
     xmlns:h="jakarta.faces.html"
+    xmlns:f="jakarta.faces.core"
     xmlns:p="primefaces"
     xmlns:ui="jakarta.faces.facelets"
     template="/WEB-INF/plantillas/general.xhtml">
@@ -53,6 +54,7 @@
                         <crud:botones-top
                             model="#{tipoMedioContactoModel}"
                             actualizar="messages tiposTable edicionDialog"
+                            resetNuevo="true"
                             oncompleteNuevo="PF('tipoMedioContactoDialog').show()" />
                     </div>
 
@@ -60,7 +62,8 @@
 
                     <p:messages
                         id="messages"
-                        showDetail="true"
+                        globalOnly="true"
+                        showDetail="false"
                         closable="true" />
 
                     <div class="table-section">
@@ -70,6 +73,8 @@
                                 #{msg['tipoMedioContacto.catalogo']}
                             </div>
                         </div>
+
+                        <p class="page-subtitle tipos-contacto-hint">#{msg['crud.dobleClicEditar']}</p>
 
                         <!--
                         Tabla lazy y paginada: no carga todo PostgreSQL. PrimeFaces solicita
@@ -81,6 +86,7 @@
                             var="item"
                             lazy="true"
                             paginator="true"
+                            paginatorPosition="bottom"
                             rows="10"
                             reflow="true"
                             selectionMode="single"
@@ -89,11 +95,13 @@
                             emptyMessage="#{msg['tipoMedioContacto.sinRegistros']}"
                             styleClass="tipo-table">
 
-                            <!-- La selección actualiza únicamente el diálogo y lo abre en EDICION. -->
+                            <!-- El doble clic abre la fila seleccionada y limpia valores de ediciones anteriores. -->
                             <p:ajax
-                                event="rowSelect"
-                                listener="#{tipoMedioContactoModel.seleccionar(item)}"
+                                event="rowDblselect"
+                                listener="#{tipoMedioContactoModel.seleccionar(tipoMedioContactoModel.seleccionado)}"
+                                process="@this"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('tipoMedioContactoDialog').show()" />
 
                             <!-- filterBy genera el filtro que termina como Predicate Criteria. -->
@@ -132,19 +140,6 @@
                                                   : ''}" />
                             </p:column>
 
-                            <p:column
-                                headerText="#{msg['tipoMedioContacto.acciones']}"
-                                styleClass="action-cell">
-
-                                <p:commandButton
-                                    icon="pi pi-pencil"
-                                    title="#{msg['crud.editar']}"
-                                    styleClass="edit-button"
-                                    action="#{tipoMedioContactoModel.seleccionar(item)}"
-                                    process="@this"
-                                    update="edicionDialog"
-                                    oncomplete="PF('tipoMedioContactoDialog').show()" />
-                            </p:column>
                         </p:dataTable>
                     </div>
                 </div>
@@ -162,7 +157,11 @@
             responsive="true"
             resizable="false"
             width="560"
-            styleClass="clinical-dialog">
+            styleClass="clinical-dialog tipo-contacto-dialog">
+
+            <p:ajax event="close"
+                    listener="#{tipoMedioContactoModel.cancelar}"
+                    process="@this" update="edicionDialog" resetValues="true" />
 
             <p:outputPanel
                 id="edicionContenido"
@@ -189,16 +188,15 @@
                         <div class="form-field">
                             <p:outputLabel
                                 for="nombre"
-                                value="#{msg['tipoMedioContacto.nombre']}"
+                                value="#{msg['tipoMedioContacto.nombre']} *"
                                 styleClass="form-label" />
 
-                            <!-- El nombre es obligatorio según el ciclo de validación de Faces. -->
+                            <!-- Los requeridos se validan secuencialmente en guardar(). -->
                             <p:inputText
                                 id="nombre"
                                 value="#{tipoMedioContactoModel.seleccionado.nombre}"
-                                placeholder="#{msg['tipoMedioContacto.nombrePlaceholder']}"
-                                required="true"
-                                requiredMessage="#{msg['mensajes.error']}" />
+                                placeholder="#{msg['tipoMedioContacto.nombrePlaceholder']}" />
+                            <p:message for="nombre" showSummary="true" showDetail="false" />
 
                             <span class="form-helper">
                                 #{msg['tipoMedioContacto.nombreAyuda']}
@@ -208,27 +206,32 @@
                         <div class="form-field">
                             <p:outputLabel
                                 for="indicaciones"
-                                value="#{msg['tipoMedioContacto.indicaciones']}"
+                                value="#{msg['tipoMedioContacto.indicaciones']} *"
                                 styleClass="form-label" />
 
                             <p:inputTextarea
                                 id="indicaciones"
                                 value="#{tipoMedioContactoModel.seleccionado.indicaciones}"
-                                rows="5"
+                                rows="4"
                                 autoResize="false"
                                 placeholder="#{msg['tipoMedioContacto.indicacionesPlaceholder']}" />
+                            <p:message for="indicaciones" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="form-field">
                             <p:outputLabel
-                                for="expresionRegular"
-                                value="#{msg['tipoMedioContacto.expresionRegular']}"
+                                for="formatoContacto"
+                                value="#{msg['tipoMedioContacto.formato']} *"
                                 styleClass="form-label" />
 
-                            <p:inputText
-                                id="expresionRegular"
-                                value="#{tipoMedioContactoModel.seleccionado.expresionRegular}"
-                                placeholder="#{msg['tipoMedioContacto.expresionRegularPlaceholder']}" />
+                            <p:selectOneMenu id="formatoContacto"
+                                value="#{tipoMedioContactoModel.formatoContacto}">
+                                <f:selectItem itemLabel="#{msg['tipoMedioContacto.seleccionarFormato']}"
+                                    itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{tipoMedioContactoModel.formatosContacto}"
+                                    var="formato" itemValue="#{formato}" itemLabel="#{msg[formato.clave]}" />
+                            </p:selectOneMenu>
+                            <p:message for="formatoContacto" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="toggle-field">
@@ -253,7 +256,7 @@
                         <crud:botones-bottom
                             model="#{tipoMedioContactoModel}"
                             procesar="@this edicionContenido"
-                            actualizar="messages tiposTable edicionDialog"
+                            actualizar="messages tiposTable edicionContenido"
                             oncompleteCancelar="PF('tipoMedioContactoDialog').hide()"
                             oncompleteGuardar="if (!args.validationFailed) PF('tipoMedioContactoDialog').hide()" />
                     </div>

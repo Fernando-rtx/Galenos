@@ -1,8 +1,7 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.application.FacesMessage;
-import jakarta.faces.component.UIComponent;
-import jakarta.faces.component.UIInput;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
@@ -11,6 +10,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import org.primefaces.event.SelectEvent;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.*;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.*;
 
@@ -18,9 +18,14 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.*;
 @ViewScoped
 public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serializable {
     private static final long serialVersionUID = 1L;
-    private final PersonaDAO personaDAO;
-    private final RolDAO rolDAO;
-    private final ClinicaDAO clinicaDAO;
+    @EJB
+    private PersonaRolDAO personaRolDAO;
+    @EJB
+    private PersonaDAO personaDAO;
+    @EJB
+    private RolDAO rolDAO;
+    @EJB
+    private ClinicaDAO clinicaDAO;
     @Inject
     private transient FacesContext facesContext;
     private PersonaRol seleccionado;
@@ -29,12 +34,20 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     private List<Rol> roles;
     private List<Clinica> clinicas;
 
-    @Inject
-    public PersonaRolModel(PersonaRolDAO dao, PersonaDAO personaDAO, RolDAO rolDAO, ClinicaDAO clinicaDAO) {
-        super(dao);
+    public PersonaRolModel() {
+    }
+
+    public PersonaRolModel(PersonaRolDAO personaRolDAO, PersonaDAO personaDAO,
+            RolDAO rolDAO, ClinicaDAO clinicaDAO) {
+        this.personaRolDAO = personaRolDAO;
         this.personaDAO = personaDAO;
         this.rolDAO = rolDAO;
         this.clinicaDAO = clinicaDAO;
+    }
+
+    @Override
+    protected PersonaRolDAO getDao() {
+        return personaRolDAO;
     }
 
     public PersonaRol getSeleccionado() {
@@ -164,6 +177,12 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
         }
     }
 
+    public void seleccionarFilaParaPersona(SelectEvent<PersonaRol> evento) {
+        if (evento != null && evento.getObject() != null) {
+            seleccionar(evento.getObject());
+        }
+    }
+
     /**
      * Indica si el formulario activo corresponde a la persona del tab.
      *
@@ -197,6 +216,23 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     public void cancelar() {
         seleccionado = null;
         setEstado(ESTADO_CRUD.LISTADO);
+    }
+
+    public void eliminarSeleccionadoParaPersona(Persona persona) {
+        if (!perteneceAPersona(seleccionado, persona)
+                || seleccionado.getIdPersonaRol() == null) {
+            return;
+        }
+        try {
+            if (getDao().eliminar(seleccionado.getIdPersonaRol())) {
+                cancelar();
+                agregarMensaje("personaRol.eliminado", FacesMessage.SEVERITY_INFO);
+            } else {
+                agregarError("personaRol.errorEliminar");
+            }
+        } catch (RuntimeException ex) {
+            agregarError("personaRol.errorEliminarEnUso");
+        }
     }
 
     private Persona buscarPersona(String id) {
@@ -238,33 +274,34 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     private boolean validarAntesDeGuardar() {
         boolean valido = true;
         if (seleccionado.getIdPersona() == null) {
-            agregarError("persona", "personaRol.personaRequerida");
+            agregarError("personaRol.personaRequerida");
             valido = false;
         }
         if (seleccionado.getIdRol() == null) {
-            agregarError("rol", "personaRol.rolRequerido");
+            agregarError("personaRol.rolRequerido");
             valido = false;
         }
         if (seleccionado.getIdClinica() == null) {
-            agregarError("clinica", "personaRol.clinicaRequerida");
+            agregarError("personaRol.clinicaRequerida");
             valido = false;
         }
         return valido;
     }
 
-    private void agregarError(String idComponente, String clave) {
+    private void agregarError(String clave) {
+        agregarMensaje(clave, FacesMessage.SEVERITY_ERROR);
+        if (facesContext != null) {
+            facesContext.validationFailed();
+        }
+    }
+
+    private void agregarMensaje(String clave, FacesMessage.Severity severidad) {
         FacesContext contexto = facesContext;
         if (contexto == null) {
             return;
         }
         String mensaje = contexto.getApplication().getResourceBundle(contexto, "msg").getString(clave);
-        String clientId = "layoutForm:" + idComponente;
-        contexto.addMessage(clientId,
-                new FacesMessage(FacesMessage.SEVERITY_ERROR, mensaje, mensaje));
-        contexto.validationFailed();
-        UIComponent componente = contexto.getViewRoot().findComponent(clientId);
-        if (componente instanceof UIInput entrada) {
-            entrada.setValid(false);
-        }
+        contexto.addMessage(null,
+                new FacesMessage(severidad, mensaje, null));
     }
 }

@@ -1,7 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.Date;
@@ -18,19 +19,32 @@ public class ExamenResultadoModel extends AbstractModel<ExamenResultado> impleme
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private ExamenResultadoDAO examenResultadoDAO;
+    @EJB
+    private OrdenExamenDAO ordenExamenDAO;
     private ExamenResultado seleccionado;
     private List<OrdenExamen> ordenExamenes;
-    private final OrdenExamenDAO ordenExamenDAO;
     private String idOrdenContexto;
     private OrdenExamen ordenContexto;
 
-    @Inject
-    public ExamenResultadoModel(
-            ExamenResultadoDAO examenResultadoDAO,
-            OrdenExamenDAO ordenExamenDAO) {
-        super(examenResultadoDAO);
+    public ExamenResultadoModel() {
+    }
+
+    public ExamenResultadoModel(ExamenResultadoDAO examenResultadoDAO, OrdenExamenDAO ordenExamenDAO) {
+        this.examenResultadoDAO = examenResultadoDAO;
         this.ordenExamenDAO = ordenExamenDAO;
+        inicializar();
+    }
+
+    @PostConstruct
+    public void inicializar() {
         this.ordenExamenes = ordenExamenDAO.obtenerTodos();
+    }
+
+    @Override
+    protected ExamenResultadoDAO getDao() {
+        return examenResultadoDAO;
     }
 
     public String getIdOrdenContexto() {

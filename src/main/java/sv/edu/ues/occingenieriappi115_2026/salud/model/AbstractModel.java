@@ -40,21 +40,11 @@ import sv.edu.ues.occingenieriappi115_2026.salud.control.OrdenDAO;
 public abstract class AbstractModel<T> extends LazyDataModel<T> {
 
     /**
-     * Contrato de persistencia inyectado por el modelo concreto.
-     */
-    private final DAOInterface<T> dao;
-    /**
      * Estado que decide si la vista lista, crea o edita.
      */
     private ESTADO_CRUD estado = ESTADO_CRUD.LISTADO;
 
-    protected AbstractModel(DAOInterface<T> dao) {
-        this.dao = Objects.requireNonNull(dao, "El DAO es requerido");
-    }
-
-    protected DAOInterface<T> getDao() {
-        return dao;
-    }
+    protected abstract DAOInterface<T> getDao();
 
     public ESTADO_CRUD getEstado() {
         return estado;
@@ -67,7 +57,7 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
     @Override
     public int count(Map<String, FilterMeta> filterBy) {
         // PrimeFaces usa este total para calcular cuántas páginas mostrar.
-        return limitarConteo(dao.contar(convertirFiltros(filterBy)));
+        return limitarConteo(getDao().contar(convertirFiltros(filterBy)));
     }
 
     @Override
@@ -76,14 +66,14 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
         // Solo se solicita al DAO el segmento visible; filtros y ordenamientos
         // se conservan para que el conteo y la consulta sean coherentes.
         List<FiltroDAO> filtros = convertirFiltros(filterBy);
-        setRowCount(limitarConteo(dao.contar(filtros)));
-        return dao.obtenerPagina(first, pageSize, filtros, convertirOrdenamientos(sortBy));
+        setRowCount(limitarConteo(getDao().contar(filtros)));
+        return getDao().obtenerPagina(first, pageSize, filtros, convertirOrdenamientos(sortBy));
     }
 
     @Override
     public String getRowKey(T objeto) {
         // El UUID estable permite a PrimeFaces reconocer una fila entre AJAX.
-        UUID id = dao.obtenerId(objeto);
+        UUID id = getDao().obtenerId(objeto);
         return id == null ? null : id.toString();
     }
 
@@ -94,7 +84,7 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
             return null;
         }
         try {
-            return dao.buscarPorId(UUID.fromString(rowKey));
+            return getDao().buscarPorId(UUID.fromString(rowKey));
         } catch (IllegalArgumentException ex) {
             return null;
         }
@@ -178,7 +168,7 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
                 new FacesMessage(
                         FacesMessage.SEVERITY_ERROR,
                         mensaje,
-                        mensaje
+                        null
                 )
         );
     }

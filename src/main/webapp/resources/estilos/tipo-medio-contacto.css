@@ -102,6 +102,10 @@
     color: #1683b6;
 }
 
+.tipos-contacto-hint {
+    margin: 0 0 16px;
+}
+
 /* Tabla PrimeFaces: encabezados, filtros, filas y paginador. */
 .tipo-table {
     border: 1px solid #e3edf3;
@@ -191,27 +195,6 @@
 .empty-note {
     color: #a1b0ba;
     font-style: italic;
-}
-
-.action-cell {
-    text-align: center;
-    width: 100px;
-}
-
-.edit-button.ui-button {
-    background: #edf7fb;
-    border: 1px solid #d9edf5;
-    border-radius: 8px;
-    box-shadow: none;
-    color: #1683b6;
-    height: 36px;
-    width: 36px;
-}
-
-.edit-button.ui-button:hover {
-    background: #dff2f9;
-    border-color: #bfe3f1;
-    color: #106f9c;
 }
 
 /* Diálogo y formulario para alta y edición de tipos de contacto. */
@@ -350,6 +333,98 @@
     border-top: 1px solid #edf2f5;
     margin: 24px -24px -24px;
     padding: 18px 24px;
+}
+
+/* Ajustes exclusivos de este diálogo, sin alterar los botones de otros módulos. */
+.tipo-contacto-dialog.ui-dialog {
+    max-width: calc(100vw - 32px);
+    border-radius: 12px;
+}
+
+.tipo-contacto-dialog .dialog-intro {
+    margin-bottom: 20px;
+    padding: 12px 14px;
+}
+
+.tipo-contacto-dialog .dialog-form {
+    gap: 18px;
+}
+
+.tipo-contacto-dialog .form-field {
+    gap: 6px;
+}
+
+.tipo-contacto-dialog .form-helper {
+    color: #647b8a;
+    line-height: 1.4;
+}
+
+.tipo-contacto-dialog .ui-selectonemenu {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    border-radius: 8px;
+}
+
+.tipo-contacto-dialog .toggle-field {
+    gap: 12px;
+    padding: 12px 14px;
+}
+
+.tipo-contacto-dialog .toggle-info span {
+    color: #647b8a;
+    line-height: 1.4;
+}
+
+.tipo-contacto-dialog .dialog-actions {
+    margin-top: 20px;
+    padding: 16px 24px;
+}
+
+.tipo-contacto-dialog .crud-actions-bottom {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.tipo-contacto-dialog .crud-actions-bottom .ui-button {
+    box-sizing: border-box;
+    min-height: 44px;
+    min-width: 132px;
+    margin: 0;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.tipo-contacto-dialog .cancel-button.ui-button {
+    background: #f4f8fb;
+    border: 1px solid #b9cdd9;
+    color: #34566c;
+    box-shadow: none;
+}
+
+.tipo-contacto-dialog .cancel-button.ui-button:hover {
+    background: #e8f2f8;
+    border-color: #7da8bf;
+    color: #173f59;
+}
+
+.tipo-contacto-dialog .crud-actions-bottom .ui-button:focus-visible {
+    outline: 2px solid #1683b6;
+    outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+    .tipo-contacto-dialog .crud-actions-bottom .ui-button {
+        flex: 1;
+        min-width: 0;
+        width: auto;
+        padding: 0.6rem 0.4rem;
+    }
 }
 
 /* Distribución responsive del catálogo. */

@@ -20,16 +20,15 @@ public interface ExamenTipoExamenDAOInterface
      * @param max tamaño máximo
      * @return relaciones paginadas del examen
      */
-    List<ExamenTipoExamen> findByIdExamen(
-            UUID idExamen,
-            int first,
-            int max);
+    List<ExamenTipoExamen> findByIdExamen(UUID idExamen, int first, int max);
 
-    /** @param idExamen UUID del examen @return total de relaciones */
+    /**
+     * @param idExamen UUID del examen @return total de relaciones
+     */
     long countByIdExamen(UUID idExamen);
 
-    /** @return total para una pareja examen/tipo; sirve para detectar duplicados */
-    long countByIdExamenAndIdTipoExamen(
-            UUID idExamen,
-            UUID idTipoExamen);
+    /**
+     * @return total para una pareja examen/tipo; sirve para detectar duplicados
+     */
+    long countByIdExamenAndIdTipoExamen(UUID idExamen, UUID idTipoExamen);
 }

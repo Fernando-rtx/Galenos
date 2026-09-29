@@ -1,9 +1,9 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.List;
@@ -28,12 +28,22 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
     /** Versión necesaria para serializar el bean de ámbito de vista. */
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private TipoExamenDAO tipoExamenDAO;
+
     /** Entidad nueva o fila seleccionada que se enlaza con el diálogo XHTML. */
     private TipoExamen seleccionado;
 
-    @Inject
+    public TipoExamenModel() {
+    }
+
     public TipoExamenModel(TipoExamenDAO tipoExamenDAO) {
-        super(tipoExamenDAO);
+        this.tipoExamenDAO = tipoExamenDAO;
+    }
+
+    @Override
+    protected TipoExamenDAO getDao() {
+        return tipoExamenDAO;
     }
 
     public TipoExamen getSeleccionado() {
@@ -51,6 +61,34 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
         setEstado(ESTADO_CRUD.CREACION);
     }
 
+    public void seleccionar(TipoExamen seleccionado) {
+        // La tabla entrega la fila seleccionada y el diálogo entra en edición.
+        this.seleccionado = seleccionado;
+        setEstado(ESTADO_CRUD.EDICION);
+    }
+
+    public void guardar() {
+        // CREACION delega en persist; EDICION delega en merge. LISTADO no escribe.
+        if (seleccionado == null) {
+            return;
+        }
+        seleccionado.setNombre(normalizar(seleccionado.getNombre()));
+        seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
+        switch (getEstado()) {
+            case CREACION -> getDao().guardar(seleccionado);
+            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
+            case LISTADO -> {
+            }
+        }
+        setEstado(ESTADO_CRUD.LISTADO);
+    }
+
+    public void cancelar() {
+        // Descarta la selección local; no ejecuta ninguna operación de base.
+        seleccionado = null;
+        setEstado(ESTADO_CRUD.LISTADO);
+    }
+
     /**
      * Valida nombre obligatorio, longitud y duplicados. Se invoca desde el
      * campo del XHTML antes de llegar a {@link #guardar()}.
@@ -60,8 +98,8 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
      * @param valor nombre ingresado
      */
     public void validarNombre(FacesContext contexto, UIComponent componente, Object valor) {
-        String nombre = valor == null ? "" : valor.toString().trim();
-        if (nombre.isEmpty()) {
+        String nombre = normalizar(valor == null ? null : valor.toString());
+        if (nombre == null || nombre.isEmpty()) {
             lanzarValidacion(contexto, "tipoExamen.nombreRequerido");
         }
         if (nombre.length() < 2) {
@@ -86,29 +124,7 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
                 || !tipo.getIdTipoExamen().equals(idActual));
     }
 
-    public void seleccionar(TipoExamen seleccionado) {
-        // La tabla entrega la fila seleccionada y el diálogo entra en edición.
-        this.seleccionado = seleccionado;
-        setEstado(ESTADO_CRUD.EDICION);
-    }
-
-    public void guardar() {
-        // CREACION delega en persist; EDICION delega en merge. LISTADO no escribe.
-        if (seleccionado == null) {
-            return;
-        }
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> {
-            }
-        }
-        setEstado(ESTADO_CRUD.LISTADO);
-    }
-
-    public void cancelar() {
-        // Descarta la selección local; no ejecuta ninguna operación de base.
-        seleccionado = null;
-        setEstado(ESTADO_CRUD.LISTADO);
+    private String normalizar(String valor) {
+        return valor == null ? null : valor.trim();
     }
 }

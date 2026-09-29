@@ -1,8 +1,13 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.faces.application.Application;
+import jakarta.faces.context.FacesContext;
 import java.util.List;
+import java.util.ListResourceBundle;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.primefaces.event.SelectEvent;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenTipoExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoExamenDAO;
@@ -19,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -27,6 +33,219 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class ExamenTipoExamenModelTest {
+
+    @Test
+    void dobleClicAbreCopiaYCancelarConservaFilaOriginal() {
+        ExamenTipoExamenModel model = model(mock(ExamenTipoExamenDAO.class));
+        Examen examen = examenPersistido();
+        ExamenTipoExamen fila = asociacionPersistida(examen);
+        fila.setObservaciones("Original");
+        model.cargarPorExamen(examen);
+
+        model.seleccionarAsociacion(evento(fila));
+
+        assertEquals(ESTADO_CRUD.EDICION, model.getEstado());
+        assertEquals(fila.getIdTipoExamen().getIdTipoExamen().toString(), model.getIdTipoExamenSeleccionado());
+        model.getSeleccionado().setObservaciones("Borrador");
+        model.cancelarAsociacion();
+        assertEquals("Original", fila.getObservaciones());
+        assertNull(model.getSeleccionado());
+        assertNull(model.getFilaSeleccionada());
+    }
+
+    @Test
+    void editarMismaAsociacionActualizaSinContarseComoDuplicada() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        TipoExamenDAO tipos = mock(TipoExamenDAO.class);
+        ExamenTipoExamenModel model = new ExamenTipoExamenModel(dao, mock(ExamenDAO.class), tipos);
+        Examen examen = examenPersistido();
+        ExamenTipoExamen fila = asociacionPersistida(examen);
+        TipoExamen tipo = fila.getIdTipoExamen();
+        when(tipos.buscarPorId(tipo.getIdTipoExamen())).thenReturn(tipo);
+        when(dao.buscarPorId(fila.getIdExamenTipoExamen())).thenReturn(fila);
+        when(dao.countByIdExamenAndIdTipoExamen(examen.getIdExamen(), tipo.getIdTipoExamen())).thenReturn(1L);
+        model.cargarPorExamen(examen);
+        model.seleccionarAsociacion(evento(fila));
+        model.getSeleccionado().setObservaciones(" Cambio ");
+
+        model.guardarAsociacion();
+
+        verify(dao).actualizar(argThat(a -> a.getIdExamenTipoExamen().equals(fila.getIdExamenTipoExamen())
+                && "Cambio".equals(a.getObservaciones())));
+        verify(dao, never()).guardar(any());
+        assertNull(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+    }
+
+    @Test
+    void editarTipoRechazaDuplicadoYPermiteTipoSinAsociacion() {
+        for (long existentes : List.of(0L, 1L)) {
+            ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+            TipoExamenDAO tipos = mock(TipoExamenDAO.class);
+            ExamenTipoExamenModel model = new ExamenTipoExamenModel(dao, mock(ExamenDAO.class), tipos);
+            Examen examen = examenPersistido();
+            ExamenTipoExamen fila = asociacionPersistida(examen);
+            TipoExamen nuevoTipo = new TipoExamen(UUID.randomUUID());
+            when(tipos.buscarPorId(nuevoTipo.getIdTipoExamen())).thenReturn(nuevoTipo);
+            when(dao.buscarPorId(fila.getIdExamenTipoExamen())).thenReturn(fila);
+            when(dao.countByIdExamenAndIdTipoExamen(examen.getIdExamen(), nuevoTipo.getIdTipoExamen()))
+                    .thenReturn(existentes);
+            model.cargarPorExamen(examen);
+            model.seleccionarAsociacion(evento(fila));
+            model.setIdTipoExamenSeleccionado(nuevoTipo.getIdTipoExamen().toString());
+            model.facesContext = contexto();
+
+            model.guardarAsociacion();
+
+            if (existentes == 0) {
+                verify(dao).actualizar(argThat(a -> a.getIdTipoExamen() == nuevoTipo));
+                verify(model.facesContext, never()).validationFailed();
+            } else {
+                verify(dao, never()).actualizar(any());
+                verify(model.facesContext).validationFailed();
+                assertNotNull(model.getSeleccionado());
+            }
+            verify(dao, never()).guardar(any());
+        }
+    }
+
+    @Test
+    void quitarAsociacionEditadaCierraFormularioYLimpiaSeleccion() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        ExamenTipoExamenModel model = model(dao);
+        Examen examen = examenPersistido();
+        ExamenTipoExamen fila = asociacionPersistida(examen);
+        when(dao.buscarPorId(fila.getIdExamenTipoExamen())).thenReturn(fila);
+        when(dao.eliminar(fila.getIdExamenTipoExamen())).thenReturn(true);
+        model.cargarPorExamen(examen);
+        model.seleccionarAsociacion(evento(fila));
+
+        model.quitarAsociacion(model.getSeleccionado(), examen);
+
+        verify(dao).eliminar(fila.getIdExamenTipoExamen());
+        assertNull(model.getSeleccionado());
+        assertNull(model.getFilaSeleccionada());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+    }
+
+    private ExamenTipoExamen asociacionPersistida(Examen examen) {
+        ExamenTipoExamen fila = new ExamenTipoExamen(UUID.randomUUID());
+        fila.setIdExamen(examen);
+        fila.setIdTipoExamen(new TipoExamen(UUID.randomUUID()));
+        return fila;
+    }
+
+    @SuppressWarnings("unchecked")
+    private SelectEvent<ExamenTipoExamen> evento(ExamenTipoExamen fila) {
+        SelectEvent<ExamenTipoExamen> evento = mock(SelectEvent.class);
+        when(evento.getObject()).thenReturn(fila);
+        return evento;
+    }
+
+    @Test
+    void quitarAsociacionEliminaSoloVinculoYConservaBorrador() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        ExamenDAO examenes = mock(ExamenDAO.class);
+        TipoExamenDAO tipos = mock(TipoExamenDAO.class);
+        ExamenTipoExamenModel model = new ExamenTipoExamenModel(dao, examenes, tipos);
+        Examen examen = examenPersistido();
+        ExamenTipoExamen asociacion = new ExamenTipoExamen(UUID.randomUUID());
+        asociacion.setIdExamen(examen);
+        when(dao.buscarPorId(asociacion.getIdExamenTipoExamen())).thenReturn(asociacion);
+        when(dao.eliminar(asociacion.getIdExamenTipoExamen())).thenReturn(true);
+        List<ExamenTipoExamen> restantes = List.of(new ExamenTipoExamen(UUID.randomUUID()));
+        when(dao.findByIdExamen(examen.getIdExamen(), 0, Integer.MAX_VALUE)).thenReturn(restantes);
+        model.nuevaAsociacion(examen);
+        ExamenTipoExamen borrador = model.getSeleccionado();
+        borrador.setObservaciones("Conservar estos datos");
+        model.facesContext = contexto();
+
+        model.quitarAsociacion(asociacion, examen);
+
+        verify(dao).eliminar(asociacion.getIdExamenTipoExamen());
+        verify(examenes, never()).eliminar(any());
+        verify(tipos, never()).eliminar(any());
+        assertSame(restantes, model.getAsociaciones());
+        assertSame(borrador, model.getSeleccionado());
+        assertEquals("Conservar estos datos", borrador.getObservaciones());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+        verify(model.facesContext).addMessage(isNull(), argThat(m ->
+                "Asociacion quitada".equals(m.getSummary())));
+        verify(model.facesContext, never()).validationFailed();
+    }
+
+    @Test
+    void quitarAsociacionRechazaVinculoPersistidoDeOtroExamen() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        ExamenTipoExamenModel model = model(dao);
+        Examen examen = examenPersistido();
+        model.cargarPorExamen(examen);
+        ExamenTipoExamen enviada = new ExamenTipoExamen(UUID.randomUUID());
+        enviada.setIdExamen(examen);
+        ExamenTipoExamen persistida = new ExamenTipoExamen(enviada.getIdExamenTipoExamen());
+        persistida.setIdExamen(examenPersistido());
+        when(dao.buscarPorId(enviada.getIdExamenTipoExamen())).thenReturn(persistida);
+        model.facesContext = contexto();
+
+        model.quitarAsociacion(enviada, examen);
+
+        verify(dao, never()).eliminar(any());
+        verify(model.facesContext).validationFailed();
+    }
+
+    @Test
+    void quitarAsociacionRechazaCambioDeExamenAbierto() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        ExamenTipoExamenModel model = model(dao);
+        model.cargarPorExamen(examenPersistido());
+        model.facesContext = contexto();
+
+        model.quitarAsociacion(new ExamenTipoExamen(UUID.randomUUID()), examenPersistido());
+
+        verify(dao, never()).buscarPorId(any());
+        verify(dao, never()).eliminar(any());
+        verify(model.facesContext).validationFailed();
+    }
+
+    @Test
+    void quitarAsociacionInexistenteNoElimina() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        ExamenTipoExamenModel model = model(dao);
+        Examen examen = examenPersistido();
+        model.cargarPorExamen(examen);
+        model.facesContext = contexto();
+
+        model.quitarAsociacion(new ExamenTipoExamen(UUID.randomUUID()), examen);
+
+        verify(dao, never()).eliminar(any());
+        verify(model.facesContext).validationFailed();
+    }
+
+    @Test
+    void quitarAsociacionManejaFalloDelDaoSinMostrarExito() {
+        for (boolean lanzarExcepcion : List.of(false, true)) {
+            ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+            ExamenTipoExamenModel model = model(dao);
+            Examen examen = examenPersistido();
+            ExamenTipoExamen asociacion = new ExamenTipoExamen(UUID.randomUUID());
+            asociacion.setIdExamen(examen);
+            List<ExamenTipoExamen> originales = List.of(asociacion);
+            when(dao.findByIdExamen(examen.getIdExamen(), 0, Integer.MAX_VALUE)).thenReturn(originales);
+            when(dao.buscarPorId(asociacion.getIdExamenTipoExamen())).thenReturn(asociacion);
+            if (lanzarExcepcion) {
+                when(dao.eliminar(asociacion.getIdExamenTipoExamen())).thenThrow(new IllegalStateException());
+            }
+            model.cargarPorExamen(examen);
+            model.facesContext = contexto();
+
+            assertDoesNotThrow(() -> model.quitarAsociacion(asociacion, examen));
+
+            assertSame(originales, model.getAsociaciones());
+            verify(model.facesContext).validationFailed();
+            verify(model.facesContext).addMessage(isNull(), argThat(m ->
+                    "Error al quitar".equals(m.getSummary())));
+        }
+    }
 
     @Test
     void cargarPorExamenFiltraConElDaoEspecializado() {
@@ -123,6 +342,8 @@ class ExamenTipoExamenModelTest {
         ExamenTipoExamenModel model = model(dao);
         Examen examen = examenPersistido();
         TipoExamen tipo = new TipoExamen(UUID.randomUUID());
+        FacesContext contexto = contexto();
+        model.facesContext = contexto;
         model.nuevaAsociacion(examen);
         model.getSeleccionado().setIdTipoExamen(tipo);
         when(dao.countByIdExamenAndIdTipoExamen(examen.getIdExamen(), tipo.getIdTipoExamen()))
@@ -131,7 +352,28 @@ class ExamenTipoExamenModelTest {
         model.guardarAsociacion();
 
         verify(dao, never()).guardar(any());
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                "Asociacion duplicada".equals(mensaje.getSummary())));
+        verify(contexto).validationFailed();
         assertNotNull(model.getSeleccionado());
+    }
+
+    @Test
+    void guardarAsociacionSinTipoNoPersisteYMarcaValidacionFallida() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        ExamenTipoExamenModel model = model(dao);
+        FacesContext contexto = contexto();
+        model.facesContext = contexto;
+        model.nuevaAsociacion(examenPersistido());
+
+        model.guardarAsociacion();
+
+        verify(dao, never()).guardar(any());
+        verify(dao, never()).countByIdExamenAndIdTipoExamen(any(), any());
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                "Tipo requerido".equals(mensaje.getSummary())));
+        verify(contexto).validationFailed();
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
     }
 
     @Test
@@ -143,33 +385,6 @@ class ExamenTipoExamenModelTest {
 
         assertNull(model.getSeleccionado());
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
-    }
-
-    @Test
-    void quitarAsociacionEliminaElPuenteYRecarga() {
-        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
-        ExamenTipoExamenModel model = model(dao);
-        Examen examen = examenPersistido();
-        model.cargarPorExamen(examen);
-        ExamenTipoExamen asociacion = new ExamenTipoExamen(UUID.randomUUID());
-        when(dao.eliminar(asociacion.getIdExamenTipoExamen())).thenReturn(true);
-        when(dao.findByIdExamen(examen.getIdExamen(), 0, Integer.MAX_VALUE))
-                .thenReturn(List.of());
-
-        model.quitarAsociacion(asociacion);
-
-        verify(dao).eliminar(asociacion.getIdExamenTipoExamen());
-        verify(dao, times(2)).findByIdExamen(examen.getIdExamen(), 0, Integer.MAX_VALUE);
-    }
-
-    @Test
-    void quitarAsociacionNulaNoHaceNada() {
-        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
-        ExamenTipoExamenModel model = model(dao);
-
-        model.quitarAsociacion(null);
-
-        verify(dao, never()).eliminar(any());
     }
 
     @Test
@@ -293,5 +508,25 @@ class ExamenTipoExamenModelTest {
 
     private Examen examenPersistido() {
         return new Examen(UUID.randomUUID());
+    }
+
+    private FacesContext contexto() {
+        FacesContext contexto = mock(FacesContext.class);
+        Application aplicacion = mock(Application.class);
+        ResourceBundle mensajes = new ListResourceBundle() {
+            @Override
+            protected Object[][] getContents() {
+                return new Object[][]{
+                    {"examen.errorQuitarAsociacion", "Error al quitar"},
+                    {"examen.asociacionQuitada", "Asociacion quitada"},
+                    {"examen.tipoDuplicado", "Asociacion duplicada"},
+                    {"examen.seleccioneExamen", "Examen requerido"},
+                    {"examen.seleccioneTipo", "Tipo requerido"}
+                };
+            }
+        };
+        when(contexto.getApplication()).thenReturn(aplicacion);
+        when(aplicacion.getResourceBundle(contexto, "msg")).thenReturn(mensajes);
+        return contexto;
     }
 }

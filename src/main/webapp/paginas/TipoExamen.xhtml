@@ -53,6 +53,7 @@
                         <crud:botones-top
                             model="#{tipoExamenModel}"
                             actualizar="messages tiposExamenTable edicionDialog"
+                            resetNuevo="true"
                             oncompleteNuevo="PF('tipoExamenDialog').show()" />
                     </div>
 
@@ -61,6 +62,7 @@
                     <!-- Área preparada para mensajes de validación y FacesMessage. -->
                     <p:messages
                         id="messages"
+                        globalOnly="true"
                         showDetail="false"
                         closable="true" />
 
@@ -173,6 +175,12 @@
             width="560"
             styleClass="clinical-dialog">
 
+            <p:ajax event="close"
+                    listener="#{tipoExamenModel.cancelar}"
+                    process="@this"
+                    update="edicionDialog"
+                    resetValues="true" />
+
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
@@ -207,15 +215,14 @@
                                 value="#{tipoExamenModel.seleccionado.nombre}"
                                 placeholder="#{msg['tipoExamen.nombrePlaceholder']}"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}"
-                                maxlength="255"
+                                requiredMessage="#{msg['tipoExamen.nombreRequerido']}"
                                 validator="#{tipoExamenModel.validarNombre}" />
+
+                            <p:message for="nombre" />
 
                             <span class="form-helper">
                                 #{msg['tipoExamen.nombreAyuda']}
                             </span>
-
-                            <p:message for="nombre" />
                         </div>
 
                         <div class="form-field">

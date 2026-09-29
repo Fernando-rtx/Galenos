@@ -1,5 +1,6 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
@@ -18,11 +19,20 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.Examen;
 @ViewScoped
 public class ExamenModel extends AbstractModel<Examen> implements Serializable {
     private static final long serialVersionUID = 1L;
+    @EJB
+    private ExamenDAO examenDAO;
     private Examen seleccionado;
 
-    @Inject
-    public ExamenModel(ExamenDAO dao) {
-        super(dao);
+    public ExamenModel() {
+    }
+
+    public ExamenModel(ExamenDAO examenDAO) {
+        this.examenDAO = examenDAO;
+    }
+
+    @Override
+    protected ExamenDAO getDao() {
+        return examenDAO;
     }
 
     public Examen getSeleccionado() {

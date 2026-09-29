@@ -1,7 +1,7 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoDocumentoDAO;
@@ -20,12 +20,22 @@ public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements 
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private TipoDocumentoDAO tipoDocumentoDAO;
+
     /** Registro enlazado al formulario; es nuevo o proviene de la tabla. */
     private TipoDocumento seleccionado;
 
-    @Inject
+    public TipoDocumentoModel() {
+    }
+
     public TipoDocumentoModel(TipoDocumentoDAO tipoDocumentoDAO) {
-        super(tipoDocumentoDAO);
+        this.tipoDocumentoDAO = tipoDocumentoDAO;
+    }
+
+    @Override
+    protected TipoDocumentoDAO getDao() {
+        return tipoDocumentoDAO;
     }
 
     public TipoDocumento getSeleccionado() {

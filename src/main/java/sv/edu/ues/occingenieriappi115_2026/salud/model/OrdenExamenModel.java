@@ -1,7 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.Date;
@@ -18,19 +19,33 @@ public class OrdenExamenModel extends AbstractModel<OrdenExamen> implements Seri
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private OrdenExamenDAO ordenExamenDAO;
+    @EJB
+    private ConsultaProcedimientoPasoDAO consultaProcedimientoPasoDAO;
     private OrdenExamen seleccionado;
     private List<ConsultaProcedimientoPaso> consultaProcedimientoPasos;
-    private final ConsultaProcedimientoPasoDAO consultaProcedimientoPasoDAO;
     private String idPasoContexto;
     private ConsultaProcedimientoPaso pasoContexto;
 
-    @Inject
-    public OrdenExamenModel(
-            OrdenExamenDAO ordenExamenDAO,
+    public OrdenExamenModel() {
+    }
+
+    public OrdenExamenModel(OrdenExamenDAO ordenExamenDAO,
             ConsultaProcedimientoPasoDAO consultaProcedimientoPasoDAO) {
-        super(ordenExamenDAO);
+        this.ordenExamenDAO = ordenExamenDAO;
         this.consultaProcedimientoPasoDAO = consultaProcedimientoPasoDAO;
+        inicializar();
+    }
+
+    @PostConstruct
+    public void inicializar() {
         this.consultaProcedimientoPasos = consultaProcedimientoPasoDAO.obtenerTodos();
+    }
+
+    @Override
+    protected OrdenExamenDAO getDao() {
+        return ordenExamenDAO;
     }
 
     public String getIdPasoContexto() {

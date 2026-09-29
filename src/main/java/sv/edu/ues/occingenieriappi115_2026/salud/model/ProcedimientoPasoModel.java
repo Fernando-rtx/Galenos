@@ -1,5 +1,9 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.EJB;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -21,19 +25,39 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private ProcedimientoPasoDAO procedimientoPasoDAO;
+    @EJB
+    private ProcedimientoDAO procedimientoDAO;
+    @EJB
+    private RolDAO rolDAO;
+    @Inject
+    transient FacesContext facesContext;
     private ProcedimientoPaso seleccionado;
 
     private List<Procedimiento> procedimientos;
     private List<Rol> roles;
 
-    @Inject
-    public ProcedimientoPasoModel(
-            ProcedimientoPasoDAO procedimientoPasoDAO,
-            ProcedimientoDAO procedimientoDAO,
-            RolDAO rolDAO) {
-        super(procedimientoPasoDAO);
+    public ProcedimientoPasoModel() {
+    }
+
+    public ProcedimientoPasoModel(ProcedimientoPasoDAO procedimientoPasoDAO,
+            ProcedimientoDAO procedimientoDAO, RolDAO rolDAO) {
+        this.procedimientoPasoDAO = procedimientoPasoDAO;
+        this.procedimientoDAO = procedimientoDAO;
+        this.rolDAO = rolDAO;
+        inicializar();
+    }
+
+    @PostConstruct
+    public void inicializar() {
         this.procedimientos = procedimientoDAO.obtenerTodos();
         this.roles = rolDAO.obtenerTodos();
+    }
+
+    @Override
+    protected ProcedimientoPasoDAO getDao() {
+        return procedimientoPasoDAO;
     }
 
     public ProcedimientoPaso getSeleccionado() {
@@ -63,14 +87,17 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
     }
 
     public void guardar() {
-        if (seleccionado == null) {
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
+            return;
+        }
+        seleccionado.setNombre(normalizar(seleccionado.getNombre()));
+        if (!validarAntesDeGuardar()) {
             return;
         }
         switch (getEstado()) {
             case CREACION -> getDao().guardar(seleccionado);
             case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> {
-            }
+            case LISTADO -> { }
         }
         setEstado(ESTADO_CRUD.LISTADO);
     }
@@ -78,5 +105,44 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
     public void cancelar() {
         seleccionado = null;
         setEstado(ESTADO_CRUD.LISTADO);
+    }
+
+    private boolean validarAntesDeGuardar() {
+        String nombre = seleccionado.getNombre();
+        if (nombre == null || nombre.isEmpty()) {
+            agregarError("procedimientoPaso.nombreRequerido");
+            return false;
+        }
+        if (nombre.length() < 2) {
+            agregarError("procedimientoPaso.nombreMinimo");
+            return false;
+        }
+        if (nombre.length() > 255) {
+            agregarError("procedimientoPaso.nombreMaximo");
+            return false;
+        }
+        return true;
+    }
+
+    private String normalizar(String valor) {
+        return valor == null ? null : valor.trim();
+    }
+
+    private void agregarError(String clave) {
+        agregarMensaje(clave, FacesMessage.SEVERITY_ERROR);
+        if (facesContext != null) {
+            facesContext.validationFailed();
+        }
+    }
+
+    private void agregarMensaje(String clave, FacesMessage.Severity severidad) {
+        FacesContext contexto = facesContext;
+        if (contexto == null) {
+            return;
+        }
+        String mensaje = contexto.getApplication()
+                .getResourceBundle(contexto, "msg")
+                .getString(clave);
+        contexto.addMessage(null, new FacesMessage(severidad, mensaje, null));
     }
 }

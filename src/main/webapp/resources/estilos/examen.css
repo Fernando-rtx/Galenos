@@ -1,4 +1,44 @@
 .examen-table .observaciones {
     max-width: 430px;
     white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.examen-page .page-header > .ui-button {
+    flex-shrink: 0;
+}
+
+.examen-table-hint {
+    margin-bottom: 16px;
+}
+
+.examen-dialog {
+    max-width: calc(100vw - 2rem);
+}
+
+.examen-details .form-field > .ui-inputfield {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.examen-details textarea.ui-inputfield {
+    resize: vertical;
+}
+
+.examen-status-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    background: #f4f9fc;
+    border: 1px solid #e3edf3;
+    border-radius: 8px;
+}
+
+.examen-detail-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
 }

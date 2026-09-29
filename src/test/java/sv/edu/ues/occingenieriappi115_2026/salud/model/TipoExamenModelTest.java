@@ -40,7 +40,39 @@ class TipoExamenModelTest {
         model.nuevo();
 
         assertNotNull(model.getSeleccionado());
+        assertTrue(model.getSeleccionado().getActivo());
         assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+    }
+
+    @Test
+    void nombreSoloConEspaciosEsRechazado() {
+        TipoExamenModel model = new TipoExamenModel(mock(TipoExamenDAO.class));
+
+        assertThrows(ValidatorException.class,
+                () -> model.validarNombre(contexto(), null, "   "));
+    }
+
+    @Test
+    void nombreValidoEsAceptado() {
+        TipoExamenModel model = new TipoExamenModel(mock(TipoExamenDAO.class));
+
+        assertDoesNotThrow(() -> model.validarNombre(null, null, "Laboratorio"));
+    }
+
+    @Test
+    void guardarRecortaNombreYObservaciones() {
+        TipoExamenDAO dao = mock(TipoExamenDAO.class);
+        TipoExamenModel model = new TipoExamenModel(dao);
+        model.nuevo();
+        TipoExamen seleccionado = model.getSeleccionado();
+        seleccionado.setNombre("  Laboratorio  ");
+        seleccionado.setObservaciones("  Rutina  ");
+
+        model.guardar();
+
+        assertEquals("Laboratorio", seleccionado.getNombre());
+        assertEquals("Rutina", seleccionado.getObservaciones());
+        verify(dao).guardar(seleccionado);
     }
 
     @Test
@@ -132,7 +164,6 @@ class TipoExamenModelTest {
         assertThrows(ValidatorException.class,
                 () -> model.validarNombre(contexto(), null, "Hemograma"));
     }
-
     private FacesContext contexto() {
         FacesContext contexto = mock(FacesContext.class);
         Application aplicacion = mock(Application.class);
