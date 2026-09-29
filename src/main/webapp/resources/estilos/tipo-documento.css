@@ -102,6 +102,10 @@
     color: #1683b6;
 }
 
+.tipo-documento-hint {
+    margin: 0 0 14px;
+}
+
 /* Tabla PrimeFaces: encabezados, filtros, filas y paginador. */
 .tipo-table {
     border: 1px solid #e3edf3;
@@ -127,6 +131,7 @@
 
 .tipo-table .ui-datatable-data > tr {
     background: #ffffff;
+    cursor: pointer;
     transition: background 0.15s ease;
 }
 
@@ -191,27 +196,6 @@
 .empty-note {
     color: #a1b0ba;
     font-style: italic;
-}
-
-.action-cell {
-    text-align: center;
-    width: 100px;
-}
-
-.edit-button.ui-button {
-    background: #edf7fb;
-    border: 1px solid #d9edf5;
-    border-radius: 8px;
-    box-shadow: none;
-    color: #1683b6;
-    height: 36px;
-    width: 36px;
-}
-
-.edit-button.ui-button:hover {
-    background: #dff2f9;
-    border-color: #bfe3f1;
-    color: #106f9c;
 }
 
 /* Diálogo y formulario para alta y edición de tipos documentales. */
