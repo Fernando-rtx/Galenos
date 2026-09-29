@@ -58,6 +58,43 @@ class MedioContactoModelTest {
     }
 
     @Test
+    void correoValidoCumpleFormatoPosixGuardadoEnBase() {
+        MedioContactoDAO dao = mock(MedioContactoDAO.class);
+        TipoMedioContactoDAO tipoDAO = mock(TipoMedioContactoDAO.class);
+        TipoMedioContacto tipo = tipoActivo(tipoDAO);
+        tipo.setExpresionRegular("^[^@[:space:]]+@[^@[:space:]]+[.][^@[:space:]]+$");
+        MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
+        modelo.nuevo();
+        MedioContacto contacto = modelo.getSeleccionado();
+        contacto.setIdPersona(new Persona());
+        contacto.setIdTipoMedioContacto(tipo);
+        contacto.setValor("rubenvenabidez@gmail.com");
+
+        modelo.guardar();
+
+        verify(dao).guardar(contacto);
+    }
+
+    @Test
+    void correoSinArrobaSigueSiendoRechazado() {
+        MedioContactoDAO dao = mock(MedioContactoDAO.class);
+        TipoMedioContactoDAO tipoDAO = mock(TipoMedioContactoDAO.class);
+        TipoMedioContacto tipo = tipoActivo(tipoDAO);
+        tipo.setExpresionRegular("^[^@[:space:]]+@[^@[:space:]]+[.][^@[:space:]]+$");
+        MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
+        modelo.nuevo();
+        MedioContacto contacto = modelo.getSeleccionado();
+        contacto.setIdPersona(new Persona());
+        contacto.setIdTipoMedioContacto(tipo);
+        contacto.setValor("rubengmail.com");
+
+        modelo.guardar();
+
+        verifyNoInteractions(dao);
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
+    @Test
     void idDeTipoInvalidoDejaRelacionSinAsignar() {
         TipoMedioContactoDAO tipoDAO = mock(TipoMedioContactoDAO.class);
         MedioContactoModel modelo = model(mock(MedioContactoDAO.class),

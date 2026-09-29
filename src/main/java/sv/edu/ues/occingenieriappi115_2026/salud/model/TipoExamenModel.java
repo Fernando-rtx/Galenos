@@ -102,6 +102,12 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
         if (nombre == null || nombre.isEmpty()) {
             lanzarValidacion(contexto, "tipoExamen.nombreRequerido");
         }
+        // Permite editar otros campos de registros antiguos cuyo nombre no
+        // cumple las reglas actuales, siempre que el nombre no cambie.
+        if (getEstado() == ESTADO_CRUD.EDICION && seleccionado != null
+                && nombre.equals(normalizar(seleccionado.getNombre()))) {
+            return;
+        }
         if (nombre.length() < 2) {
             lanzarValidacion(contexto, "tipoExamen.nombreMinimo");
         }

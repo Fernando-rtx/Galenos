@@ -325,7 +325,10 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
             return true;
         }
         try {
-            return Pattern.compile(expresion).matcher(valor).matches();
+            // Los formatos antiguos pueden usar la clase POSIX de PostgreSQL;
+            // Java necesita su equivalente para evaluar el correo correctamente.
+            String expresionJava = expresion.replace("[:space:]", "\\s");
+            return Pattern.compile(expresionJava).matcher(valor).matches();
         } catch (PatternSyntaxException ex) {
             return true;
         }

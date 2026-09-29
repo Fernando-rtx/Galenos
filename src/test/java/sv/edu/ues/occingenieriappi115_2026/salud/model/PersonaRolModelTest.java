@@ -45,7 +45,9 @@ class PersonaRolModelTest {
         RolDAO rolDAO = mock(RolDAO.class);
         ClinicaDAO clinicaDAO = mock(ClinicaDAO.class);
         java.util.List<Persona> personas = java.util.List.of(new Persona());
-        java.util.List<Rol> roles = java.util.List.of(new Rol());
+        Rol rolActivo = new Rol();
+        rolActivo.setActivo(true);
+        java.util.List<Rol> roles = java.util.List.of(rolActivo);
         java.util.List<Clinica> clinicas = java.util.List.of(new Clinica());
         when(personaDAO.obtenerTodos()).thenReturn(personas);
         when(rolDAO.obtenerTodos()).thenReturn(roles);
@@ -54,13 +56,45 @@ class PersonaRolModelTest {
 
         assertSame(personas, modelo.getPersonas());
         assertSame(personas, modelo.getPersonas());
-        assertSame(roles, modelo.getRoles());
-        assertSame(roles, modelo.getRoles());
+        assertEquals(roles, modelo.getRoles());
+        assertEquals(roles, modelo.getRoles());
         assertSame(clinicas, modelo.getClinicas());
         assertSame(clinicas, modelo.getClinicas());
         verify(personaDAO).obtenerTodos();
         verify(rolDAO).obtenerTodos();
         verify(clinicaDAO).obtenerTodos();
+    }
+
+    @Test
+    void soloOfreceRolesActivosParaNuevaAsignacion() {
+        RolDAO rolDAO = mock(RolDAO.class);
+        Rol activo = new Rol(UUID.randomUUID());
+        activo.setActivo(true);
+        Rol inactivo = new Rol(UUID.randomUUID());
+        inactivo.setActivo(false);
+        when(rolDAO.obtenerTodos()).thenReturn(java.util.List.of(activo, inactivo));
+        PersonaRolModel modelo = model(mock(PersonaRolDAO.class), mock(PersonaDAO.class),
+                rolDAO, mock(ClinicaDAO.class));
+        modelo.nuevo();
+
+        assertEquals(java.util.List.of(activo), modelo.getRoles());
+    }
+
+    @Test
+    void conservaRolInactivoAsignadoDuranteEdicion() {
+        RolDAO rolDAO = mock(RolDAO.class);
+        Rol activo = new Rol(UUID.randomUUID());
+        activo.setActivo(true);
+        Rol inactivo = new Rol(UUID.randomUUID());
+        inactivo.setActivo(false);
+        when(rolDAO.obtenerTodos()).thenReturn(java.util.List.of(activo, inactivo));
+        PersonaRol relacion = new PersonaRol();
+        relacion.setIdRol(inactivo);
+        PersonaRolModel modelo = model(mock(PersonaRolDAO.class), mock(PersonaDAO.class),
+                rolDAO, mock(ClinicaDAO.class));
+        modelo.seleccionar(relacion);
+
+        assertEquals(java.util.List.of(activo, inactivo), modelo.getRoles());
     }
 
     @Test

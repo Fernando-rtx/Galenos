@@ -7,8 +7,10 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.primefaces.event.SelectEvent;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.*;
@@ -85,7 +87,19 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
         if (roles == null) {
             roles = rolDAO.obtenerTodos();
         }
-        return roles;
+        List<Rol> disponibles = new ArrayList<>();
+        for (Rol rol : roles) {
+            if (Boolean.TRUE.equals(rol.getActivo())) {
+                disponibles.add(rol);
+            }
+        }
+        // Conserva la opción ya asignada al editar una relación antigua.
+        Rol actual = seleccionado == null ? null : seleccionado.getIdRol();
+        if (getEstado() == ESTADO_CRUD.EDICION && actual != null
+                && disponibles.stream().noneMatch(rol -> Objects.equals(rol.getIdRol(), actual.getIdRol()))) {
+            disponibles.add(actual);
+        }
+        return disponibles;
     }
 
     public List<Clinica> getClinicas() {
@@ -129,6 +143,7 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     }
 
     public void nuevo() {
+        roles = null;
         seleccionado = new PersonaRol();
         seleccionado.setFechaCreacion(new Date());
         seleccionado.setIdPersona(personaContexto);
@@ -194,6 +209,7 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     }
 
     public void seleccionar(PersonaRol seleccionado) {
+        roles = null;
         this.seleccionado = seleccionado;
         setEstado(ESTADO_CRUD.EDICION);
     }

@@ -11,6 +11,37 @@ import static org.mockito.Mockito.*;
 class DocumentoModelTest {
 
     @Test
+    void opcionesDeDocumentoSoloIncluyenTiposActivosAlCrear() {
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        TipoDocumento activo = new TipoDocumento(UUID.randomUUID());
+        activo.setActivo(true);
+        TipoDocumento inactivo = new TipoDocumento(UUID.randomUUID());
+        inactivo.setActivo(false);
+        TipoDocumento sinEstado = new TipoDocumento(UUID.randomUUID());
+        when(tipos.obtenerTodos()).thenReturn(List.of(activo, inactivo, sinEstado));
+        DocumentoModel modelo = model(mock(DocumentoDAO.class), mock(PersonaDAO.class), tipos);
+        modelo.nuevo();
+
+        assertEquals(List.of(activo), modelo.getTiposDocumento());
+    }
+
+    @Test
+    void edicionConservaElTipoInactivoYaAsignado() {
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        TipoDocumento activo = new TipoDocumento(UUID.randomUUID());
+        activo.setActivo(true);
+        TipoDocumento inactivo = new TipoDocumento(UUID.randomUUID());
+        inactivo.setActivo(false);
+        when(tipos.obtenerTodos()).thenReturn(List.of(activo, inactivo));
+        Documento documento = new Documento();
+        documento.setIdTipoDocumento(inactivo);
+        DocumentoModel modelo = model(mock(DocumentoDAO.class), mock(PersonaDAO.class), tipos);
+        modelo.seleccionar(documento);
+
+        assertEquals(List.of(activo, inactivo), modelo.getTiposDocumento());
+    }
+
+    @Test
     void guardarSinDocumentoSeleccionadoNoLlamaAlDao() {
         DocumentoDAO dao = mock(DocumentoDAO.class);
         DocumentoModel modelo = model(dao, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
