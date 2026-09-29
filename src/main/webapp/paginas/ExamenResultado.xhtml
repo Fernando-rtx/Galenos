@@ -69,6 +69,8 @@
                             </div>
                         </div>
 
+                        <p class="page-subtitle">#{msg['crud.dobleClicEditar']}</p>
+
                         <p:dataTable
                             id="examenResultadoTable"
                             value="#{examenResultadoModel}"
@@ -84,9 +86,11 @@
                             styleClass="examen-resultado-table">
 
                             <p:ajax
-                                event="rowSelect"
-                                listener="#{examenResultadoModel.seleccionar(item)}"
+                                event="rowDblselect"
+                                listener="#{examenResultadoModel.seleccionar(examenResultadoModel.seleccionado)}"
+                                process="@this"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('examenResultadoDialog').show()" />
 
                             <p:column
@@ -137,19 +141,6 @@
                                     styleClass="#{item.rutaAtestado != null ? 'ruta-text' : 'empty-note'}" />
                             </p:column>
 
-                            <p:column
-                                headerText="#{msg['examenResultado.acciones']}"
-                                styleClass="action-cell">
-
-                                <p:commandButton
-                                    icon="pi pi-pencil"
-                                    title="#{msg['crud.editar']}"
-                                    styleClass="edit-button"
-                                    action="#{examenResultadoModel.seleccionar(item)}"
-                                    process="@this"
-                                    update="edicionDialog"
-                                    oncomplete="PF('examenResultadoDialog').show()" />
-                            </p:column>
                         </p:dataTable>
                     </div>
                 </div>
