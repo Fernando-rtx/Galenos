@@ -211,14 +211,15 @@
                             <p:selectOneMenu
                                 id="idProcedimiento"
                                 value="#{procedimientoPasoModel.seleccionado.idProcedimiento}"
-                                
+                                converter="#{procedimientoConverter}"
+
                                 required="true"
                                 requiredMessage="#{msg['mensajes.error']}"
                                 styleClass="full-width">
 
                                 <f:selectItem
                                     itemLabel="#{msg['procedimientoPaso.seleccionarProcedimiento']}"
-                                    itemValue="" />
+                                    itemValue="#{null}" />
                                 <f:selectItems
                                     value="#{procedimientoPasoModel.procedimientos}"
                                     var="procedimiento"
@@ -236,14 +237,15 @@
                             <p:selectOneMenu
                                 id="idRol"
                                 value="#{procedimientoPasoModel.seleccionado.idRol}"
-                                
+                                converter="#{rolConverter}"
+
                                 required="true"
                                 requiredMessage="#{msg['mensajes.error']}"
                                 styleClass="full-width">
 
                                 <f:selectItem
                                     itemLabel="#{msg['procedimientoPaso.seleccionarRol']}"
-                                    itemValue="" />
+                                    itemValue="#{null}" />
                                 <f:selectItems
                                     value="#{procedimientoPasoModel.roles}"
                                     var="rol"

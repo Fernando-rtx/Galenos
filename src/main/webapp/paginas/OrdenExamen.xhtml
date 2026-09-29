@@ -10,6 +10,10 @@
     xmlns:ui="jakarta.faces.facelets"
     template="/WEB-INF/plantillas/general.xhtml">
 
+    <f:metadata>
+        <f:viewParam name="idPaso" value="#{ordenExamenModel.idPasoContexto}" />
+    </f:metadata>
+
     <ui:define name="titulo">
         #{msg['ordenExamen.titulo']} | #{msg['app.nombre']}
     </ui:define>
@@ -113,6 +117,15 @@
                                 <h:outputText
                                     value="#{item.indicaciones != null ? item.indicaciones : msg['ordenExamen.sinIndicaciones']}"
                                     styleClass="#{item.indicaciones != null ? 'indicaciones-text' : 'empty-note'}" />
+                            </p:column>
+
+                            <p:column
+                                headerText="#{msg['ordenExamen.resultados']}"
+                                styleClass="action-cell">
+
+                                <h:link outcome="/paginas/ExamenResultado" value="#{msg['crud.ver']}">
+                                    <f:param name="idOrden" value="#{item.idOrdenExamen}" />
+                                </h:link>
                             </p:column>
 
                             <p:column

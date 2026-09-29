@@ -59,6 +59,12 @@ public class ConsultaProcedimientoPaso implements Serializable {
     @JoinColumn(name = "id_persona_rol", referencedColumnName = "id_persona_rol")
     @ManyToOne
     private PersonaRol idPersonaRol;
+    /**
+     * Plantilla del paso ejecutado.
+     */
+    @JoinColumn(name = "id_procedimiento_paso", referencedColumnName = "id_procedimiento_paso")
+    @ManyToOne
+    private ProcedimientoPaso idProcedimientoPaso;
     @OneToMany(mappedBy = "idConsultaProcedimientoPaso")
     private Collection<OrdenExamen> ordenExamenCollection;
 
@@ -115,6 +121,22 @@ public class ConsultaProcedimientoPaso implements Serializable {
 
     public void setIdPersonaRol(PersonaRol idPersonaRol) {
         this.idPersonaRol = idPersonaRol;
+    }
+
+    /**
+     * Plantilla del paso ejecutado.
+     * @return paso de procedimiento asociado.
+     */
+    public ProcedimientoPaso getIdProcedimientoPaso() {
+        return idProcedimientoPaso;
+    }
+
+    /**
+     * Plantilla del paso ejecutado.
+     * @param idProcedimientoPaso paso de procedimiento asociado.
+     */
+    public void setIdProcedimientoPaso(ProcedimientoPaso idProcedimientoPaso) {
+        this.idProcedimientoPaso = idProcedimientoPaso;
     }
 
     public Collection<OrdenExamen> getOrdenExamenCollection() {

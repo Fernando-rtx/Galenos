@@ -6,6 +6,7 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenResultadoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OrdenExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.ExamenResultado;
@@ -23,6 +24,8 @@ public class ExamenResultadoModel extends AbstractModel<ExamenResultado> impleme
     private OrdenExamenDAO ordenExamenDAO;
     private ExamenResultado seleccionado;
     private List<OrdenExamen> ordenExamenes;
+    private String idOrdenContexto;
+    private OrdenExamen ordenContexto;
 
     public ExamenResultadoModel() {
     }
@@ -43,6 +46,24 @@ public class ExamenResultadoModel extends AbstractModel<ExamenResultado> impleme
         return examenResultadoDAO;
     }
 
+    public String getIdOrdenContexto() {
+        return idOrdenContexto;
+    }
+
+    public void setIdOrdenContexto(String id) {
+        if (id == null || id.isBlank()) {
+            return;
+        }
+        this.idOrdenContexto = id;
+        try {
+            OrdenExamen orden = ordenExamenDAO.buscarPorId(UUID.fromString(id));
+            ordenContexto = orden;
+            ordenExamenes = orden == null ? List.of() : List.of(orden);
+        } catch (IllegalArgumentException ex) {
+            // id inválido: se conserva la lista completa cargada en el constructor
+        }
+    }
+
     public ExamenResultado getSeleccionado() {
         return seleccionado;
     }
@@ -57,6 +78,9 @@ public class ExamenResultadoModel extends AbstractModel<ExamenResultado> impleme
 
     public void nuevo() {
         seleccionado = new ExamenResultado();
+        if (ordenContexto != null && ordenContexto.getIdOrdenExamen() != null) {
+            seleccionado.setIdOrdenExamen(ordenContexto);
+        }
         setEstado(ESTADO_CRUD.CREACION);
     }
 

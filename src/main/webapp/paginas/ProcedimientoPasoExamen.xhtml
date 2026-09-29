@@ -123,10 +123,11 @@
                             <p:outputLabel for="idExamen" value="#{msg['ppe.examen']}" styleClass="form-label" />
                             <p:selectOneMenu id="idExamen"
                                 value="#{ppeModel.seleccionado.idExamen}"
-                                
+                                converter="#{examenConverter}"
+
                                 required="true" requiredMessage="#{msg['mensajes.error']}"
                                 styleClass="full-width">
-                                <f:selectItem itemLabel="#{msg['ppe.seleccionarExamen']}" itemValue="" />
+                                <f:selectItem itemLabel="#{msg['ppe.seleccionarExamen']}" itemValue="#{null}" />
                                 <f:selectItems value="#{ppeModel.examenes}" var="examen"
                                     itemLabel="#{examen.nombre}" itemValue="#{examen}" />
                             </p:selectOneMenu>
@@ -136,10 +137,11 @@
                             <p:outputLabel for="idProcedimientoPaso" value="#{msg['ppe.paso']}" styleClass="form-label" />
                             <p:selectOneMenu id="idProcedimientoPaso"
                                 value="#{ppeModel.seleccionado.idProcedimientoPaso}"
-                                
+                                converter="#{procedimientoPasoConverter}"
+
                                 required="true" requiredMessage="#{msg['mensajes.error']}"
                                 styleClass="full-width">
-                                <f:selectItem itemLabel="#{msg['ppe.seleccionarPaso']}" itemValue="" />
+                                <f:selectItem itemLabel="#{msg['ppe.seleccionarPaso']}" itemValue="#{null}" />
                                 <f:selectItems value="#{ppeModel.procedimientosPaso}" var="paso"
                                     itemLabel="#{paso.nombre}" itemValue="#{paso}" />
                             </p:selectOneMenu>

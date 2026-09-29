@@ -186,14 +186,15 @@
                             <p:selectOneMenu
                                 id="idProcedimientoPaso"
                                 value="#{secuenciaModel.seleccionado.idProcedimientoPaso}"
-                                
+                                converter="#{procedimientoPasoConverter}"
+
                                 required="true"
                                 requiredMessage="#{msg['mensajes.error']}"
                                 styleClass="full-width">
 
                                 <f:selectItem
                                     itemLabel="#{msg['secuencia.seleccionarPaso']}"
-                                    itemValue="" />
+                                    itemValue="#{null}" />
                                 <f:selectItems
                                     value="#{secuenciaModel.procedimientosPaso}"
                                     var="paso"

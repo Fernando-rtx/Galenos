@@ -1,6 +1,7 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaProcedimientoPasoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OrdenExamenDAO;
@@ -122,5 +123,57 @@ class OrdenExamenModelTest {
                 mock(OrdenExamenDAO.class), consultaProcedimientoPasoDAO);
 
         assertEquals(1, model.getConsultaProcedimientoPasos().size());
+    }
+
+    @Test
+    void idPasoContextoValidoFiltraLaListaDePasos() {
+        ConsultaProcedimientoPasoDAO dao = mock(ConsultaProcedimientoPasoDAO.class);
+        ConsultaProcedimientoPaso paso = new ConsultaProcedimientoPaso(UUID.randomUUID());
+        when(dao.buscarPorId(paso.getIdConsultaProcedimientoPaso())).thenReturn(paso);
+        OrdenExamenModel model = new OrdenExamenModel(mock(OrdenExamenDAO.class), dao);
+
+        model.setIdPasoContexto(paso.getIdConsultaProcedimientoPaso().toString());
+
+        assertEquals(paso.getIdConsultaProcedimientoPaso().toString(), model.getIdPasoContexto());
+        assertEquals(List.of(paso), model.getConsultaProcedimientoPasos());
+    }
+
+    @Test
+    void idPasoContextoExponeRoundTripParaViewParam() {
+        ConsultaProcedimientoPasoDAO dao = mock(ConsultaProcedimientoPasoDAO.class);
+        ConsultaProcedimientoPaso paso = new ConsultaProcedimientoPaso(UUID.randomUUID());
+        when(dao.obtenerTodos()).thenReturn(List.of(paso));
+        when(dao.buscarPorId(paso.getIdConsultaProcedimientoPaso())).thenReturn(paso);
+        OrdenExamenModel model = new OrdenExamenModel(mock(OrdenExamenDAO.class), dao);
+
+        model.setIdPasoContexto(paso.getIdConsultaProcedimientoPaso().toString());
+
+        assertEquals(paso.getIdConsultaProcedimientoPaso().toString(), model.getIdPasoContexto());
+        assertEquals(List.of(paso), model.getConsultaProcedimientoPasos());
+    }
+
+    @Test
+    void idPasoContextoInvalidoConservaLaListaCompleta() {
+        ConsultaProcedimientoPasoDAO dao = mock(ConsultaProcedimientoPasoDAO.class);
+        ConsultaProcedimientoPaso paso = new ConsultaProcedimientoPaso(UUID.randomUUID());
+        when(dao.obtenerTodos()).thenReturn(List.of(paso));
+        OrdenExamenModel model = new OrdenExamenModel(mock(OrdenExamenDAO.class), dao);
+
+        model.setIdPasoContexto("no-es-uuid");
+
+        assertEquals(List.of(paso), model.getConsultaProcedimientoPasos());
+    }
+
+    @Test
+    void nuevoConContextoPreseleccionaElPaso() {
+        ConsultaProcedimientoPasoDAO dao = mock(ConsultaProcedimientoPasoDAO.class);
+        ConsultaProcedimientoPaso paso = new ConsultaProcedimientoPaso(UUID.randomUUID());
+        when(dao.buscarPorId(paso.getIdConsultaProcedimientoPaso())).thenReturn(paso);
+        OrdenExamenModel model = new OrdenExamenModel(mock(OrdenExamenDAO.class), dao);
+        model.setIdPasoContexto(paso.getIdConsultaProcedimientoPaso().toString());
+
+        model.nuevo();
+
+        assertSame(paso, model.getSeleccionado().getIdConsultaProcedimientoPaso());
     }
 }

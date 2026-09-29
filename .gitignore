@@ -11,3 +11,6 @@ src/main/liberty/config/logs/
 src/main/liberty/config/workarea/
 src/main/liberty/config/apps/
 src/main/liberty/config/dropins/
+
+# Playwright MCP artifacts
+.playwright-mcp/

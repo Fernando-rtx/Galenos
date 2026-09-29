@@ -9,7 +9,6 @@ import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaRolDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Consulta;
@@ -59,34 +58,6 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
         return personasRoles;
     }
 
-    public String getIdConsultaContexto() {
-        if (seleccionado == null || seleccionado.getIdConsulta() == null) {
-            return null;
-        }
-        return seleccionado.getIdConsulta().toString();
-    }
-
-    /**
-     * Carga la consulta indicada en la URL para abrirla en edición. Si el id no
-     * es un UUID válido, la vista permanece en modo listado.
-     *
-     * @param id identificador textual de la consulta
-     */
-    public void setIdConsultaContexto(String id) {
-        if (id == null || id.isBlank()) {
-            return;
-        }
-        try {
-            Consulta consulta = getDao().buscarPorId(UUID.fromString(id));
-            if (consulta != null) {
-                seleccionar(consulta);
-            }
-        } catch (IllegalArgumentException ex) {
-            seleccionado = null;
-            setEstado(ESTADO_CRUD.LISTADO);
-        }
-    }
-
     /**
      * Valida que la fecha de fin no sea anterior a la de inicio. La fecha de fin
      * es opcional, por lo que un valor nulo se acepta.
@@ -109,6 +80,7 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
 
     public void nuevo() {
         seleccionado = new Consulta();
+        seleccionado.setFechaInicio(new Date());
         setEstado(ESTADO_CRUD.CREACION);
     }
 

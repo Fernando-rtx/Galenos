@@ -11,10 +11,10 @@
         <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
-    <!-- Solo las URLs bajo /faces/* pasan por Jakarta Faces. -->
+    <!-- Todas las vistas .xhtml pasan por Jakarta Faces. -->
     <servlet-mapping>
         <servlet-name>Faces Servlet</servlet-name>
-        <url-pattern>/faces/*</url-pattern>
+        <url-pattern>*.xhtml</url-pattern>
     </servlet-mapping>
     <!-- Duración de la sesión que, entre otros datos, conserva IdiomaBean. -->
     <session-config>

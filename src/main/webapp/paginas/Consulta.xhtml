@@ -10,11 +10,6 @@
     xmlns:ui="jakarta.faces.facelets"
     template="/WEB-INF/plantillas/general.xhtml">
 
-    <f:metadata>
-        <f:viewParam name="idConsulta"
-                     value="#{consultaModel.idConsultaContexto}" />
-    </f:metadata>
-
     <ui:define name="titulo">
         #{msg['consulta.titulo']} | #{msg['app.nombre']}
     </ui:define>
@@ -469,7 +464,8 @@
                                     icon="pi pi-plus"
                                     action="#{consultaProcedimientoPasoModel.nuevo()}"
                                     process="@this"
-                                    update="pasosContenido" />
+                                    update="pasosContenido"
+                                    disabled="#{consultaProcedimientoModel.getProcedimientosPorConsulta(consultaModel.seleccionado).isEmpty()}" />
 
                                 <p:dataTable
                                     id="consultaProcedimientoPasoTable"
@@ -492,6 +488,13 @@
                                         styleClass="consulta-proc-cell">
                                         <h:outputText
                                             value="#{consultaProcedimientoModel.getNombreProcedimiento(paso.idConsultaProcedimiento)}" />
+                                    </p:column>
+
+                                    <p:column
+                                        headerText="#{msg['consultaProcedimientoPaso.procedimientoPaso']}"
+                                        styleClass="consulta-proc-cell">
+                                        <h:outputText
+                                            value="#{paso.idProcedimientoPaso != null ? paso.idProcedimientoPaso.nombre : '-'}" />
                                     </p:column>
 
                                     <p:column
@@ -522,6 +525,13 @@
                                             value="#{paso.estado}"
                                             styleClass="estado-badge #{paso.estado eq 'COMPLETADO' ? 'estado-completado' : paso.estado eq 'EN_CURSO' ? 'estado-en-curso' : 'estado-pendiente'}" />
                                     </p:column>
+
+                                    <p:column headerText="#{msg['consultaProcedimientoPaso.ordenes']}"
+                                              styleClass="action-cell">
+                                        <h:link outcome="/paginas/OrdenExamen" value="#{msg['crud.ver']}">
+                                            <f:param name="idPaso" value="#{paso.idConsultaProcedimientoPaso}" />
+                                        </h:link>
+                                    </p:column>
                                 </p:dataTable>
 
                                 <h:panelGroup rendered="#{consultaProcedimientoPasoModel.isFormularioVisibleParaConsulta(consultaModel.seleccionado)}">
@@ -551,9 +561,44 @@
                                                     var="cp"
                                                     itemLabel="#{consultaProcedimientoModel.getNombreProcedimiento(cp)}"
                                                     itemValue="#{cp}" />
+
+                                                <p:ajax event="change"
+                                                        listener="#{consultaProcedimientoPasoModel.limpiarResponsableInvalido}"
+                                                        process="@this"
+                                                        update="pasoProcedimientoPaso pasoPersonaRol" />
                                             </p:selectOneMenu>
 
                                             <p:message for="pasoConsultaProcedimiento" />
+                                        </div>
+
+                                        <div class="form-field">
+                                            <p:outputLabel
+                                                for="pasoProcedimientoPaso"
+                                                value="#{msg['consultaProcedimientoPaso.procedimientoPaso']}"
+                                                styleClass="form-label" />
+
+                                            <p:selectOneMenu
+                                                id="pasoProcedimientoPaso"
+                                                value="#{consultaProcedimientoPasoModel.seleccionado.idProcedimientoPaso}"
+                                                converter="#{procedimientoPasoConverter}">
+
+                                                <f:selectItem
+                                                    itemLabel="#{msg['crud.seleccionar']}"
+                                                    itemValue="#{null}" />
+
+                                                <f:selectItems
+                                                    value="#{consultaProcedimientoPasoModel.getPasosDeProcedimiento(consultaProcedimientoPasoModel.seleccionado.idConsultaProcedimiento)}"
+                                                    var="pp"
+                                                    itemLabel="#{pp.nombre}"
+                                                    itemValue="#{pp}" />
+
+                                                <p:ajax event="change"
+                                                        listener="#{consultaProcedimientoPasoModel.limpiarResponsableInvalido}"
+                                                        process="@this"
+                                                        update="pasoPersonaRol" />
+                                            </p:selectOneMenu>
+
+                                            <p:message for="pasoProcedimientoPaso" />
                                         </div>
 
                                         <div class="form-field">
@@ -567,14 +612,15 @@
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.idPersonaRol}"
                                                 converter="#{personaRolConverter}"
                                                 required="true"
-                                                requiredMessage="#{msg['mensajes.error']}">
+                                                requiredMessage="#{msg['mensajes.error']}"
+                                                validator="#{consultaProcedimientoPasoModel.validarResponsable}">
 
                                                 <f:selectItem
                                                     itemLabel="#{msg['crud.seleccionar']}"
                                                     itemValue="#{null}" />
 
                                                 <f:selectItems
-                                                    value="#{consultaProcedimientoPasoModel.personasRoles}"
+                                                    value="#{consultaProcedimientoPasoModel.getPersonasRolesParaPaso()}"
                                                     var="pr"
                                                     itemLabel="#{pr.idPersona.nombres} #{pr.idPersona.apellidos} - #{pr.idRol.nombre}"
                                                     itemValue="#{pr}" />
@@ -635,15 +681,15 @@
                                                     itemValue="#{null}" />
 
                                                 <f:selectItem
-                                                    itemLabel="PENDIENTE"
+                                                    itemLabel="#{msg['estado.pendiente']}"
                                                     itemValue="PENDIENTE" />
 
                                                 <f:selectItem
-                                                    itemLabel="EN_CURSO"
+                                                    itemLabel="#{msg['estado.enCurso']}"
                                                     itemValue="EN_CURSO" />
 
                                                 <f:selectItem
-                                                    itemLabel="COMPLETADO"
+                                                    itemLabel="#{msg['estado.completado']}"
                                                     itemValue="COMPLETADO" />
                                             </p:selectOneMenu>
 
