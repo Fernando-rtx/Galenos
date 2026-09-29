@@ -35,7 +35,7 @@
                             <p class="page-subtitle">#{msg['ppe.subtitulo']}</p>
                         </div>
                         <crud:botones-top
-                            model="#{ppeModel}"
+                            model="#{procedimientoPasoExamenModel}"
                             actualizar="messages ppeTable edicionDialog"
                             oncompleteNuevo="PF('ppeDialog').show()" />
                     </div>
@@ -51,14 +51,14 @@
                             </div>
                         </div>
 
-                        <p:dataTable id="ppeTable" value="#{ppeModel}" var="item"
+                        <p:dataTable id="ppeTable" value="#{procedimientoPasoExamenModel}" var="item"
                             lazy="true" paginator="true" rows="10" reflow="true"
-                            selectionMode="single" selection="#{ppeModel.seleccionado}"
-                            rowKey="#{ppeModel.getRowKey(item)}"
+                            selectionMode="single" selection="#{procedimientoPasoExamenModel.seleccionado}"
+                            rowKey="#{procedimientoPasoExamenModel.getRowKey(item)}"
                             emptyMessage="#{msg['ppe.sinRegistros']}"
                             styleClass="ppe-table">
 
-                            <p:ajax event="rowSelect" listener="#{ppeModel.seleccionar(item)}"
+                            <p:ajax event="rowSelect" listener="#{procedimientoPasoExamenModel.seleccionar(item)}"
                                 update="edicionDialog" oncomplete="PF('ppeDialog').show()" />
 
                             <p:column headerText="#{msg['ppe.examen']}" field="idExamen.nombre"
@@ -93,7 +93,7 @@
 
                             <p:column headerText="#{msg['ppe.acciones']}" styleClass="action-cell">
                                 <p:commandButton icon="pi pi-pencil" title="#{msg['crud.editar']}"
-                                    styleClass="edit-button" action="#{ppeModel.seleccionar(item)}"
+                                    styleClass="edit-button" action="#{procedimientoPasoExamenModel.seleccionar(item)}"
                                     process="@this" update="edicionDialog"
                                     oncomplete="PF('ppeDialog').show()" />
                             </p:column>
@@ -104,12 +104,12 @@
         </main>
 
         <p:dialog id="edicionDialog" widgetVar="ppeDialog"
-            header="#{ppeModel.estado eq 'CREACION' ? msg['ppe.nuevo'] : msg['ppe.editar']}"
+            header="#{procedimientoPasoExamenModel.estado eq 'CREACION' ? msg['ppe.nuevo'] : msg['ppe.editar']}"
             modal="true" responsive="true" resizable="false" width="560"
             styleClass="clinical-dialog">
 
             <p:outputPanel id="edicionContenido" layout="block">
-                <h:panelGroup rendered="#{ppeModel.seleccionado ne null}">
+                <h:panelGroup rendered="#{procedimientoPasoExamenModel.seleccionado ne null}">
                     <div class="dialog-intro">
                         <div class="dialog-intro-icon"><i class="pi pi-file-edit"></i></div>
                         <div>
@@ -122,13 +122,13 @@
                         <div class="form-field">
                             <p:outputLabel for="idExamen" value="#{msg['ppe.examen']}" styleClass="form-label" />
                             <p:selectOneMenu id="idExamen"
-                                value="#{ppeModel.seleccionado.idExamen}"
+                                value="#{procedimientoPasoExamenModel.seleccionado.idExamen}"
                                 converter="#{examenConverter}"
 
                                 required="true" requiredMessage="#{msg['mensajes.error']}"
                                 styleClass="full-width">
                                 <f:selectItem itemLabel="#{msg['ppe.seleccionarExamen']}" itemValue="#{null}" />
-                                <f:selectItems value="#{ppeModel.examenes}" var="examen"
+                                <f:selectItems value="#{procedimientoPasoExamenModel.examenes}" var="examen"
                                     itemLabel="#{examen.nombre}" itemValue="#{examen}" />
                             </p:selectOneMenu>
                         </div>
@@ -136,13 +136,13 @@
                         <div class="form-field">
                             <p:outputLabel for="idProcedimientoPaso" value="#{msg['ppe.paso']}" styleClass="form-label" />
                             <p:selectOneMenu id="idProcedimientoPaso"
-                                value="#{ppeModel.seleccionado.idProcedimientoPaso}"
+                                value="#{procedimientoPasoExamenModel.seleccionado.idProcedimientoPaso}"
                                 converter="#{procedimientoPasoConverter}"
 
                                 required="true" requiredMessage="#{msg['mensajes.error']}"
                                 styleClass="full-width">
                                 <f:selectItem itemLabel="#{msg['ppe.seleccionarPaso']}" itemValue="#{null}" />
-                                <f:selectItems value="#{ppeModel.procedimientosPaso}" var="paso"
+                                <f:selectItems value="#{procedimientoPasoExamenModel.procedimientosPaso}" var="paso"
                                     itemLabel="#{paso.nombre}" itemValue="#{paso}" />
                             </p:selectOneMenu>
                         </div>
@@ -150,7 +150,7 @@
                         <div class="form-field">
                             <p:outputLabel for="observaciones" value="#{msg['ppe.observaciones']}" styleClass="form-label" />
                             <p:inputTextarea id="observaciones"
-                                value="#{ppeModel.seleccionado.observaciones}"
+                                value="#{procedimientoPasoExamenModel.seleccionado.observaciones}"
                                 rows="5" autoResize="false"
                                 placeholder="#{msg['ppe.observacionesPlaceholder']}" />
                         </div>
@@ -160,12 +160,12 @@
                                 <strong>#{msg['ppe.activo']}</strong>
                                 <span>#{msg['ppe.usarSistema']}</span>
                             </div>
-                            <p:toggleSwitch id="activo" value="#{ppeModel.seleccionado.activo}" />
+                            <p:toggleSwitch id="activo" value="#{procedimientoPasoExamenModel.seleccionado.activo}" />
                         </div>
                     </div>
 
                     <div class="dialog-actions">
-                        <crud:botones-bottom model="#{ppeModel}"
+                        <crud:botones-bottom model="#{procedimientoPasoExamenModel}"
                             procesar="@this edicionContenido"
                             actualizar="messages ppeTable edicionDialog"
                             oncompleteCancelar="PF('ppeDialog').hide()"
