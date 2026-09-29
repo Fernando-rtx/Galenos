@@ -81,8 +81,9 @@
 
                             <p:ajax
                                 event="rowDblselect"
-                                listener="#{procedimientoPasoModel.seleccionar(item)}"
+                                listener="#{procedimientoPasoModel.seleccionarFila()}"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('procedimientoPasoDialog').show()" />
 
                             <p:column

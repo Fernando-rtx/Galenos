@@ -58,8 +58,9 @@
                             emptyMessage="#{msg['ppe.sinRegistros']}"
                             styleClass="ppe-table">
 
-                            <p:ajax event="rowDblselect" listener="#{procedimientoPasoExamenModel.seleccionar(item)}"
-                                update="edicionDialog" oncomplete="PF('ppeDialog').show()" />
+                            <p:ajax event="rowDblselect" listener="#{procedimientoPasoExamenModel.seleccionarFila()}"
+                                update="edicionDialog" resetValues="true"
+                                oncomplete="PF('ppeDialog').show()" />
 
                             <p:column headerText="#{msg['ppe.examen']}" field="idExamen.nombre"
                                 sortBy="#{item.idExamen.nombre}" filterBy="#{item.idExamen.nombre}"
