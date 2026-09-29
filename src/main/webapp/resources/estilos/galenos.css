@@ -17,6 +17,10 @@ body.clinical-body {
 
 /* Encabezado: marca, título y selector internacionalizado de idioma. */
 .layout-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
     background: #ffffff;
     border-bottom: 1px solid #dfeaf1;
     padding: 16px 24px;
@@ -39,7 +43,24 @@ body.clinical-body {
 
 .layout-tools {
     gap: 10px;
+    flex-wrap: wrap;
     justify-content: flex-end;
+}
+
+.layout-header > .layout-logo,
+.layout-header > .layout-brand,
+.layout-header > .layout-tools {
+    width: auto;
+    min-width: 0;
+    float: none;
+}
+
+.layout-logo-image {
+    display: block;
+    width: 280px;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
 }
 
 .layout-language {
@@ -275,6 +296,15 @@ body.clinical-body {
 }
 
 @media (max-width: 720px) {
+    .layout-header {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .layout-logo-image {
+        width: 240px;
+    }
+
     .card-content {
         padding: 22px 18px;
     }

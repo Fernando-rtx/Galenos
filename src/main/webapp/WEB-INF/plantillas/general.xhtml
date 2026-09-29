@@ -4,8 +4,10 @@
       xmlns:f="jakarta.faces.core"
       xmlns:h="jakarta.faces.html"
       xmlns:p="primefaces"
-      xmlns:ui="jakarta.faces.facelets">
+      xmlns:ui="jakarta.faces.facelets"
+      lang="#{idiomaBean.locale.toLanguageTag()}">
 
+    <f:view locale="#{idiomaBean.locale}">
     <h:head>
         <title>
             <ui:insert name="titulo">#{msg['app.nombre']}</ui:insert>
@@ -20,8 +22,11 @@
 
                 <header class="layout-header ui-g">
                     <div class="ui-g-12 ui-md-4 layout-logo">
-                        <span class="brand-mark">#{msg['app.logoTexto']}</span>
-                        <span>#{msg['app.nombre']}</span>
+                        <h:graphicImage library="imagenes"
+                                        name="galenos-sv-logo.png"
+                                        alt="Galenos SV — Clínica General"
+                                        width="2048" height="768"
+                                        styleClass="layout-logo-image" />
                     </div>
 
                     <div class="ui-g-12 ui-md-4 layout-brand">
@@ -52,7 +57,8 @@
                             <p:ajax
                                 event="change"
                                 listener="#{idiomaBean.cambiarIdioma}"
-                                update="@form" />
+                                process="@this"
+                                update="@all" />
                         </p:selectOneMenu>
                     </div>
                 </header>
@@ -128,4 +134,5 @@
             </div>
         </h:form>
     </h:body>
+    </f:view>
 </html>
