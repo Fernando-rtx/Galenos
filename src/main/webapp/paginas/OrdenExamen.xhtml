@@ -69,6 +69,8 @@
                             </div>
                         </div>
 
+                        <p class="page-subtitle">#{msg['crud.dobleClicEditar']}</p>
+
                         <p:dataTable
                             id="ordenExamenTable"
                             value="#{ordenExamenModel}"
@@ -83,10 +85,13 @@
                             emptyMessage="#{msg['ordenExamen.sinRegistros']}"
                             styleClass="orden-examen-table">
 
+                            <!-- El doble clic abre la orden seleccionada para editarla. -->
                             <p:ajax
-                                event="rowSelect"
-                                listener="#{ordenExamenModel.seleccionar(item)}"
+                                event="rowDblselect"
+                                listener="#{ordenExamenModel.seleccionar(ordenExamenModel.seleccionado)}"
+                                process="@this"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('ordenExamenDialog').show()" />
 
                             <p:column
@@ -128,19 +133,6 @@
                                 </h:link>
                             </p:column>
 
-                            <p:column
-                                headerText="#{msg['ordenExamen.acciones']}"
-                                styleClass="action-cell">
-
-                                <p:commandButton
-                                    icon="pi pi-pencil"
-                                    title="#{msg['crud.editar']}"
-                                    styleClass="edit-button"
-                                    action="#{ordenExamenModel.seleccionar(item)}"
-                                    process="@this"
-                                    update="edicionDialog"
-                                    oncomplete="PF('ordenExamenDialog').show()" />
-                            </p:column>
                         </p:dataTable>
                     </div>
                 </div>
