@@ -91,12 +91,6 @@
                                     styleClass="#{empty item.observaciones ? 'empty-note' : ''}" />
                             </p:column>
 
-                            <p:column headerText="#{msg['ppe.acciones']}" styleClass="action-cell">
-                                <p:commandButton icon="pi pi-pencil" title="#{msg['crud.editar']}"
-                                    styleClass="edit-button" action="#{procedimientoPasoExamenModel.seleccionar(item)}"
-                                    process="@this" update="edicionDialog"
-                                    oncomplete="PF('ppeDialog').show()" />
-                            </p:column>
                         </p:dataTable>
                     </div>
                 </div>

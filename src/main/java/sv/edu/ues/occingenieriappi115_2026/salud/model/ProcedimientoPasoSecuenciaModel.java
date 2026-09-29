@@ -78,6 +78,23 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
         return procedimientosPaso;
     }
 
+    public List<ProcedimientoPasoSecuencia> getSecuenciasPorProcedimiento(
+            sv.edu.ues.occingenieriappi115_2026.salud.entity.Procedimiento procedimiento) {
+        if (procedimiento == null || procedimiento.getIdProcedimiento() == null) {
+            return List.of();
+        }
+        UUID idProcedimiento = procedimiento.getIdProcedimiento();
+        return obtenerSecuencias().stream()
+                .filter(secuencia -> secuencia != null
+                && secuencia.getIdProcedimientoPaso() != null
+                && secuencia.getIdProcedimientoPaso().getIdProcedimiento() != null)
+                .filter(secuencia -> idProcedimiento.equals(secuencia
+                .getIdProcedimientoPaso()
+                .getIdProcedimiento()
+                .getIdProcedimiento()))
+                .toList();
+    }
+
     public void nuevo() {
         seleccionado = new ProcedimientoPasoSecuencia();
         setEstado(ESTADO_CRUD.CREACION);

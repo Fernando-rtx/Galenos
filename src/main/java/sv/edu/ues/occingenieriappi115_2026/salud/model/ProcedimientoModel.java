@@ -8,6 +8,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.UUID;
+import org.primefaces.event.SelectEvent;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaProcedimientoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ProcedimientoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ProcedimientoPasoDAO;
@@ -70,6 +71,19 @@ public class ProcedimientoModel extends AbstractModel<Procedimiento> implements 
     public void seleccionar(Procedimiento seleccionado) {
         this.seleccionado = seleccionado;
         setEstado(ESTADO_CRUD.EDICION);
+    }
+
+    public void seleccionarFila(SelectEvent<Procedimiento> evento) {
+        if (evento == null || evento.getObject() == null) {
+            return;
+        }
+        seleccionar(evento.getObject());
+    }
+
+    public void seleccionarFila() {
+        if (seleccionado != null) {
+            setEstado(ESTADO_CRUD.EDICION);
+        }
     }
 
     public void guardar() {

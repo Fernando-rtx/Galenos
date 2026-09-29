@@ -1,4 +1,4 @@
-/* Contenedor y tarjeta principal del catálogo TipoExamen. */
+/* Contenedor y tarjeta principal del catálogo Procedimiento. */
 .page-shell {
     width: min(1180px, 100%);
     margin: 0 auto;
@@ -103,17 +103,17 @@
 }
 
 /* Tabla PrimeFaces: encabezados, filtros, filas y paginador. */
-.tipo-table {
+.procedimiento-table {
     border: 1px solid #e3edf3;
     border-radius: 8px;
     overflow: hidden;
 }
 
-.tipo-table .ui-datatable-tablewrapper {
+.procedimiento-table .ui-datatable-tablewrapper {
     border-radius: 8px;
 }
 
-.tipo-table .ui-datatable-thead > tr > th {
+.procedimiento-table .ui-datatable-thead > tr > th {
     background: #f4f9fc;
     border: 0;
     border-bottom: 1px solid #dfeaf1;
@@ -125,16 +125,16 @@
     text-transform: uppercase;
 }
 
-.tipo-table .ui-datatable-data > tr {
+.procedimiento-table .ui-datatable-data > tr {
     background: #ffffff;
     transition: background 0.15s ease;
 }
 
-.tipo-table .ui-datatable-data > tr:hover {
+.procedimiento-table .ui-datatable-data > tr:hover {
     background: #f7fbfd;
 }
 
-.tipo-table .ui-datatable-data > tr > td {
+.procedimiento-table .ui-datatable-data > tr > td {
     border: 0;
     border-bottom: 1px solid #edf2f5;
     color: #405767;
@@ -142,11 +142,11 @@
     padding: 16px;
 }
 
-.tipo-table .ui-datatable-data > tr:last-child > td {
+.procedimiento-table .ui-datatable-data > tr:last-child > td {
     border-bottom: 0;
 }
 
-.tipo-table .ui-column-filter {
+.procedimiento-table .ui-column-filter {
     background: #ffffff;
     border: 1px solid #d7e4ec;
     border-radius: 8px;
@@ -156,29 +156,29 @@
     width: 100%;
 }
 
-.tipo-table .ui-column-filter:focus {
+.procedimiento-table .ui-column-filter:focus {
     border-color: #49a5ce;
     box-shadow: 0 0 0 3px rgba(22, 131, 182, 0.10);
     outline: none;
 }
 
-.tipo-table .ui-paginator {
+.procedimiento-table .ui-paginator {
     background: #ffffff;
     border: 0;
     border-top: 1px solid #e6eef3;
     padding: 13px;
 }
 
-.tipo-table .ui-paginator .ui-paginator-page {
+.procedimiento-table .ui-paginator .ui-paginator-page {
     border-radius: 7px;
 }
 
-.tipo-table .ui-paginator .ui-state-active {
+.procedimiento-table .ui-paginator .ui-state-active {
     background: #1683b6;
     border-color: #1683b6;
 }
 
-.exam-name {
+.procedimiento-name {
     color: #264b62;
     font-weight: 600;
 }
@@ -281,6 +281,36 @@
     gap: 20px;
 }
 
+.related-tab-header {
+    align-items: center;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.related-tab-header span {
+    color: #31566d;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.related-tab-link {
+    color: #1683b6;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.related-tab-link:hover {
+    color: #106f9c;
+    text-decoration: underline;
+}
+
+.related-table {
+    margin-bottom: 4px;
+}
+
 .form-field {
     display: grid;
     gap: 8px;
@@ -350,6 +380,46 @@
     border-top: 1px solid #edf2f5;
     margin: 24px -24px -24px;
     padding: 18px 24px;
+}
+
+.clinical-dialog .dialog-actions .crud-actions-bottom {
+    flex-direction: row;
+    gap: 8px;
+    justify-content: flex-start;
+}
+
+.clinical-dialog .dialog-actions .crud-actions-bottom .ui-button {
+    align-items: center;
+    background: #1683b6;
+    border: 1px solid #1683b6;
+    border-radius: 4px;
+    box-shadow: none;
+    color: #ffffff;
+    display: inline-flex;
+    font-size: 0.92rem;
+    font-weight: 600;
+    justify-content: center;
+    margin: 0;
+    min-height: 40px;
+    min-width: 100px;
+    padding: 0.58rem 1rem;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    width: auto;
+}
+
+.clinical-dialog .dialog-actions .crud-actions-bottom .ui-button:hover {
+    background: #106f9c;
+    border-color: #106f9c;
+    color: #ffffff;
+}
+
+.clinical-dialog .dialog-actions .crud-actions-bottom .ui-button:focus-visible {
+    outline: 2px solid #1683b6;
+    outline-offset: 3px;
+}
+
+.clinical-dialog .dialog-actions .crud-actions-bottom .ui-button .ui-button-icon {
+    display: none;
 }
 
 /* Distribución responsive del catálogo. */

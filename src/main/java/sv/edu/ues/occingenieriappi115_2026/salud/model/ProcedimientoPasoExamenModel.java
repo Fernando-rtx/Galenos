@@ -15,6 +15,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ProcedimientoPasoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ProcedimientoPasoExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Examen;
+import sv.edu.ues.occingenieriappi115_2026.salud.entity.Procedimiento;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPaso;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPasoExamen;
 
@@ -79,6 +80,22 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
 
     public List<Examen> getExamenes() {
         return examenes;
+    }
+
+    public List<ProcedimientoPasoExamen> getExamenesPorProcedimiento(Procedimiento procedimiento) {
+        if (procedimiento == null || procedimiento.getIdProcedimiento() == null) {
+            return List.of();
+        }
+        UUID idProcedimiento = procedimiento.getIdProcedimiento();
+        return obtenerRelaciones().stream()
+                .filter(relacion -> relacion != null
+                && relacion.getIdProcedimientoPaso() != null
+                && relacion.getIdProcedimientoPaso().getIdProcedimiento() != null)
+                .filter(relacion -> idProcedimiento.equals(relacion
+                .getIdProcedimientoPaso()
+                .getIdProcedimiento()
+                .getIdProcedimiento()))
+                .toList();
     }
 
     public void nuevo() {
