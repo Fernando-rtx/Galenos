@@ -3,6 +3,7 @@ package sv.edu.ues.occingenieriappi115_2026.salud.model;
 import jakarta.ejb.EJB;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
+import jakarta.faces.component.UIInput;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.validator.ValidatorException;
 import jakarta.faces.view.ViewScoped;
@@ -141,13 +142,21 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
             UIComponent componente,
             Object valor) {
 
+        validarNombre(contexto, componente.getId(), valor);
+    }
+
+    private void validarNombre(
+            FacesContext contexto,
+            String idComponente,
+            Object valor) {
+
         String texto = valor == null
                 ? ""
                 : valor.toString().trim();
 
         String prefijo;
 
-        if ("apellidos".equals(componente.getId())) {
+        if ("apellidos".equals(idComponente)) {
             prefijo = "persona.apellidos";
         } else {
             prefijo = "persona.nombres";
@@ -189,6 +198,13 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
     public void validarFechaNacimiento(
             FacesContext contexto,
             UIComponent componente,
+            Object valor) {
+
+        validarFechaNacimiento(contexto, valor);
+    }
+
+    private void validarFechaNacimiento(
+            FacesContext contexto,
             Object valor) {
 
         if (!(valor instanceof Date fecha)) {
@@ -236,19 +252,34 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
                 normalizar(seleccionado.getApellidos())
         );
 
-        switch (getEstado()) {
+        if (!validarAntesDeGuardar()) {
+            return;
+        }
 
-            case CREACION -> {
-                getDao().guardar(seleccionado);
-            }
+        try {
+            switch (getEstado()) {
 
-            case EDICION -> {
-                seleccionado = getDao().actualizar(seleccionado);
-            }
+                case CREACION -> {
+                    getDao().guardar(seleccionado);
+                    agregarMensaje("persona.creadaCorrectamente");
+                }
 
-            case LISTADO -> {
-                return;
+                case EDICION -> {
+                    seleccionado = getDao().actualizar(seleccionado);
+                    agregarMensaje("persona.actualizadaCorrectamente");
+                }
+
+                case LISTADO -> {
+                    return;
+                }
             }
+        } catch (RuntimeException ex) {
+            if (facesContext == null) {
+                throw ex;
+            }
+            agregarMensaje("persona.errorGuardar");
+            facesContext.validationFailed();
+            return;
         }
 
         setEstado(ESTADO_CRUD.LISTADO);
@@ -265,6 +296,22 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
+    public void cerrarEdicion(
+            DocumentoModel documento,
+            MedioContactoModel contacto,
+            PersonaRolModel personaRol) {
+        if (documento != null) {
+            documento.cancelar();
+        }
+        if (contacto != null) {
+            contacto.cancelar();
+        }
+        if (personaRol != null) {
+            personaRol.cancelar();
+        }
+        cancelar();
+    }
+
     // =========================================================
     // UTILIDADES
     // =========================================================
@@ -276,6 +323,74 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
         }
 
         return valor.trim();
+    }
+
+    private boolean validarAntesDeGuardar() {
+        if (!validarCampo("nombres", seleccionado.getNombres(), true)) {
+            return false;
+        }
+        if (!validarCampo("apellidos", seleccionado.getApellidos(), true)) {
+            return false;
+        }
+        return validarCampo("fechaNacimiento", seleccionado.getFechaNacimiento(), false);
+    }
+
+    private boolean validarCampo(String idComponente, Object valor, boolean nombre) {
+        try {
+            if (nombre) {
+                validarNombre(facesContext, idComponente, valor);
+            } else {
+                validarFechaNacimiento(facesContext, valor);
+            }
+            return true;
+        } catch (ValidatorException ex) {
+            agregarErrorCampo(idComponente, ex.getFacesMessage());
+            return false;
+        }
+    }
+
+    private void agregarErrorCampo(String idComponente, FacesMessage mensaje) {
+        FacesContext contexto = obtenerFacesContext();
+        if (contexto == null) {
+            throw new IllegalStateException("FacesContext es requerido para validar el formulario");
+        }
+
+        UIComponent componente = buscarComponente(contexto, idComponente);
+        String clientId = idComponente;
+        if (componente != null) {
+            clientId = componente.getClientId(contexto);
+            if (componente instanceof UIInput entrada) {
+                entrada.setValid(false);
+            }
+        }
+
+        contexto.addMessage(clientId, mensaje);
+        contexto.validationFailed();
+    }
+
+    private FacesContext obtenerFacesContext() {
+        return facesContext == null ? FacesContext.getCurrentInstance() : facesContext;
+    }
+
+    private UIComponent buscarComponente(FacesContext contexto, String id) {
+        if (contexto == null || contexto.getViewRoot() == null) {
+            return null;
+        }
+        return buscarComponente(contexto.getViewRoot(), id);
+    }
+
+    private UIComponent buscarComponente(UIComponent componente, String id) {
+        if (id.equals(componente.getId())) {
+            return componente;
+        }
+        var hijos = componente.getFacetsAndChildren();
+        while (hijos.hasNext()) {
+            UIComponent encontrado = buscarComponente(hijos.next(), id);
+            if (encontrado != null) {
+                return encontrado;
+            }
+        }
+        return null;
     }
 
     private void lanzarValidacion(
@@ -291,8 +406,20 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
                 new FacesMessage(
                         FacesMessage.SEVERITY_ERROR,
                         mensaje,
-                        mensaje
+                        null
                 )
         );
+    }
+
+    private void agregarMensaje(String clave) {
+        if (facesContext == null) {
+            return;
+        }
+        String mensaje = facesContext
+                .getApplication()
+                .getResourceBundle(facesContext, "msg")
+                .getString(clave);
+        facesContext.addMessage(null,
+                new FacesMessage(FacesMessage.SEVERITY_INFO, mensaje, null));
     }
 }

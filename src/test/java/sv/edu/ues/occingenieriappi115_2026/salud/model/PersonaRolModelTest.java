@@ -233,4 +233,40 @@ class PersonaRolModelTest {
         assertSame(persona, modelo.getSeleccionado().getIdPersona());
         assertTrue(modelo.isSeleccionadoParaPersona(persona));
     }
+
+    @Test
+    void eliminaRolSeleccionadoDeLaPersona() {
+        PersonaRolDAO dao = mock(PersonaRolDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        PersonaRol personaRol = new PersonaRol(UUID.randomUUID());
+        personaRol.setIdPersona(persona);
+        when(dao.eliminar(personaRol.getIdPersonaRol())).thenReturn(true);
+        PersonaRolModel modelo = model(dao, mock(PersonaDAO.class), mock(RolDAO.class),
+                mock(ClinicaDAO.class));
+        modelo.seleccionar(personaRol);
+
+        modelo.eliminarSeleccionadoParaPersona(persona);
+
+        verify(dao).eliminar(personaRol.getIdPersonaRol());
+        assertNull(modelo.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+    }
+
+    @Test
+    void errorAlEliminarRolEnUsoConservaLaSeleccion() {
+        PersonaRolDAO dao = mock(PersonaRolDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        PersonaRol personaRol = new PersonaRol(UUID.randomUUID());
+        personaRol.setIdPersona(persona);
+        doThrow(new IllegalStateException("Rol en uso"))
+                .when(dao).eliminar(personaRol.getIdPersonaRol());
+        PersonaRolModel modelo = model(dao, mock(PersonaDAO.class), mock(RolDAO.class),
+                mock(ClinicaDAO.class));
+        modelo.seleccionar(personaRol);
+
+        modelo.eliminarSeleccionadoParaPersona(persona);
+
+        assertSame(personaRol, modelo.getSeleccionado());
+        assertEquals(ESTADO_CRUD.EDICION, modelo.getEstado());
+    }
 }
