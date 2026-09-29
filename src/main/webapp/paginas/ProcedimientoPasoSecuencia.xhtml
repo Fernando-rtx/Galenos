@@ -124,19 +124,6 @@
                                                   : ''}" />
                             </p:column>
 
-                            <p:column
-                                headerText="#{msg['secuencia.acciones']}"
-                                styleClass="action-cell">
-
-                                <p:commandButton
-                                    icon="pi pi-pencil"
-                                    title="#{msg['crud.editar']}"
-                                    styleClass="edit-button"
-                                    action="#{procedimientoPasoSecuenciaModel.seleccionar(item)}"
-                                    process="@this"
-                                    update="edicionDialog"
-                                    oncomplete="PF('secuenciaDialog').show()" />
-                            </p:column>
                         </p:dataTable>
                     </div>
                 </div>

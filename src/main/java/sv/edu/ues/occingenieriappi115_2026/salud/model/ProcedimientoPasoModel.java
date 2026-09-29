@@ -92,6 +92,18 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
         return roles;
     }
 
+    public List<ProcedimientoPaso> getPasosPorProcedimiento(Procedimiento procedimiento) {
+        if (procedimiento == null || procedimiento.getIdProcedimiento() == null) {
+            return List.of();
+        }
+        UUID idProcedimiento = procedimiento.getIdProcedimiento();
+        return getDao().obtenerTodos().stream()
+                .filter(paso -> paso != null && paso.getIdProcedimiento() != null)
+                .filter(paso -> idProcedimiento.equals(
+                paso.getIdProcedimiento().getIdProcedimiento()))
+                .toList();
+    }
+
     public void nuevo() {
         seleccionado = new ProcedimientoPaso();
         setEstado(ESTADO_CRUD.CREACION);

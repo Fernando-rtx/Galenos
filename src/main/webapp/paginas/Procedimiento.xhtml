@@ -84,7 +84,7 @@
 
                             <p:ajax
                                 event="rowDblselect"
-                                listener="#{procedimientoModel.seleccionar(item)}"
+                                listener="#{procedimientoModel.seleccionarFila()}"
                                 update="edicionDialog"
                                 resetValues="true"
                                 oncomplete="PF('procedimientoDialog').show()" />
@@ -140,7 +140,7 @@
             modal="true"
             responsive="true"
             resizable="false"
-            width="560"
+            width="900"
             styleClass="clinical-dialog">
 
             <p:outputPanel
@@ -148,22 +148,6 @@
                 layout="block">
 
                 <h:panelGroup rendered="#{procedimientoModel.seleccionado ne null}">
-                    <div class="dialog-intro">
-                        <div class="dialog-intro-icon">
-                            <i class="pi pi-file-edit"></i>
-                        </div>
-
-                        <div>
-                            <strong>
-                                #{msg['procedimiento.informacion']}
-                            </strong>
-
-                            <span>
-                                #{msg['procedimiento.completar']}
-                            </span>
-                        </div>
-                    </div>
-
                     <p:tabView id="procedimientoTabs">
                         <p:tab title="#{msg['procedimiento.tabDetalle']}">
                             <div class="dialog-form">
@@ -177,12 +161,15 @@
                                         id="nombre"
                                         value="#{procedimientoModel.seleccionado.nombre}"
                                         placeholder="#{msg['procedimiento.nombrePlaceholder']}"
+                                        maxlength="155"
                                         required="true"
                                         requiredMessage="#{msg['mensajes.error']}" />
 
                                     <span class="form-helper">
                                         #{msg['procedimiento.nombreAyuda']}
                                     </span>
+
+                                    <p:message for="nombre" />
                                 </div>
 
                                 <div class="toggle-field">
@@ -200,15 +187,6 @@
                                         id="activo"
                                         value="#{procedimientoModel.seleccionado.activo}" />
                                 </div>
-                            </div>
-
-                            <div class="dialog-actions">
-                                <crud:botones-bottom
-                                    model="#{procedimientoModel}"
-                                    procesar="@this edicionContenido"
-                                    actualizar="messages procedimientosTable edicionDialog"
-                                    oncompleteCancelar="PF('procedimientoDialog').hide()"
-                                    oncompleteGuardar="if (!args.validationFailed) PF('procedimientoDialog').hide()" />
                             </div>
                         </p:tab>
 
@@ -229,7 +207,139 @@
                                 </div>
                             </div>
                         </p:tab>
+
+                        <p:tab title="#{msg['procedimientoPaso.titulo']}"
+                               disabled="#{procedimientoModel.seleccionado.idProcedimiento eq null}">
+                            <div class="related-tab-header">
+                                <span>#{msg['procedimientoPaso.lista']}</span>
+                                <h:link outcome="/paginas/ProcedimientoPaso"
+                                        value="#{msg['nav.procedimientoPaso']}"
+                                        styleClass="related-tab-link" />
+                            </div>
+
+                            <p:dataTable
+                                id="pasosProcedimientoTable"
+                                value="#{procedimientoPasoModel.getPasosPorProcedimiento(procedimientoModel.seleccionado)}"
+                                var="paso"
+                                reflow="true"
+                                emptyMessage="#{msg['procedimientoPaso.sinRegistros']}"
+                                styleClass="procedimiento-table related-table">
+
+                                <p:column headerText="#{msg['procedimientoPaso.nombre']}">
+                                    <h:outputText value="#{paso.nombre}"
+                                                  styleClass="procedimiento-name" />
+                                </p:column>
+
+                                <p:column headerText="#{msg['procedimientoPaso.rol']}">
+                                    <h:outputText value="#{empty paso.idRol
+                                                           ? msg['comun.sinDato']
+                                                           : paso.idRol.nombre}" />
+                                </p:column>
+
+                                <p:column headerText="#{msg['procedimientoPaso.indicaFin']}">
+                                    <p:tag
+                                        styleClass="clinical-status"
+                                        value="#{paso.indicaFin eq true
+                                                 ? msg['procedimientoPaso.finSi']
+                                                 : msg['procedimientoPaso.finNo']}"
+                                        severity="#{paso.indicaFin eq true
+                                                    ? 'success'
+                                                    : 'secondary'}" />
+                                </p:column>
+                            </p:dataTable>
+                        </p:tab>
+
+                        <p:tab title="#{msg['secuencia.titulo']}"
+                               disabled="#{procedimientoModel.seleccionado.idProcedimiento eq null}">
+                            <div class="related-tab-header">
+                                <span>#{msg['secuencia.lista']}</span>
+                                <h:link outcome="/paginas/ProcedimientoPasoSecuencia"
+                                        value="#{msg['nav.secuencia']}"
+                                        styleClass="related-tab-link" />
+                            </div>
+
+                            <p:dataTable
+                                id="secuenciasProcedimientoTable"
+                                value="#{procedimientoPasoSecuenciaModel.getSecuenciasPorProcedimiento(procedimientoModel.seleccionado)}"
+                                var="secuencia"
+                                reflow="true"
+                                emptyMessage="#{msg['secuencia.sinRegistros']}"
+                                styleClass="procedimiento-table related-table">
+
+                                <p:column headerText="#{msg['secuencia.tipo']}">
+                                    <h:outputText
+                                        value="#{empty secuencia.tipoSecuencia
+                                                 ? msg['secuencia.sinTipo']
+                                                 : secuencia.tipoSecuencia}"
+                                        styleClass="#{empty secuencia.tipoSecuencia
+                                                      ? 'empty-note'
+                                                      : ''}" />
+                                </p:column>
+
+                                <p:column headerText="#{msg['secuencia.pasoOrigen']}">
+                                    <h:outputText value="#{secuencia.idProcedimientoPaso.nombre}" />
+                                </p:column>
+
+                                <p:column headerText="#{msg['secuencia.pasoReferencia']}">
+                                    <h:outputText
+                                        value="#{empty secuencia.idProcedimientoPasoReferencia
+                                                 ? msg['secuencia.sinReferencia']
+                                                 : secuencia.idProcedimientoPasoReferencia}"
+                                        styleClass="#{empty secuencia.idProcedimientoPasoReferencia
+                                                      ? 'empty-note'
+                                                      : ''}" />
+                                </p:column>
+                            </p:dataTable>
+                        </p:tab>
+
+                        <p:tab title="#{msg['ppe.titulo']}"
+                               disabled="#{procedimientoModel.seleccionado.idProcedimiento eq null}">
+                            <div class="related-tab-header">
+                                <span>#{msg['ppe.lista']}</span>
+                                <h:link outcome="/paginas/ProcedimientoPasoExamen"
+                                        value="#{msg['nav.procedimientoPasoExamen']}"
+                                        styleClass="related-tab-link" />
+                            </div>
+
+                            <p:dataTable
+                                id="examenesProcedimientoTable"
+                                value="#{procedimientoPasoExamenModel.getExamenesPorProcedimiento(procedimientoModel.seleccionado)}"
+                                var="relacion"
+                                reflow="true"
+                                emptyMessage="#{msg['ppe.sinRegistros']}"
+                                styleClass="procedimiento-table related-table">
+
+                                <p:column headerText="#{msg['ppe.examen']}">
+                                    <h:outputText value="#{relacion.idExamen.nombre}"
+                                                  styleClass="procedimiento-name" />
+                                </p:column>
+
+                                <p:column headerText="#{msg['ppe.paso']}">
+                                    <h:outputText value="#{relacion.idProcedimientoPaso.nombre}" />
+                                </p:column>
+
+                                <p:column headerText="#{msg['ppe.activo']}">
+                                    <p:tag
+                                        styleClass="clinical-status"
+                                        value="#{relacion.activo eq true
+                                                 ? msg['ppe.activoLabel']
+                                                 : msg['ppe.inactivo']}"
+                                        severity="#{relacion.activo eq true
+                                                    ? 'success'
+                                                    : 'secondary'}" />
+                                </p:column>
+                            </p:dataTable>
+                        </p:tab>
                     </p:tabView>
+
+                    <div class="dialog-actions">
+                        <crud:botones-bottom
+                            model="#{procedimientoModel}"
+                            procesar="@this edicionContenido"
+                            actualizar="messages procedimientosTable edicionDialog"
+                            oncompleteCancelar="PF('procedimientoDialog').hide()"
+                            oncompleteGuardar="if (!args.validationFailed) PF('procedimientoDialog').hide()" />
+                    </div>
                 </h:panelGroup>
             </p:outputPanel>
         </p:dialog>
