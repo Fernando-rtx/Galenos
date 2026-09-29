@@ -80,7 +80,7 @@
                             styleClass="procedimiento-paso-table">
 
                             <p:ajax
-                                event="rowSelect"
+                                event="rowDblselect"
                                 listener="#{procedimientoPasoModel.seleccionar(item)}"
                                 update="edicionDialog"
                                 oncomplete="PF('procedimientoPasoDialog').show()" />

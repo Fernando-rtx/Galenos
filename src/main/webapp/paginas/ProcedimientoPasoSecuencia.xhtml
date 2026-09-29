@@ -80,7 +80,7 @@
                             styleClass="secuencia-table">
 
                             <p:ajax
-                                event="rowSelect"
+                                event="rowDblselect"
                                 listener="#{procedimientoPasoSecuenciaModel.seleccionar(item)}"
                                 update="edicionDialog"
                                 oncomplete="PF('secuenciaDialog').show()" />
