@@ -89,8 +89,10 @@
 
                             <p:ajax
                                 event="rowDblselect"
-                                listener="#{consultaModel.editarSeleccionado}"
+                                listener="#{consultaModel.seleccionarFila}"
+                                process="@this"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('consultaDialog').show()" />
 
                             <p:column

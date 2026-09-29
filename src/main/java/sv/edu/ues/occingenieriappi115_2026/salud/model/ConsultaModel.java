@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import org.primefaces.event.SelectEvent;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.DocumentoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaRolDAO;
@@ -198,14 +199,10 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
         setEstado(ESTADO_CRUD.EDICION);
     }
 
-    /**
-     * Abre la edición del registro ya seleccionado por la tabla. La tabla enlaza
-     * la selección a {@link #seleccionado} antes de disparar el evento de fila,
-     * por lo que este método solo cambia el estado a edición.
-     */
-    public void editarSeleccionado() {
-        if (seleccionado != null) {
-            setEstado(ESTADO_CRUD.EDICION);
+    /** Selecciona la consulta que PrimeFaces entrega al evento de doble clic. */
+    public void seleccionarFila(SelectEvent<Consulta> evento) {
+        if (evento != null && evento.getObject() != null) {
+            seleccionar(evento.getObject());
         }
     }
 
