@@ -1,7 +1,7 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ProcedimientoDAO;
@@ -16,11 +16,21 @@ public class ProcedimientoModel extends AbstractModel<Procedimiento> implements 
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private ProcedimientoDAO procedimientoDAO;
+
     private Procedimiento seleccionado;
 
-    @Inject
+    public ProcedimientoModel() {
+    }
+
     public ProcedimientoModel(ProcedimientoDAO procedimientoDAO) {
-        super(procedimientoDAO);
+        this.procedimientoDAO = procedimientoDAO;
+    }
+
+    @Override
+    protected ProcedimientoDAO getDao() {
+        return procedimientoDAO;
     }
 
     public Procedimiento getSeleccionado() {

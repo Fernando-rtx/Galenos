@@ -1,9 +1,10 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.EJB;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.Date;
@@ -19,13 +20,30 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private ConsultaDAO consultaDAO;
+    @EJB
+    private PersonaRolDAO personaRolDAO;
     private Consulta seleccionado;
     private List<PersonaRol> personasRoles;
 
-    @Inject
+    public ConsultaModel() {
+    }
+
     public ConsultaModel(ConsultaDAO consultaDAO, PersonaRolDAO personaRolDAO) {
-        super(consultaDAO);
+        this.consultaDAO = consultaDAO;
+        this.personaRolDAO = personaRolDAO;
+        inicializar();
+    }
+
+    @PostConstruct
+    public void inicializar() {
         this.personasRoles = personaRolDAO.obtenerTodos();
+    }
+
+    @Override
+    protected ConsultaDAO getDao() {
+        return consultaDAO;
     }
 
     public Consulta getSeleccionado() {

@@ -1,5 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.EJB;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -26,19 +29,36 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
     private Examen examenPadre;
     private String idTipoExamenSeleccionado;
     private List<ExamenTipoExamen> asociaciones = List.of();
-    private final ExamenTipoExamenDAO examenTipoExamenDAO;
-    private final TipoExamenDAO tipoExamenDAO;
+    @EJB
+    private ExamenTipoExamenDAO examenTipoExamenDAO;
+    @EJB
+    private ExamenDAO examenDAO;
+    @EJB
+    private TipoExamenDAO tipoExamenDAO;
 
     @Inject
-    public ExamenTipoExamenModel(
-            ExamenTipoExamenDAO examenTipoExamenDAO,
-            ExamenDAO examenDAO,
-            TipoExamenDAO tipoExamenDAO) {
-        super(examenTipoExamenDAO);
+    transient FacesContext facesContext;
+
+    public ExamenTipoExamenModel() {
+    }
+
+    public ExamenTipoExamenModel(ExamenTipoExamenDAO examenTipoExamenDAO,
+            ExamenDAO examenDAO, TipoExamenDAO tipoExamenDAO) {
         this.examenTipoExamenDAO = examenTipoExamenDAO;
+        this.examenDAO = examenDAO;
         this.tipoExamenDAO = tipoExamenDAO;
+        inicializar();
+    }
+
+    @PostConstruct
+    public void inicializar() {
         this.examenes = examenDAO.obtenerTodos();
         this.tipoExamenes = tipoExamenDAO.obtenerTodos();
+    }
+
+    @Override
+    protected ExamenTipoExamenDAO getDao() {
+        return examenTipoExamenDAO;
     }
 
     public ExamenTipoExamen getSeleccionado() {

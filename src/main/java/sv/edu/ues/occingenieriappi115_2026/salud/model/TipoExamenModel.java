@@ -1,5 +1,6 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -22,12 +23,22 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
     /** Versión necesaria para serializar el bean de ámbito de vista. */
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private TipoExamenDAO tipoExamenDAO;
+
     /** Entidad nueva o fila seleccionada que se enlaza con el diálogo XHTML. */
     private TipoExamen seleccionado;
 
-    @Inject
+    public TipoExamenModel() {
+    }
+
     public TipoExamenModel(TipoExamenDAO tipoExamenDAO) {
-        super(tipoExamenDAO);
+        this.tipoExamenDAO = tipoExamenDAO;
+    }
+
+    @Override
+    protected TipoExamenDAO getDao() {
+        return tipoExamenDAO;
     }
 
     public TipoExamen getSeleccionado() {

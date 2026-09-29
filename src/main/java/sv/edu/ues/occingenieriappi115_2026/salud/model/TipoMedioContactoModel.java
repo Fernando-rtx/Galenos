@@ -1,7 +1,7 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.ejb.EJB;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoMedioContactoDAO;
@@ -20,12 +20,22 @@ public class TipoMedioContactoModel extends AbstractModel<TipoMedioContacto> imp
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private TipoMedioContactoDAO tipoMedioContactoDAO;
+
     /** Entidad actualmente enlazada al formulario del diálogo. */
     private TipoMedioContacto seleccionado;
 
-    @Inject
+    public TipoMedioContactoModel() {
+    }
+
     public TipoMedioContactoModel(TipoMedioContactoDAO tipoMedioContactoDAO) {
-        super(tipoMedioContactoDAO);
+        this.tipoMedioContactoDAO = tipoMedioContactoDAO;
+    }
+
+    @Override
+    protected TipoMedioContactoDAO getDao() {
+        return tipoMedioContactoDAO;
     }
 
     public TipoMedioContacto getSeleccionado() {

@@ -1,9 +1,10 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.EJB;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.Date;
@@ -25,19 +26,34 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
 
     private static final long serialVersionUID = 1L;
 
+    @EJB
+    private ConsultaProcedimientoDAO consultaProcedimientoDAO;
     private ConsultaProcedimiento seleccionado;
     private List<Procedimiento> procedimientos;
-    private final ProcedimientoDAO procedimientoDAO;
+    @EJB
+    private ProcedimientoDAO procedimientoDAO;
     private final Map<UUID, String> nombresProcedimientos = new HashMap<>();
 
-    @Inject
+    public ConsultaProcedimientoModel() {
+    }
+
     public ConsultaProcedimientoModel(ConsultaProcedimientoDAO consultaProcedimientoDAO,
             ProcedimientoDAO procedimientoDAO) {
-        super(consultaProcedimientoDAO);
+        this.consultaProcedimientoDAO = consultaProcedimientoDAO;
         this.procedimientoDAO = procedimientoDAO;
+        inicializar();
+    }
+
+    @PostConstruct
+    public void inicializar() {
         this.procedimientos = procedimientoDAO.obtenerTodos().stream()
                 .filter(p -> p.getActivo() == null || p.getActivo())
                 .toList();
+    }
+
+    @Override
+    protected ConsultaProcedimientoDAO getDao() {
+        return consultaProcedimientoDAO;
     }
 
     public ConsultaProcedimiento getSeleccionado() {

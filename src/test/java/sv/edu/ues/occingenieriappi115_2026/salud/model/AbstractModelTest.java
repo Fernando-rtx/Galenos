@@ -20,8 +20,15 @@ class AbstractModelTest {
     }
 
     private static class ConcreteModel extends AbstractModel<TestEntity> {
+        private final DAOInterface<TestEntity> dao;
+
         ConcreteModel(DAOInterface<TestEntity> dao) {
-            super(dao);
+            this.dao = dao;
+        }
+
+        @Override
+        protected DAOInterface<TestEntity> getDao() {
+            return dao;
         }
     }
 
