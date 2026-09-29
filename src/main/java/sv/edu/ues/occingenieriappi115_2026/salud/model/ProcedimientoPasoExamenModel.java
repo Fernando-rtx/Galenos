@@ -101,17 +101,67 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
         if (!validarAntesDeGuardar()) {
             return;
         }
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> { }
+        try {
+            switch (getEstado()) {
+                case CREACION -> {
+                    getDao().guardar(seleccionado);
+                    agregarMensaje("ppe.creadaCorrectamente", FacesMessage.SEVERITY_INFO);
+                }
+                case EDICION -> {
+                    seleccionado = getDao().actualizar(seleccionado);
+                    agregarMensaje("ppe.actualizadaCorrectamente", FacesMessage.SEVERITY_INFO);
+                }
+                case LISTADO -> { }
+            }
+        } catch (RuntimeException ex) {
+            if (facesContext == null) {
+                throw ex;
+            }
+            agregarMensaje("ppe.errorGuardar", FacesMessage.SEVERITY_ERROR);
+            facesContext.validationFailed();
+            return;
         }
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
     public void cancelar() {
+        volverAlListado();
+        agregarMensaje("ppe.cancelado", FacesMessage.SEVERITY_INFO);
+    }
+
+    private void volverAlListado() {
         seleccionado = null;
         setEstado(ESTADO_CRUD.LISTADO);
+    }
+
+    /**
+     * Quita la asociación paso-examen sin borrar ni el paso ni el examen:
+     * solo elimina la fila de la tabla de unión.
+     *
+     * @param fila relación seleccionada en la tabla
+     */
+    public void quitar(ProcedimientoPasoExamen fila) {
+        if (fila == null || fila.getIdProcedimientoPasoExamen() == null) {
+            agregarError("ppe.errorQuitar");
+            return;
+        }
+        try {
+            ProcedimientoPasoExamen persistida
+                    = getDao().buscarPorId(fila.getIdProcedimientoPasoExamen());
+            if (persistida == null
+                    || !getDao().eliminar(persistida.getIdProcedimientoPasoExamen())) {
+                agregarError("ppe.errorQuitar");
+                return;
+            }
+        } catch (RuntimeException ex) {
+            agregarError("ppe.errorQuitar");
+            return;
+        }
+        if (seleccionado != null && fila.getIdProcedimientoPasoExamen().equals(
+                seleccionado.getIdProcedimientoPasoExamen())) {
+            volverAlListado();
+        }
+        agregarMensaje("ppe.quitada", FacesMessage.SEVERITY_INFO);
     }
 
     /**
@@ -136,8 +186,13 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
             agregarError("ppe.pasoNoExiste");
             return false;
         }
-        if (examenDAO.buscarPorId(examen.getIdExamen()) == null) {
+        Examen examenPersistido = examenDAO.buscarPorId(examen.getIdExamen());
+        if (examenPersistido == null) {
             agregarError("ppe.examenNoExiste");
+            return false;
+        }
+        if (Boolean.FALSE.equals(examenPersistido.getActivo())) {
+            agregarError("ppe.examenInactivo");
             return false;
         }
         for (ProcedimientoPasoExamen existente : obtenerRelaciones()) {

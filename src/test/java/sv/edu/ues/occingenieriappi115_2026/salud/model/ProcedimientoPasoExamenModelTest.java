@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -322,6 +323,158 @@ class ProcedimientoPasoExamenModelTest {
 
         verifyNoInteractions(dao);
         verificarError(contexto, "ppe.pasoRequerido");
+    }
+
+    @Test
+    void quitarLaRelacionNoBorraPasoNiExamen() {
+        ProcedimientoPasoExamenDAO dao = mock(ProcedimientoPasoExamenDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
+        ExamenDAO examenDao = mock(ExamenDAO.class);
+        ProcedimientoPasoExamenModel model = new ProcedimientoPasoExamenModel(
+                dao, ppDao, examenDao);
+        UUID id = UUID.randomUUID();
+        ProcedimientoPasoExamen relacion = new ProcedimientoPasoExamen();
+        relacion.setIdProcedimientoPasoExamen(id);
+        model.seleccionar(relacion);
+        when(dao.buscarPorId(id)).thenReturn(relacion);
+        when(dao.eliminar(id)).thenReturn(true);
+
+        model.quitar(relacion);
+
+        verify(dao).eliminar(id);
+        assertNull(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+        verify(ppDao, never()).eliminar(any());
+        verify(examenDao, never()).eliminar(any());
+    }
+
+    @Test
+    void quitarConRegistroInexistenteNoElimina() {
+        ProcedimientoPasoExamenDAO dao = mock(ProcedimientoPasoExamenDAO.class);
+        ProcedimientoPasoExamenModel model = new ProcedimientoPasoExamenModel(
+                dao, mock(ProcedimientoPasoDAO.class), mock(ExamenDAO.class));
+        ProcedimientoPasoExamen relacion = new ProcedimientoPasoExamen();
+        relacion.setIdProcedimientoPasoExamen(UUID.randomUUID());
+        when(dao.buscarPorId(relacion.getIdProcedimientoPasoExamen())).thenReturn(null);
+
+        model.quitar(relacion);
+
+        verify(dao, never()).eliminar(any());
+    }
+
+    @Test
+    void quitarConErrorDeDaoNoPropaga() {
+        ProcedimientoPasoExamenDAO dao = mock(ProcedimientoPasoExamenDAO.class);
+        ProcedimientoPasoExamenModel model = new ProcedimientoPasoExamenModel(
+                dao, mock(ProcedimientoPasoDAO.class), mock(ExamenDAO.class));
+        ProcedimientoPasoExamen relacion = new ProcedimientoPasoExamen();
+        relacion.setIdProcedimientoPasoExamen(UUID.randomUUID());
+        when(dao.buscarPorId(relacion.getIdProcedimientoPasoExamen()))
+                .thenThrow(new IllegalStateException("fallo"));
+
+        assertDoesNotThrow(() -> model.quitar(relacion));
+
+        verify(dao, never()).eliminar(any());
+    }
+
+    @Test
+    void guardarConErrorDeDaoPublicaErrorGuardarYConservaEstado() {
+        ProcedimientoPasoExamenDAO dao = mock(ProcedimientoPasoExamenDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
+        ExamenDAO examenDao = mock(ExamenDAO.class);
+        ProcedimientoPasoExamenModel model = new ProcedimientoPasoExamenModel(
+                dao, ppDao, examenDao);
+        FacesContext contexto = contexto("ppe.errorGuardar");
+        model.facesContext = contexto;
+        model.nuevo();
+        UUID idPaso = UUID.randomUUID();
+        UUID idExamen = UUID.randomUUID();
+        ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
+        Examen examen = new Examen(idExamen);
+        model.getSeleccionado().setIdProcedimientoPaso(paso);
+        model.getSeleccionado().setIdExamen(examen);
+        when(ppDao.buscarPorId(idPaso)).thenReturn(paso);
+        when(examenDao.buscarPorId(idExamen)).thenReturn(examen);
+        ProcedimientoPasoExamen seleccionado = model.getSeleccionado();
+        doThrow(new IllegalStateException("fallo")).when(dao).guardar(seleccionado);
+
+        model.guardar();
+
+        assertSame(seleccionado, model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+        verificarError(contexto, "ppe.errorGuardar");
+    }
+
+    @Test
+    void guardarEnCreacionPublicaMensajeDeExito() {
+        ProcedimientoPasoExamenDAO dao = mock(ProcedimientoPasoExamenDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
+        ExamenDAO examenDao = mock(ExamenDAO.class);
+        ProcedimientoPasoExamenModel model = new ProcedimientoPasoExamenModel(
+                dao, ppDao, examenDao);
+        FacesContext contexto = contexto("ppe.creadaCorrectamente");
+        model.facesContext = contexto;
+        model.nuevo();
+        UUID idPaso = UUID.randomUUID();
+        UUID idExamen = UUID.randomUUID();
+        ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
+        Examen examen = new Examen(idExamen);
+        model.getSeleccionado().setIdProcedimientoPaso(paso);
+        model.getSeleccionado().setIdExamen(examen);
+        when(ppDao.buscarPorId(idPaso)).thenReturn(paso);
+        when(examenDao.buscarPorId(idExamen)).thenReturn(examen);
+
+        model.guardar();
+
+        verify(contexto, never()).validationFailed();
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                FacesMessage.SEVERITY_INFO.equals(mensaje.getSeverity())
+                && ("Mensaje ppe.creadaCorrectamente").equals(mensaje.getSummary())));
+    }
+
+    @Test
+    void cancelarPublicaMensajeDeCancelacion() {
+        ProcedimientoPasoExamenModel model = new ProcedimientoPasoExamenModel(
+                mock(ProcedimientoPasoExamenDAO.class),
+                mock(ProcedimientoPasoDAO.class), mock(ExamenDAO.class));
+        FacesContext contexto = contexto("ppe.cancelado");
+        model.facesContext = contexto;
+        model.nuevo();
+
+        model.cancelar();
+
+        assertNull(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+        verify(contexto, never()).validationFailed();
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                FacesMessage.SEVERITY_INFO.equals(mensaje.getSeverity())
+                && ("Mensaje ppe.cancelado").equals(mensaje.getSummary())));
+    }
+
+    @Test
+    void guardarConExamenInactivoNoDelega() {
+        ProcedimientoPasoExamenDAO dao = mock(ProcedimientoPasoExamenDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
+        ExamenDAO examenDao = mock(ExamenDAO.class);
+        ProcedimientoPasoExamenModel model = new ProcedimientoPasoExamenModel(
+                dao, ppDao, examenDao);
+        FacesContext contexto = contexto("ppe.examenInactivo");
+        model.facesContext = contexto;
+        model.nuevo();
+        UUID idPaso = UUID.randomUUID();
+        UUID idExamen = UUID.randomUUID();
+        ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
+        Examen examen = new Examen(idExamen);
+        examen.setActivo(Boolean.FALSE);
+        model.getSeleccionado().setIdProcedimientoPaso(paso);
+        model.getSeleccionado().setIdExamen(examen);
+        when(ppDao.buscarPorId(idPaso)).thenReturn(paso);
+        when(examenDao.buscarPorId(idExamen)).thenReturn(examen);
+
+        model.guardar();
+
+        verify(dao, never()).guardar(any());
+        verificarError(contexto, "ppe.examenInactivo");
     }
 
     private FacesContext contexto(String... claves) {

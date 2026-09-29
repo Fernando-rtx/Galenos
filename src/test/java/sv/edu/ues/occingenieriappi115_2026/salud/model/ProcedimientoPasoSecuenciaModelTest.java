@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -63,6 +64,7 @@ class ProcedimientoPasoSecuenciaModelTest {
         model.nuevo();
         model.getSeleccionado().setIdProcedimientoPaso(
                 new ProcedimientoPaso(UUID.randomUUID()));
+        model.getSeleccionado().setTipoSecuencia("ANTES");
         ProcedimientoPasoSecuencia seleccionado = model.getSeleccionado();
 
         model.guardar();
@@ -78,6 +80,7 @@ class ProcedimientoPasoSecuenciaModelTest {
                 dao, mock(ProcedimientoPasoDAO.class));
         ProcedimientoPasoSecuencia secuencia = new ProcedimientoPasoSecuencia();
         secuencia.setIdProcedimientoPaso(new ProcedimientoPaso(UUID.randomUUID()));
+        secuencia.setTipoSecuencia("ANTES");
         ProcedimientoPasoSecuencia actualizado = new ProcedimientoPasoSecuencia();
         model.seleccionar(secuencia);
         when(dao.actualizar(secuencia)).thenReturn(actualizado);
@@ -147,6 +150,7 @@ class ProcedimientoPasoSecuenciaModelTest {
         model.getSeleccionado().setIdProcedimientoPaso(
                 new ProcedimientoPaso(UUID.randomUUID()));
         model.getSeleccionado().setIdProcedimientoPasoReferencia(UUID.randomUUID());
+        model.getSeleccionado().setTipoSecuencia("ANTES");
 
         model.guardar();
 
@@ -165,6 +169,7 @@ class ProcedimientoPasoSecuenciaModelTest {
         model.getSeleccionado().setIdProcedimientoPaso(
                 new ProcedimientoPaso(UUID.randomUUID()));
         model.getSeleccionado().setIdProcedimientoPasoReferencia(idDestino);
+        model.getSeleccionado().setTipoSecuencia("ANTES");
         when(ppDao.buscarPorId(idDestino)).thenReturn(new ProcedimientoPaso(idDestino));
 
         model.guardar();
@@ -187,6 +192,7 @@ class ProcedimientoPasoSecuenciaModelTest {
         model.getSeleccionado().setIdProcedimientoPaso(origen);
         model.getSeleccionado().setIdProcedimientoPasoReferencia(
                 destino.getIdProcedimientoPaso());
+        model.getSeleccionado().setTipoSecuencia("ANTES");
         when(ppDao.buscarPorId(destino.getIdProcedimientoPaso())).thenReturn(destino);
 
         model.guardar();
@@ -208,6 +214,7 @@ class ProcedimientoPasoSecuenciaModelTest {
         ProcedimientoPaso destino = new ProcedimientoPaso(idDestino);
         model.getSeleccionado().setIdProcedimientoPaso(origen);
         model.getSeleccionado().setIdProcedimientoPasoReferencia(idDestino);
+        model.getSeleccionado().setTipoSecuencia("ANTES");
         when(ppDao.buscarPorId(idDestino)).thenReturn(destino);
         ProcedimientoPasoSecuencia existente = new ProcedimientoPasoSecuencia();
         existente.setIdProcedimientoPaso(origen);
@@ -234,6 +241,7 @@ class ProcedimientoPasoSecuenciaModelTest {
         secuencia.setIdProcedimientoPasoSecuencia(idPropio);
         secuencia.setIdProcedimientoPaso(origen);
         secuencia.setIdProcedimientoPasoReferencia(idDestino);
+        secuencia.setTipoSecuencia("ANTES");
         ProcedimientoPasoSecuencia existente = new ProcedimientoPasoSecuencia();
         existente.setIdProcedimientoPasoSecuencia(idPropio);
         existente.setIdProcedimientoPaso(origen);
@@ -314,6 +322,7 @@ class ProcedimientoPasoSecuenciaModelTest {
         ProcedimientoPaso origen = new ProcedimientoPaso(idOrigen);
         model.getSeleccionado().setIdProcedimientoPaso(origen);
         model.getSeleccionado().setIdProcedimientoPasoReferencia(idOrigen);
+        model.getSeleccionado().setTipoSecuencia("ANTES");
         when(ppDao.buscarPorId(idOrigen)).thenReturn(origen);
 
         model.guardar();
@@ -351,6 +360,150 @@ class ProcedimientoPasoSecuenciaModelTest {
 
         verifyNoInteractions(dao);
         verificarError(contexto, "secuencia.pasoOrigenRequerido");
+    }
+
+    @Test
+    void guardarSinTipoSecuenciaNoDelega() {
+        ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
+                dao, mock(ProcedimientoPasoDAO.class));
+        FacesContext contexto = contexto("secuencia.tipoRequerido");
+        model.facesContext = contexto;
+        model.nuevo();
+        model.getSeleccionado().setIdProcedimientoPaso(
+                new ProcedimientoPaso(UUID.randomUUID()));
+
+        model.guardar();
+
+        verifyNoInteractions(dao);
+        verificarError(contexto, "secuencia.tipoRequerido");
+    }
+
+    @Test
+    void guardarConTipoDeMasDe20CaracteresNoDelega() {
+        ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
+                dao, mock(ProcedimientoPasoDAO.class));
+        FacesContext contexto = contexto("secuencia.tipoMaximo");
+        model.facesContext = contexto;
+        model.nuevo();
+        model.getSeleccionado().setIdProcedimientoPaso(
+                new ProcedimientoPaso(UUID.randomUUID()));
+        model.getSeleccionado().setTipoSecuencia("x".repeat(21));
+
+        model.guardar();
+
+        verifyNoInteractions(dao);
+        verificarError(contexto, "secuencia.tipoMaximo");
+    }
+
+    @Test
+    void quitarLaSecuenciaSeleccionadaNoTocaLosPasos() {
+        ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(dao, ppDao);
+        UUID id = UUID.randomUUID();
+        ProcedimientoPasoSecuencia secuencia = new ProcedimientoPasoSecuencia();
+        secuencia.setIdProcedimientoPasoSecuencia(id);
+        model.seleccionar(secuencia);
+        when(dao.buscarPorId(id)).thenReturn(secuencia);
+        when(dao.eliminar(id)).thenReturn(true);
+
+        model.quitar(secuencia);
+
+        verify(dao).eliminar(id);
+        assertNull(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+        verify(ppDao, never()).eliminar(any());
+    }
+
+    @Test
+    void quitarConRegistroInexistenteNoElimina() {
+        ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
+                dao, mock(ProcedimientoPasoDAO.class));
+        ProcedimientoPasoSecuencia secuencia = new ProcedimientoPasoSecuencia();
+        secuencia.setIdProcedimientoPasoSecuencia(UUID.randomUUID());
+        when(dao.buscarPorId(secuencia.getIdProcedimientoPasoSecuencia())).thenReturn(null);
+
+        model.quitar(secuencia);
+
+        verify(dao, never()).eliminar(any());
+    }
+
+    @Test
+    void quitarConErrorDeDaoNoPropaga() {
+        ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
+                dao, mock(ProcedimientoPasoDAO.class));
+        ProcedimientoPasoSecuencia secuencia = new ProcedimientoPasoSecuencia();
+        secuencia.setIdProcedimientoPasoSecuencia(UUID.randomUUID());
+        when(dao.buscarPorId(secuencia.getIdProcedimientoPasoSecuencia()))
+                .thenThrow(new IllegalStateException("fallo"));
+
+        assertDoesNotThrow(() -> model.quitar(secuencia));
+
+        verify(dao, never()).eliminar(any());
+    }
+
+    @Test
+    void guardarConErrorDeDaoPublicaErrorGuardarYConservaEstado() {
+        ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
+                dao, mock(ProcedimientoPasoDAO.class));
+        FacesContext contexto = contexto("secuencia.errorGuardar");
+        model.facesContext = contexto;
+        model.nuevo();
+        model.getSeleccionado().setIdProcedimientoPaso(
+                new ProcedimientoPaso(UUID.randomUUID()));
+        model.getSeleccionado().setTipoSecuencia("ANTES");
+        ProcedimientoPasoSecuencia seleccionado = model.getSeleccionado();
+        doThrow(new IllegalStateException("fallo")).when(dao).guardar(seleccionado);
+
+        model.guardar();
+
+        assertSame(seleccionado, model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+        verificarError(contexto, "secuencia.errorGuardar");
+    }
+
+    @Test
+    void guardarEnCreacionPublicaMensajeDeExito() {
+        ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
+                dao, mock(ProcedimientoPasoDAO.class));
+        FacesContext contexto = contexto("secuencia.creadaCorrectamente");
+        model.facesContext = contexto;
+        model.nuevo();
+        model.getSeleccionado().setIdProcedimientoPaso(
+                new ProcedimientoPaso(UUID.randomUUID()));
+        model.getSeleccionado().setTipoSecuencia("ANTES");
+
+        model.guardar();
+
+        verify(contexto, never()).validationFailed();
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                FacesMessage.SEVERITY_INFO.equals(mensaje.getSeverity())
+                && ("Mensaje secuencia.creadaCorrectamente").equals(mensaje.getSummary())));
+    }
+
+    @Test
+    void cancelarPublicaMensajeDeCancelacion() {
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
+                mock(ProcedimientoPasoSecuenciaDAO.class),
+                mock(ProcedimientoPasoDAO.class));
+        FacesContext contexto = contexto("secuencia.cancelado");
+        model.facesContext = contexto;
+        model.nuevo();
+
+        model.cancelar();
+
+        assertNull(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+        verify(contexto, never()).validationFailed();
+        verify(contexto).addMessage(isNull(), argThat(mensaje ->
+                FacesMessage.SEVERITY_INFO.equals(mensaje.getSeverity())
+                && ("Mensaje secuencia.cancelado").equals(mensaje.getSummary())));
     }
 
     private FacesContext contexto(String... claves) {
