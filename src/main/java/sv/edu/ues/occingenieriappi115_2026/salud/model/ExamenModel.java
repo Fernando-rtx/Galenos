@@ -94,6 +94,6 @@ public class ExamenModel extends AbstractModel<Examen> implements Serializable {
 
     private void lanzarValidacion(FacesContext contexto, String clave) {
         String mensaje = contexto.getApplication().getResourceBundle(contexto, "msg").getString(clave);
-        throw new ValidatorException(new FacesMessage(FacesMessage.SEVERITY_ERROR, mensaje, mensaje));
+        throw new ValidatorException(new FacesMessage(FacesMessage.SEVERITY_ERROR, mensaje, null));
     }
 }
