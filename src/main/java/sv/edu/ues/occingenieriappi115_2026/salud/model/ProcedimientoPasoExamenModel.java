@@ -110,6 +110,12 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
         setEstado(ESTADO_CRUD.EDICION);
     }
 
+    public void seleccionarFila() {
+        if (seleccionado != null) {
+            setEstado(ESTADO_CRUD.EDICION);
+        }
+    }
+
     public void guardar() {
         if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
             return;
