@@ -266,26 +266,39 @@
                                 <div class="form-field">
                                     <p:outputLabel
                                         for="consultaPersonaRol"
-                                        value="#{msg['consulta.personaRol']}"
+                                        value="#{msg['consulta.paciente']}"
                                         styleClass="form-label" />
 
-                                    <p:selectOneMenu
+                                    <p:autoComplete
                                         id="consultaPersonaRol"
                                         value="#{consultaModel.seleccionado.idPersonaRol}"
                                         converter="#{personaRolConverter}"
+                                        completeMethod="#{consultaModel.buscarPacientes}"
+                                        var="paciente"
+                                        itemLabel="#{consultaModel.getEtiquetaPaciente(paciente)}"
+                                        itemValue="#{paciente}"
+                                        placeholder="#{msg['consulta.buscarPacientePlaceholder']}"
+                                        forceSelection="true"
+                                        dropdown="false"
+                                        minQueryLength="2"
+                                        queryDelay="250"
+                                        scrollHeight="240"
+                                        emptyMessage="#{msg['consulta.sinPacientes']}"
                                         required="true"
                                         requiredMessage="#{msg['mensajes.error']}">
 
-                                        <f:selectItem
-                                            itemLabel="-- Seleccionar --"
-                                            itemValue="#{null}" />
+                                        <p:column headerText="#{msg['consulta.paciente']}">
+                                            <h:outputText
+                                                value="#{paciente.idPersona.nombres} #{paciente.idPersona.apellidos}" />
+                                        </p:column>
 
-                                        <f:selectItems
-                                            value="#{consultaModel.personasRoles}"
-                                            var="pr"
-                                            itemLabel="#{pr.idPersona.nombres} #{pr.idPersona.apellidos} - #{pr.idRol.nombre}"
-                                            itemValue="#{pr}" />
-                                    </p:selectOneMenu>
+                                        <p:column headerText="#{msg['consulta.documentoDui']}">
+                                            <h:outputText
+                                                value="#{empty consultaModel.getDui(paciente)
+                                                         ? msg['consulta.sinDui']
+                                                         : consultaModel.getDui(paciente)}" />
+                                        </p:column>
+                                    </p:autoComplete>
 
                                     <p:message for="consultaPersonaRol" />
                                 </div>
@@ -450,7 +463,7 @@
                                             value="#{msg['crud.guardar']}"
                                             action="#{consultaProcedimientoModel.guardar()}"
                                             process="procedimientoForm"
-                                            update=":layoutForm:messages procedimientosContenido" />
+                                            update=":layoutForm:messages :layoutForm:consultaTabs:procedimientosContenido :layoutForm:consultaTabs:pasosContenido" />
                                     </div>
                                 </h:panelGroup>
                             </p:outputPanel>
@@ -562,27 +575,37 @@
                                         <div class="form-field">
                                             <p:outputLabel
                                                 for="pasoPersonaRol"
-                                                value="#{msg['consultaProcedimientoPaso.personaRol']}"
+                                                value="#{msg['consultaProcedimientoPaso.responsableMedico']}"
                                                 styleClass="form-label" />
 
-                                            <p:selectOneMenu
+                                            <p:autoComplete
                                                 id="pasoPersonaRol"
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.idPersonaRol}"
                                                 converter="#{personaRolConverter}"
+                                                completeMethod="#{consultaProcedimientoPasoModel.buscarMedicos}"
+                                                var="medico"
+                                                itemLabel="#{consultaProcedimientoPasoModel.getEtiquetaMedico(medico)}"
+                                                itemValue="#{medico}"
+                                                placeholder="#{msg['consultaProcedimientoPaso.buscarMedicoPlaceholder']}"
+                                                forceSelection="true"
+                                                dropdown="false"
+                                                minQueryLength="2"
+                                                queryDelay="250"
+                                                scrollHeight="240"
+                                                emptyMessage="#{msg['consultaProcedimientoPaso.sinMedicos']}"
                                                 required="true"
                                                 requiredMessage="#{msg['mensajes.error']}"
                                                 validator="#{consultaProcedimientoPasoModel.validarResponsable}">
 
-                                                <f:selectItem
-                                                    itemLabel="#{msg['crud.seleccionar']}"
-                                                    itemValue="#{null}" />
+                                                <p:column headerText="#{msg['consultaProcedimientoPaso.responsableMedico']}">
+                                                    <h:outputText
+                                                        value="#{medico.idPersona.nombres} #{medico.idPersona.apellidos}" />
+                                                </p:column>
 
-                                                <f:selectItems
-                                                    value="#{consultaProcedimientoPasoModel.personasRoles}"
-                                                    var="pr"
-                                                    itemLabel="#{pr.idPersona.nombres} #{pr.idPersona.apellidos} - #{pr.idRol.nombre}"
-                                                    itemValue="#{pr}" />
-                                            </p:selectOneMenu>
+                                                <p:column headerText="#{msg['consultaProcedimientoPaso.especialidad']}">
+                                                    <h:outputText value="#{medico.idRol.nombre}" />
+                                                </p:column>
+                                            </p:autoComplete>
 
                                             <p:message for="pasoPersonaRol" />
                                         </div>

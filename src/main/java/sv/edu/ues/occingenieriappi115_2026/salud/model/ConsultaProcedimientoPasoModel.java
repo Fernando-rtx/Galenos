@@ -7,8 +7,10 @@ import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.text.Normalizer;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaProcedimientoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaProcedimientoPasoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
@@ -65,6 +67,70 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
 
     public List<PersonaRol> getPersonasRoles() {
         return personasRoles;
+    }
+
+    /** Busca responsables médicos por nombre o por el rol/especialidad asignado. */
+    public List<PersonaRol> buscarMedicos(String consulta) {
+        String criterio = normalizarBusqueda(consulta);
+        if (criterio.isEmpty() || personasRoles == null) {
+            return List.of();
+        }
+        return personasRoles.stream()
+                .filter(this::esMedico)
+                .filter(personaRol -> {
+                    String nombre = personaRol.getIdPersona() == null ? ""
+                            : normalizarBusqueda(texto(personaRol.getIdPersona().getNombres())
+                                    + " " + texto(personaRol.getIdPersona().getApellidos()));
+                    String rol = normalizarBusqueda(personaRol.getIdRol().getNombre());
+                    String detalle = normalizarBusqueda(personaRol.getIdRol().getObservaciones());
+                    return nombre.contains(criterio) || rol.contains(criterio)
+                            || detalle.contains(criterio);
+                })
+                .limit(15)
+                .toList();
+    }
+
+    public String getEtiquetaMedico(PersonaRol medico) {
+        if (medico == null || medico.getIdPersona() == null || medico.getIdRol() == null) {
+            return "";
+        }
+        return (texto(medico.getIdPersona().getNombres()) + " "
+                + texto(medico.getIdPersona().getApellidos())).trim() + " — "
+                + texto(medico.getIdRol().getNombre());
+    }
+
+    private boolean esMedico(PersonaRol personaRol) {
+        if (personaRol == null || personaRol.getIdPersona() == null
+                || personaRol.getIdRol() == null
+                || Boolean.FALSE.equals(personaRol.getIdRol().getActivo())) {
+            return false;
+        }
+        String nombreRol = normalizarBusqueda(personaRol.getIdRol().getNombre());
+        if ("paciente".equals(nombreRol)) {
+            return false;
+        }
+        String detalleRol = normalizarBusqueda(personaRol.getIdRol().getObservaciones());
+        return nombreRol.startsWith("medico")
+                || nombreRol.startsWith("doctor")
+                || nombreRol.startsWith("especialista")
+                || detalleRol.contains("medico")
+                || detalleRol.contains("doctor")
+                || detalleRol.contains("especialista");
+    }
+
+    private String normalizarBusqueda(String valor) {
+        if (valor == null) {
+            return "";
+        }
+        return Normalizer.normalize(valor, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase(Locale.ROOT)
+                .trim()
+                .replaceAll("\\s+", " ");
+    }
+
+    private String texto(String valor) {
+        return valor == null ? "" : valor;
     }
 
     public void nuevo() {
@@ -196,6 +262,9 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
         }
         if (!personasRoles.contains(responsable)) {
             lanzarValidacion(contexto, "consultaProcedimientoPaso.responsableNoExiste");
+        }
+        if (!esMedico(responsable)) {
+            lanzarValidacion(contexto, "consultaProcedimientoPaso.responsableDebeSerMedico");
         }
     }
 
