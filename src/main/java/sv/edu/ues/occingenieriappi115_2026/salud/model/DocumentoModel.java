@@ -9,10 +9,12 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.DocumentoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
@@ -37,7 +39,6 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     private Documento seleccionado;
     private Persona personaContexto;
     private List<Persona> personas;
-    private List<TipoDocumento> tiposDocumento;
 
     public DocumentoModel() {
     }
@@ -85,10 +86,18 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     }
 
     public List<TipoDocumento> getTiposDocumento() {
-        if (tiposDocumento == null) {
-            tiposDocumento = tipoDocumentoDAO.obtenerTodos();
+        List<TipoDocumento> activos = tipoDocumentoDAO.obtenerTodos().stream()
+                .filter(tipo -> Boolean.TRUE.equals(tipo.getActivo()))
+                .collect(Collectors.toCollection(ArrayList::new));
+        // Un documento antiguo puede conservar un tipo desactivado; al editarlo,
+        // JSF necesita que la opción actual siga presente para validarla.
+        if (getEstado() == ESTADO_CRUD.EDICION && seleccionado != null
+                && seleccionado.getIdTipoDocumento() != null
+                && activos.stream().noneMatch(tipo -> tipo.getIdTipoDocumento()
+                        .equals(seleccionado.getIdTipoDocumento().getIdTipoDocumento()))) {
+            activos.add(seleccionado.getIdTipoDocumento());
         }
-        return tiposDocumento;
+        return activos;
     }
 
     public String getPersonaSeleccionadaId() {

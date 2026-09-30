@@ -60,6 +60,34 @@ class TipoExamenModelTest {
     }
 
     @Test
+    void permiteDesactivarRegistroExistenteConNombreCortoSinModificarlo() {
+        TipoExamenDAO dao = mock(TipoExamenDAO.class);
+        TipoExamenModel model = new TipoExamenModel(dao);
+        TipoExamen tipoExamen = new TipoExamen(UUID.randomUUID());
+        tipoExamen.setNombre("a");
+        tipoExamen.setActivo(true);
+        model.seleccionar(tipoExamen);
+
+        assertDoesNotThrow(() -> model.validarNombre(null, null, "a"));
+        tipoExamen.setActivo(false);
+        model.guardar();
+
+        verify(dao).actualizar(tipoExamen);
+        assertEquals(false, tipoExamen.getActivo());
+    }
+
+    @Test
+    void rechazaNombreCortoAlCambiarloEnEdicion() {
+        TipoExamenModel model = new TipoExamenModel(mock(TipoExamenDAO.class));
+        TipoExamen tipoExamen = new TipoExamen(UUID.randomUUID());
+        tipoExamen.setNombre("a");
+        model.seleccionar(tipoExamen);
+
+        assertThrows(ValidatorException.class,
+                () -> model.validarNombre(contexto(), null, "b"));
+    }
+
+    @Test
     void guardarRecortaNombreYObservaciones() {
         TipoExamenDAO dao = mock(TipoExamenDAO.class);
         TipoExamenModel model = new TipoExamenModel(dao);

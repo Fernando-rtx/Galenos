@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.ListResourceBundle;
 import java.util.ResourceBundle;
+import org.primefaces.event.SelectEvent;
 import org.junit.jupiter.api.Test;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaRolDAO;
@@ -134,26 +135,29 @@ class ConsultaModelTest {
     }
 
     @Test
-    void editarSeleccionadoCambiaEstadoAEdicionConLaSeleccionEnlazada() {
+    void dobleClicSeleccionaConsultaDelEventoYCambiaAEdicion() {
         ConsultaModel model = new ConsultaModel(
                 mock(ConsultaDAO.class),
                 mock(PersonaRolDAO.class));
         Consulta consulta = new Consulta();
-        model.setSeleccionado(consulta);
+        SelectEvent<Consulta> evento = mock(SelectEvent.class);
+        when(evento.getObject()).thenReturn(consulta);
 
-        model.editarSeleccionado();
+        model.seleccionarFila(evento);
 
         assertSame(consulta, model.getSeleccionado());
         assertEquals(ESTADO_CRUD.EDICION, model.getEstado());
     }
 
     @Test
-    void editarSeleccionadoSinSeleccionNoRompeNiCambiaElEstado() {
+    void dobleClicSinFilaNoCambiaLaSeleccionNiElEstado() {
         ConsultaModel model = new ConsultaModel(
                 mock(ConsultaDAO.class),
                 mock(PersonaRolDAO.class));
+        SelectEvent<Consulta> evento = mock(SelectEvent.class);
+        when(evento.getObject()).thenReturn(null);
 
-        assertDoesNotThrow(model::editarSeleccionado);
+        assertDoesNotThrow(() -> model.seleccionarFila(evento));
 
         assertNull(model.getSeleccionado());
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
