@@ -18,7 +18,9 @@ import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaRolDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Consulta;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.ConsultaProcedimiento;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.ConsultaProcedimientoPaso;
+import sv.edu.ues.occingenieriappi115_2026.salud.entity.Persona;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.PersonaRol;
+import sv.edu.ues.occingenieriappi115_2026.salud.entity.Rol;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -369,6 +371,14 @@ class ConsultaProcedimientoPasoModelTest {
         PersonaRolDAO personaRolDao = mock(PersonaRolDAO.class);
         PersonaRol responsable = new PersonaRol();
         responsable.setIdPersonaRol(UUID.randomUUID());
+        Persona persona = new Persona();
+        persona.setIdPersona(UUID.randomUUID());
+        Rol rol = new Rol();
+        rol.setIdRol(UUID.randomUUID());
+        rol.setNombre("Medico general");
+        rol.setActivo(true);
+        responsable.setIdPersona(persona);
+        responsable.setIdRol(rol);
         when(personaRolDao.obtenerTodos()).thenReturn(List.of(responsable));
         ConsultaProcedimientoPasoModel model = new ConsultaProcedimientoPasoModel(
                 mock(ConsultaProcedimientoPasoDAO.class), mock(ConsultaProcedimientoDAO.class),
