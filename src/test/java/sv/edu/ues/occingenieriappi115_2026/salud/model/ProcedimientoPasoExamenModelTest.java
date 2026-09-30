@@ -12,6 +12,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ProcedimientoPasoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ProcedimientoPasoExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Examen;
+import sv.edu.ues.occingenieriappi115_2026.salud.entity.Procedimiento;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPaso;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPasoExamen;
 
@@ -151,6 +152,40 @@ class ProcedimientoPasoExamenModelTest {
 
         assertEquals(1, model.getProcedimientosPaso().size());
         assertEquals(1, model.getExamenes().size());
+    }
+
+    @Test
+    void filtraPasosDisponiblesPorProcedimiento() {
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
+        Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
+        Procedimiento otro = new Procedimiento(UUID.randomUUID());
+        ProcedimientoPaso pasoElegido = new ProcedimientoPaso(UUID.randomUUID());
+        pasoElegido.setIdProcedimiento(procedimiento);
+        ProcedimientoPaso pasoOtro = new ProcedimientoPaso(UUID.randomUUID());
+        pasoOtro.setIdProcedimiento(otro);
+        when(ppDao.obtenerTodos()).thenReturn(List.of(pasoElegido, pasoOtro));
+        ProcedimientoPasoExamenModel model = new ProcedimientoPasoExamenModel(
+                mock(ProcedimientoPasoExamenDAO.class), ppDao, mock(ExamenDAO.class));
+        model.setProcedimientoSeleccionado(procedimiento);
+
+        assertEquals(List.of(procedimiento, otro), model.getProcedimientos());
+        assertEquals(List.of(pasoElegido), model.getPasosDelProcedimiento());
+    }
+
+    @Test
+    void bloqueaPasoYExamenAlEditarUnaAsociacion() {
+        ProcedimientoPasoExamenModel model = new ProcedimientoPasoExamenModel(
+                mock(ProcedimientoPasoExamenDAO.class), mock(ProcedimientoPasoDAO.class),
+                mock(ExamenDAO.class));
+        model.nuevo();
+        assertEquals(true, model.isEstructuraEditable());
+        ProcedimientoPasoExamen existente = new ProcedimientoPasoExamen();
+        existente.setIdProcedimientoPaso(new ProcedimientoPaso(UUID.randomUUID()));
+        existente.setIdExamen(new Examen());
+
+        model.seleccionar(existente);
+
+        assertEquals(false, model.isEstructuraEditable());
     }
 
     @Test

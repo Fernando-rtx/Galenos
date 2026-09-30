@@ -92,13 +92,17 @@ class PersonaRolModelTest {
     @Test
     void errorDelDaoAlGuardarConservaRelacionYEstado() {
         PersonaRolDAO dao = mock(PersonaRolDAO.class);
+        ClinicaDAO clinicaDAO = mock(ClinicaDAO.class);
         PersonaRolModel modelo = model(dao, mock(PersonaDAO.class), mock(RolDAO.class),
-                mock(ClinicaDAO.class));
+                clinicaDAO);
         modelo.nuevo();
         PersonaRol relacion = modelo.getSeleccionado();
         relacion.setIdPersona(new Persona());
         relacion.setIdRol(new Rol());
-        relacion.setIdClinica(new Clinica());
+        Clinica clinica = new Clinica(UUID.randomUUID(), "Centro de salud");
+        clinica.setActivo(true);
+        relacion.setIdClinica(clinica);
+        when(clinicaDAO.buscarPorId(clinica.getIdClinica())).thenReturn(clinica);
         doThrow(new IllegalStateException("Error de persistencia")).when(dao).guardar(relacion);
 
         assertThrows(IllegalStateException.class, modelo::guardar);
@@ -132,12 +136,16 @@ class PersonaRolModelTest {
     @Test
     void guardarCreacionYEdicion() {
         PersonaRolDAO d = mock(PersonaRolDAO.class);
-        PersonaRolModel m = model(d, mock(PersonaDAO.class), mock(RolDAO.class), mock(ClinicaDAO.class));
+        ClinicaDAO clinicaDAO = mock(ClinicaDAO.class);
+        PersonaRolModel m = model(d, mock(PersonaDAO.class), mock(RolDAO.class), clinicaDAO);
         m.nuevo();
         PersonaRol n = m.getSeleccionado();
         n.setIdPersona(new Persona());
         n.setIdRol(new Rol());
-        n.setIdClinica(new Clinica());
+        Clinica clinica = new Clinica(UUID.randomUUID(), "Clínica central");
+        clinica.setActivo(true);
+        n.setIdClinica(clinica);
+        when(clinicaDAO.buscarPorId(clinica.getIdClinica())).thenReturn(clinica);
         m.guardar();
         verify(d).guardar(n);
         PersonaRol a = new PersonaRol();
@@ -210,6 +218,64 @@ class PersonaRolModelTest {
         m.getSeleccionado().setIdRol(new Rol());
         m.guardar();
         verifyNoInteractions(d);
+    }
+
+    @Test
+    void clinicasInactivasNoEstanDisponiblesEnUnaAsignacionNueva() {
+        Clinica activa = new Clinica(UUID.randomUUID(), "Clínica activa");
+        activa.setActivo(true);
+        Clinica inactiva = new Clinica(UUID.randomUUID(), "Clínica inactiva");
+        inactiva.setActivo(false);
+        ClinicaDAO clinicaDAO = mock(ClinicaDAO.class);
+        when(clinicaDAO.obtenerTodos()).thenReturn(List.of(activa, inactiva));
+        PersonaRolModel modelo = model(mock(PersonaRolDAO.class), mock(PersonaDAO.class),
+                mock(RolDAO.class), clinicaDAO);
+        modelo.nuevo();
+
+        assertEquals(List.of(activa), modelo.getClinicasDisponibles());
+    }
+
+    @Test
+    void rechazaAsignarUnaClinicaInactivaNueva() {
+        PersonaRolDAO dao = mock(PersonaRolDAO.class);
+        ClinicaDAO clinicaDAO = mock(ClinicaDAO.class);
+        PersonaRolModel modelo = model(dao, mock(PersonaDAO.class), mock(RolDAO.class), clinicaDAO);
+        modelo.nuevo();
+        Clinica inactiva = new Clinica(UUID.randomUUID(), "Clínica inactiva");
+        inactiva.setActivo(false);
+        modelo.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
+        modelo.getSeleccionado().setIdRol(new Rol(UUID.randomUUID()));
+        modelo.getSeleccionado().setIdClinica(inactiva);
+        when(clinicaDAO.buscarPorId(inactiva.getIdClinica())).thenReturn(inactiva);
+
+        modelo.guardar();
+
+        verifyNoInteractions(dao);
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
+    @Test
+    void conservaLaClinicaInactivaDeLaAsignacionActualAlEditar() {
+        PersonaRolDAO dao = mock(PersonaRolDAO.class);
+        ClinicaDAO clinicaDAO = mock(ClinicaDAO.class);
+        Clinica inactiva = new Clinica(UUID.randomUUID(), "Clínica anterior");
+        inactiva.setActivo(false);
+        Clinica activa = new Clinica(UUID.randomUUID(), "Clínica activa");
+        activa.setActivo(true);
+        when(clinicaDAO.obtenerTodos()).thenReturn(List.of(activa, inactiva));
+        when(clinicaDAO.buscarPorId(inactiva.getIdClinica())).thenReturn(inactiva);
+        PersonaRol relacion = new PersonaRol(UUID.randomUUID());
+        relacion.setIdPersona(new Persona(UUID.randomUUID()));
+        relacion.setIdRol(new Rol(UUID.randomUUID()));
+        relacion.setIdClinica(inactiva);
+        when(dao.actualizar(relacion)).thenReturn(relacion);
+        PersonaRolModel modelo = model(dao, mock(PersonaDAO.class), mock(RolDAO.class), clinicaDAO);
+        modelo.seleccionar(relacion);
+
+        assertEquals(List.of(activa, inactiva), modelo.getClinicasDisponibles());
+        modelo.guardar();
+
+        verify(dao).actualizar(relacion);
     }
 
     @Test

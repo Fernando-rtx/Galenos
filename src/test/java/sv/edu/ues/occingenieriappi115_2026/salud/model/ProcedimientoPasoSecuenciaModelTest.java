@@ -59,12 +59,20 @@ class ProcedimientoPasoSecuenciaModelTest {
     @Test
     void guardarEnCreacionDelegaAGuardarYVuelveAListado() {
         ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
-                dao, mock(ProcedimientoPasoDAO.class));
+                dao, ppDao);
         model.nuevo();
-        model.getSeleccionado().setIdProcedimientoPaso(
-                new ProcedimientoPaso(UUID.randomUUID()));
+        Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
+        ProcedimientoPaso origen = new ProcedimientoPaso(UUID.randomUUID());
+        ProcedimientoPaso destino = new ProcedimientoPaso(UUID.randomUUID());
+        origen.setIdProcedimiento(procedimiento);
+        destino.setIdProcedimiento(procedimiento);
+        model.getSeleccionado().setIdProcedimientoPaso(origen);
+        model.getSeleccionado().setIdProcedimientoPasoReferencia(destino.getIdProcedimientoPaso());
         model.getSeleccionado().setTipoSecuencia("ANTES");
+        when(ppDao.buscarPorId(origen.getIdProcedimientoPaso())).thenReturn(origen);
+        when(ppDao.buscarPorId(destino.getIdProcedimientoPaso())).thenReturn(destino);
         ProcedimientoPasoSecuencia seleccionado = model.getSeleccionado();
 
         model.guardar();
@@ -76,11 +84,20 @@ class ProcedimientoPasoSecuenciaModelTest {
     @Test
     void guardarEnEdicionDelegaAActualizarYVuelveAListado() {
         ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
-                dao, mock(ProcedimientoPasoDAO.class));
+                dao, ppDao);
         ProcedimientoPasoSecuencia secuencia = new ProcedimientoPasoSecuencia();
-        secuencia.setIdProcedimientoPaso(new ProcedimientoPaso(UUID.randomUUID()));
+        Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
+        ProcedimientoPaso origen = new ProcedimientoPaso(UUID.randomUUID());
+        ProcedimientoPaso destino = new ProcedimientoPaso(UUID.randomUUID());
+        origen.setIdProcedimiento(procedimiento);
+        destino.setIdProcedimiento(procedimiento);
+        secuencia.setIdProcedimientoPaso(origen);
+        secuencia.setIdProcedimientoPasoReferencia(destino.getIdProcedimientoPaso());
         secuencia.setTipoSecuencia("ANTES");
+        when(ppDao.buscarPorId(origen.getIdProcedimientoPaso())).thenReturn(origen);
+        when(ppDao.buscarPorId(destino.getIdProcedimientoPaso())).thenReturn(destino);
         ProcedimientoPasoSecuencia actualizado = new ProcedimientoPasoSecuencia();
         model.seleccionar(secuencia);
         when(dao.actualizar(secuencia)).thenReturn(actualizado);
@@ -128,6 +145,74 @@ class ProcedimientoPasoSecuenciaModelTest {
     }
 
     @Test
+    void muestraNombreDelPasoSiguienteSinExponerElUuid() {
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
+        ProcedimientoPaso siguiente = new ProcedimientoPaso(UUID.randomUUID());
+        siguiente.setNombre("Evaluación médica general");
+        when(ppDao.obtenerTodos()).thenReturn(List.of(siguiente));
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
+                mock(ProcedimientoPasoSecuenciaDAO.class), ppDao);
+        ProcedimientoPasoSecuencia secuencia = new ProcedimientoPasoSecuencia();
+        secuencia.setIdProcedimientoPasoReferencia(siguiente.getIdProcedimientoPaso());
+
+        assertEquals("Evaluación médica general", model.getNombrePasoSiguiente(secuencia));
+    }
+
+    @Test
+    void filtraPasosPorProcedimientoSeleccionado() {
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
+        Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
+        procedimiento.setNombre("Valoración clínica");
+        Procedimiento otro = new Procedimiento(UUID.randomUUID());
+        otro.setNombre("Radiografía");
+        ProcedimientoPaso pasoUno = new ProcedimientoPaso(UUID.randomUUID());
+        pasoUno.setIdProcedimiento(procedimiento);
+        ProcedimientoPaso pasoDos = new ProcedimientoPaso(UUID.randomUUID());
+        pasoDos.setIdProcedimiento(procedimiento);
+        ProcedimientoPaso pasoOtro = new ProcedimientoPaso(UUID.randomUUID());
+        pasoOtro.setIdProcedimiento(otro);
+        when(ppDao.obtenerTodos()).thenReturn(List.of(pasoUno, pasoDos, pasoOtro));
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
+                mock(ProcedimientoPasoSecuenciaDAO.class), ppDao);
+        model.setProcedimientoSeleccionado(procedimiento);
+
+        assertEquals(List.of(otro, procedimiento), model.getProcedimientos());
+        assertEquals(List.of(pasoUno, pasoDos), model.getPasosDelProcedimiento());
+        model.nuevo();
+        model.setProcedimientoSeleccionado(procedimiento);
+        model.getSeleccionado().setIdProcedimientoPaso(pasoUno);
+        assertEquals(List.of(pasoDos), model.getPasosSiguientesDisponibles());
+    }
+
+    @Test
+    void conservaTiposExistentesYOfreceLosTiposDeInterfaz() {
+        ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoSecuencia guardada = new ProcedimientoPasoSecuencia();
+        guardada.setTipoSecuencia("DESPUES");
+        when(dao.obtenerTodos()).thenReturn(List.of(guardada));
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
+                dao, mock(ProcedimientoPasoDAO.class));
+
+        assertEquals(List.of("SIGUIENTE", "ALTERNATIVA", "DESPUES"), model.getTiposSecuencia());
+    }
+
+    @Test
+    void bloqueaLaEstructuraAlEditarUnaSecuenciaYaDefinida() {
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
+                mock(ProcedimientoPasoSecuenciaDAO.class), mock(ProcedimientoPasoDAO.class));
+        model.nuevo();
+        assertEquals(true, model.isEstructuraEditable());
+        ProcedimientoPasoSecuencia existente = new ProcedimientoPasoSecuencia();
+        existente.setIdProcedimientoPaso(new ProcedimientoPaso(UUID.randomUUID()));
+        existente.setIdProcedimientoPasoReferencia(UUID.randomUUID());
+
+        model.seleccionar(existente);
+
+        assertEquals(false, model.isEstructuraEditable());
+        assertEquals(false, model.isPasoSiguienteEditable());
+    }
+
+    @Test
     void guardarSinPasoOrigenNoDelegaNiCambiaEstado() {
         ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
         ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
@@ -144,18 +229,39 @@ class ProcedimientoPasoSecuenciaModelTest {
     @Test
     void guardarConDestinoInexistenteNoDelega() {
         ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
-                dao, mock(ProcedimientoPasoDAO.class));
+                dao, ppDao);
         model.nuevo();
-        model.getSeleccionado().setIdProcedimientoPaso(
-                new ProcedimientoPaso(UUID.randomUUID()));
+        ProcedimientoPaso origen = new ProcedimientoPaso(UUID.randomUUID());
+        model.getSeleccionado().setIdProcedimientoPaso(origen);
         model.getSeleccionado().setIdProcedimientoPasoReferencia(UUID.randomUUID());
         model.getSeleccionado().setTipoSecuencia("ANTES");
+        when(ppDao.buscarPorId(origen.getIdProcedimientoPaso())).thenReturn(origen);
 
         model.guardar();
 
         verifyNoInteractions(dao);
         assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+    }
+
+    @Test
+    void guardarSinPasoSiguienteNoDelega() {
+        ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
+        ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(dao, ppDao);
+        FacesContext contexto = contexto("secuencia.pasoDestinoRequerido");
+        model.facesContext = contexto;
+        model.nuevo();
+        ProcedimientoPaso origen = new ProcedimientoPaso(UUID.randomUUID());
+        model.getSeleccionado().setIdProcedimientoPaso(origen);
+        model.getSeleccionado().setTipoSecuencia("SIGUIENTE");
+        when(ppDao.buscarPorId(origen.getIdProcedimientoPaso())).thenReturn(origen);
+
+        model.guardar();
+
+        verifyNoInteractions(dao);
+        verificarError(contexto, "secuencia.pasoDestinoRequerido");
     }
 
     @Test
@@ -166,11 +272,17 @@ class ProcedimientoPasoSecuenciaModelTest {
                 dao, ppDao);
         model.nuevo();
         UUID idDestino = UUID.randomUUID();
-        model.getSeleccionado().setIdProcedimientoPaso(
-                new ProcedimientoPaso(UUID.randomUUID()));
-        model.getSeleccionado().setIdProcedimientoPasoReferencia(idDestino);
+        Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
+        ProcedimientoPaso origen = new ProcedimientoPaso(UUID.randomUUID());
+        origen.setIdProcedimiento(procedimiento);
+        ProcedimientoPaso destino = new ProcedimientoPaso(idDestino);
+        destino.setIdProcedimiento(procedimiento);
+        model.setProcedimientoSeleccionado(procedimiento);
+        model.setPasoSiguienteSeleccionado(destino);
+        model.getSeleccionado().setIdProcedimientoPaso(origen);
         model.getSeleccionado().setTipoSecuencia("ANTES");
-        when(ppDao.buscarPorId(idDestino)).thenReturn(new ProcedimientoPaso(idDestino));
+        when(ppDao.buscarPorId(origen.getIdProcedimientoPaso())).thenReturn(origen);
+        when(ppDao.buscarPorId(idDestino)).thenReturn(destino);
 
         model.guardar();
 
@@ -193,6 +305,7 @@ class ProcedimientoPasoSecuenciaModelTest {
         model.getSeleccionado().setIdProcedimientoPasoReferencia(
                 destino.getIdProcedimientoPaso());
         model.getSeleccionado().setTipoSecuencia("ANTES");
+        when(ppDao.buscarPorId(origen.getIdProcedimientoPaso())).thenReturn(origen);
         when(ppDao.buscarPorId(destino.getIdProcedimientoPaso())).thenReturn(destino);
 
         model.guardar();
@@ -210,11 +323,15 @@ class ProcedimientoPasoSecuenciaModelTest {
         model.nuevo();
         UUID idOrigen = UUID.randomUUID();
         UUID idDestino = UUID.randomUUID();
+        Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
         ProcedimientoPaso origen = new ProcedimientoPaso(idOrigen);
         ProcedimientoPaso destino = new ProcedimientoPaso(idDestino);
+        origen.setIdProcedimiento(procedimiento);
+        destino.setIdProcedimiento(procedimiento);
         model.getSeleccionado().setIdProcedimientoPaso(origen);
         model.getSeleccionado().setIdProcedimientoPasoReferencia(idDestino);
         model.getSeleccionado().setTipoSecuencia("ANTES");
+        when(ppDao.buscarPorId(idOrigen)).thenReturn(origen);
         when(ppDao.buscarPorId(idDestino)).thenReturn(destino);
         ProcedimientoPasoSecuencia existente = new ProcedimientoPasoSecuencia();
         existente.setIdProcedimientoPaso(origen);
@@ -235,8 +352,11 @@ class ProcedimientoPasoSecuenciaModelTest {
                 dao, ppDao);
         UUID idPropio = UUID.randomUUID();
         UUID idDestino = UUID.randomUUID();
+        Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
         ProcedimientoPaso origen = new ProcedimientoPaso(UUID.randomUUID());
         ProcedimientoPaso destino = new ProcedimientoPaso(idDestino);
+        origen.setIdProcedimiento(procedimiento);
+        destino.setIdProcedimiento(procedimiento);
         ProcedimientoPasoSecuencia secuencia = new ProcedimientoPasoSecuencia();
         secuencia.setIdProcedimientoPasoSecuencia(idPropio);
         secuencia.setIdProcedimientoPaso(origen);
@@ -246,6 +366,7 @@ class ProcedimientoPasoSecuenciaModelTest {
         existente.setIdProcedimientoPasoSecuencia(idPropio);
         existente.setIdProcedimientoPaso(origen);
         existente.setIdProcedimientoPasoReferencia(idDestino);
+        when(ppDao.buscarPorId(origen.getIdProcedimientoPaso())).thenReturn(origen);
         when(ppDao.buscarPorId(idDestino)).thenReturn(destino);
         when(dao.obtenerTodos()).thenReturn(List.of(existente));
         model.seleccionar(secuencia);
@@ -266,11 +387,15 @@ class ProcedimientoPasoSecuenciaModelTest {
         model.nuevo();
         UUID idOrigen = UUID.randomUUID();
         UUID idDestino = UUID.randomUUID();
+        Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
         ProcedimientoPaso origen = new ProcedimientoPaso(idOrigen);
         ProcedimientoPaso destino = new ProcedimientoPaso(idDestino);
+        origen.setIdProcedimiento(procedimiento);
+        destino.setIdProcedimiento(procedimiento);
         model.getSeleccionado().setIdProcedimientoPaso(origen);
         model.getSeleccionado().setIdProcedimientoPasoReferencia(idDestino);
         model.getSeleccionado().setTipoSecuencia("DESPUES");
+        when(ppDao.buscarPorId(idOrigen)).thenReturn(origen);
         when(ppDao.buscarPorId(idDestino)).thenReturn(destino);
         ProcedimientoPasoSecuencia existente = new ProcedimientoPasoSecuencia();
         existente.setIdProcedimientoPaso(origen);
@@ -293,11 +418,15 @@ class ProcedimientoPasoSecuenciaModelTest {
         model.nuevo();
         UUID idOrigen = UUID.randomUUID();
         UUID idDestino = UUID.randomUUID();
+        Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
         ProcedimientoPaso origen = new ProcedimientoPaso(idOrigen);
         ProcedimientoPaso destino = new ProcedimientoPaso(idDestino);
+        origen.setIdProcedimiento(procedimiento);
+        destino.setIdProcedimiento(procedimiento);
         model.getSeleccionado().setIdProcedimientoPaso(origen);
         model.getSeleccionado().setIdProcedimientoPasoReferencia(idDestino);
         model.getSeleccionado().setTipoSecuencia("DESPUES");
+        when(ppDao.buscarPorId(idOrigen)).thenReturn(origen);
         when(ppDao.buscarPorId(idDestino)).thenReturn(destino);
         ProcedimientoPasoSecuencia inversa = new ProcedimientoPasoSecuencia();
         inversa.setIdProcedimientoPaso(destino);
@@ -320,6 +449,7 @@ class ProcedimientoPasoSecuenciaModelTest {
         model.nuevo();
         UUID idOrigen = UUID.randomUUID();
         ProcedimientoPaso origen = new ProcedimientoPaso(idOrigen);
+        origen.setIdProcedimiento(new Procedimiento(UUID.randomUUID()));
         model.getSeleccionado().setIdProcedimientoPaso(origen);
         model.getSeleccionado().setIdProcedimientoPasoReferencia(idOrigen);
         model.getSeleccionado().setTipoSecuencia("ANTES");
@@ -365,13 +495,15 @@ class ProcedimientoPasoSecuenciaModelTest {
     @Test
     void guardarSinTipoSecuenciaNoDelega() {
         ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
-                dao, mock(ProcedimientoPasoDAO.class));
+                dao, ppDao);
         FacesContext contexto = contexto("secuencia.tipoRequerido");
         model.facesContext = contexto;
         model.nuevo();
-        model.getSeleccionado().setIdProcedimientoPaso(
-                new ProcedimientoPaso(UUID.randomUUID()));
+        ProcedimientoPaso origen = new ProcedimientoPaso(UUID.randomUUID());
+        model.getSeleccionado().setIdProcedimientoPaso(origen);
+        when(ppDao.buscarPorId(origen.getIdProcedimientoPaso())).thenReturn(origen);
 
         model.guardar();
 
@@ -382,13 +514,15 @@ class ProcedimientoPasoSecuenciaModelTest {
     @Test
     void guardarConTipoDeMasDe20CaracteresNoDelega() {
         ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
-                dao, mock(ProcedimientoPasoDAO.class));
+                dao, ppDao);
         FacesContext contexto = contexto("secuencia.tipoMaximo");
         model.facesContext = contexto;
         model.nuevo();
-        model.getSeleccionado().setIdProcedimientoPaso(
-                new ProcedimientoPaso(UUID.randomUUID()));
+        ProcedimientoPaso origen = new ProcedimientoPaso(UUID.randomUUID());
+        model.getSeleccionado().setIdProcedimientoPaso(origen);
+        when(ppDao.buscarPorId(origen.getIdProcedimientoPaso())).thenReturn(origen);
         model.getSeleccionado().setTipoSecuencia("x".repeat(21));
 
         model.guardar();
@@ -449,14 +583,22 @@ class ProcedimientoPasoSecuenciaModelTest {
     @Test
     void guardarConErrorDeDaoPublicaErrorGuardarYConservaEstado() {
         ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
-                dao, mock(ProcedimientoPasoDAO.class));
+                dao, ppDao);
         FacesContext contexto = contexto("secuencia.errorGuardar");
         model.facesContext = contexto;
         model.nuevo();
-        model.getSeleccionado().setIdProcedimientoPaso(
-                new ProcedimientoPaso(UUID.randomUUID()));
+        Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
+        ProcedimientoPaso origen = new ProcedimientoPaso(UUID.randomUUID());
+        ProcedimientoPaso destino = new ProcedimientoPaso(UUID.randomUUID());
+        origen.setIdProcedimiento(procedimiento);
+        destino.setIdProcedimiento(procedimiento);
+        model.getSeleccionado().setIdProcedimientoPaso(origen);
+        model.getSeleccionado().setIdProcedimientoPasoReferencia(destino.getIdProcedimientoPaso());
         model.getSeleccionado().setTipoSecuencia("ANTES");
+        when(ppDao.buscarPorId(origen.getIdProcedimientoPaso())).thenReturn(origen);
+        when(ppDao.buscarPorId(destino.getIdProcedimientoPaso())).thenReturn(destino);
         ProcedimientoPasoSecuencia seleccionado = model.getSeleccionado();
         doThrow(new IllegalStateException("fallo")).when(dao).guardar(seleccionado);
 
@@ -470,14 +612,22 @@ class ProcedimientoPasoSecuenciaModelTest {
     @Test
     void guardarEnCreacionPublicaMensajeDeExito() {
         ProcedimientoPasoSecuenciaDAO dao = mock(ProcedimientoPasoSecuenciaDAO.class);
+        ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoPasoSecuenciaModel model = new ProcedimientoPasoSecuenciaModel(
-                dao, mock(ProcedimientoPasoDAO.class));
+                dao, ppDao);
         FacesContext contexto = contexto("secuencia.creadaCorrectamente");
         model.facesContext = contexto;
         model.nuevo();
-        model.getSeleccionado().setIdProcedimientoPaso(
-                new ProcedimientoPaso(UUID.randomUUID()));
+        Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
+        ProcedimientoPaso origen = new ProcedimientoPaso(UUID.randomUUID());
+        ProcedimientoPaso destino = new ProcedimientoPaso(UUID.randomUUID());
+        origen.setIdProcedimiento(procedimiento);
+        destino.setIdProcedimiento(procedimiento);
+        model.getSeleccionado().setIdProcedimientoPaso(origen);
+        model.getSeleccionado().setIdProcedimientoPasoReferencia(destino.getIdProcedimientoPaso());
         model.getSeleccionado().setTipoSecuencia("ANTES");
+        when(ppDao.buscarPorId(origen.getIdProcedimientoPaso())).thenReturn(origen);
+        when(ppDao.buscarPorId(destino.getIdProcedimientoPaso())).thenReturn(destino);
 
         model.guardar();
 

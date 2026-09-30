@@ -419,10 +419,12 @@
                                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                                               itemValue="#{null}"
                                                               noSelectionOption="true" />
-                                                <f:selectItems value="#{personaRolModel.clinicas}"
+                                                <f:selectItems value="#{personaRolModel.clinicasDisponibles}"
                                                                var="clinica"
                                                                itemValue="#{clinica.idClinica}"
-                                                               itemLabel="#{clinica.nombre}" />
+                                                               itemLabel="#{clinica.activo eq true
+                                                                            ? clinica.nombre
+                                                                            : clinica.nombre.concat(' (').concat(msg['clinica.inactivo']).concat(')')}" />
                                             </p:selectOneMenu>
                                             <p:message for="clinicaSeleccionada" />
                                         </div>

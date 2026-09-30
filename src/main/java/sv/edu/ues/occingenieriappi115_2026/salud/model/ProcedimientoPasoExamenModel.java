@@ -9,6 +9,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenDAO;
@@ -43,6 +44,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
 
     private List<ProcedimientoPaso> procedimientosPaso;
     private List<Examen> examenes;
+    private Procedimiento procedimientoSeleccionado;
 
     public ProcedimientoPasoExamenModel() {
     }
@@ -82,6 +84,56 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
         return examenes;
     }
 
+    public List<Procedimiento> getProcedimientos() {
+        if (procedimientosPaso == null) {
+            return List.of();
+        }
+        return procedimientosPaso.stream()
+                .filter(paso -> paso != null && paso.getIdProcedimiento() != null
+                && paso.getIdProcedimiento().getIdProcedimiento() != null)
+                .map(ProcedimientoPaso::getIdProcedimiento)
+                .collect(java.util.stream.Collectors.toMap(
+                        Procedimiento::getIdProcedimiento,
+                        procedimiento -> procedimiento,
+                        (primero, ignorado) -> primero,
+                        java.util.LinkedHashMap::new))
+                .values().stream()
+                .sorted(Comparator.comparing(Procedimiento::getNombre,
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .toList();
+    }
+
+    public Procedimiento getProcedimientoSeleccionado() {
+        return procedimientoSeleccionado;
+    }
+
+    public void setProcedimientoSeleccionado(Procedimiento procedimientoSeleccionado) {
+        this.procedimientoSeleccionado = procedimientoSeleccionado;
+    }
+
+    public List<ProcedimientoPaso> getPasosDelProcedimiento() {
+        if (procedimientoSeleccionado == null
+                || procedimientoSeleccionado.getIdProcedimiento() == null
+                || procedimientosPaso == null) {
+            return List.of();
+        }
+        UUID idProcedimiento = procedimientoSeleccionado.getIdProcedimiento();
+        return procedimientosPaso.stream()
+                .filter(paso -> paso != null && paso.getIdProcedimiento() != null
+                && idProcedimiento.equals(paso.getIdProcedimiento().getIdProcedimiento()))
+                .toList();
+    }
+
+    public boolean isEstructuraEditable() {
+        return getEstado() != ESTADO_CRUD.EDICION;
+    }
+
+    public void procedimientoCambio() {
+        if (getEstado() == ESTADO_CRUD.CREACION) {
+            seleccionado.setIdProcedimientoPaso(null);
+        }
+    }
+
     public List<ProcedimientoPasoExamen> getExamenesPorProcedimiento(Procedimiento procedimiento) {
         if (procedimiento == null || procedimiento.getIdProcedimiento() == null) {
             return List.of();
@@ -100,6 +152,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
 
     public void nuevo() {
         seleccionado = new ProcedimientoPasoExamen();
+        procedimientoSeleccionado = null;
         seleccionado.setFechaCreacion(new Date());
         seleccionado.setActivo(true);
         setEstado(ESTADO_CRUD.CREACION);
@@ -107,13 +160,21 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
 
     public void seleccionar(ProcedimientoPasoExamen seleccionado) {
         this.seleccionado = seleccionado;
+        prepararEdicion();
         setEstado(ESTADO_CRUD.EDICION);
     }
 
     public void seleccionarFila() {
         if (seleccionado != null) {
+            prepararEdicion();
             setEstado(ESTADO_CRUD.EDICION);
         }
+    }
+
+    private void prepararEdicion() {
+        procedimientoSeleccionado = seleccionado == null
+                || seleccionado.getIdProcedimientoPaso() == null
+                ? null : seleccionado.getIdProcedimientoPaso().getIdProcedimiento();
     }
 
     public void guardar() {
@@ -207,6 +268,14 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
         }
         if (procedimientoPasoDAO.buscarPorId(paso.getIdProcedimientoPaso()) == null) {
             agregarError("ppe.pasoNoExiste");
+            return false;
+        }
+        if (procedimientoSeleccionado != null
+                && (procedimientoSeleccionado.getIdProcedimiento() == null
+                || paso.getIdProcedimiento() == null
+                || !procedimientoSeleccionado.getIdProcedimiento().equals(
+                        paso.getIdProcedimiento().getIdProcedimiento()))) {
+            agregarError("ppe.pasoFueraProcedimiento");
             return false;
         }
         Examen examenPersistido = examenDAO.buscarPorId(examen.getIdExamen());

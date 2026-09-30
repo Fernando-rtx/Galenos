@@ -75,6 +75,30 @@
     margin: 7px 0 0;
 }
 
+.procedure-flow {
+    align-items: center;
+    color: #718797;
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    gap: 7px;
+    margin-top: 12px;
+}
+
+.procedure-flow a {
+    color: #087eaa;
+    text-decoration: none;
+}
+
+.procedure-flow a:hover {
+    text-decoration: underline;
+}
+
+.procedure-flow strong {
+    color: #34566c;
+    font-weight: 700;
+}
+
 .section-divider {
     background: #e8eff4;
     height: 1px;

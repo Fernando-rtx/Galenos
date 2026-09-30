@@ -33,6 +33,15 @@
                             </div>
                             <h1 class="page-title">#{msg['ppe.titulo']}</h1>
                             <p class="page-subtitle">#{msg['ppe.subtitulo']}</p>
+                            <nav class="procedure-flow" aria-label="#{msg['procedimiento.flow']}">
+                                <h:link outcome="/paginas/Procedimiento" value="#{msg['nav.procedimiento']}" />
+                                <span aria-hidden="true">›</span>
+                                <h:link outcome="/paginas/ProcedimientoPaso" value="#{msg['nav.procedimientoPaso']}" />
+                                <span aria-hidden="true">›</span>
+                                <h:link outcome="/paginas/ProcedimientoPasoSecuencia" value="#{msg['nav.secuencia']}" />
+                                <span aria-hidden="true">›</span>
+                                <strong>#{msg['nav.procedimientoPasoExamen']}</strong>
+                            </nav>
                         </div>
                         <crud:botones-top
                             model="#{procedimientoPasoExamenModel}"
@@ -41,7 +50,7 @@
                     </div>
 
                     <div class="section-divider"></div>
-                    <p:messages id="messages" showDetail="true" closable="true" />
+                    <p:messages id="messages" showDetail="false" closable="true" />
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -61,6 +70,14 @@
                             <p:ajax event="rowDblselect" listener="#{procedimientoPasoExamenModel.seleccionarFila()}"
                                 update="edicionDialog" resetValues="true"
                                 oncomplete="PF('ppeDialog').show()" />
+
+                            <p:column headerText="#{msg['procedimientoPaso.procedimiento']}"
+                                field="idProcedimientoPaso.idProcedimiento.nombre"
+                                sortBy="#{item.idProcedimientoPaso.idProcedimiento.nombre}"
+                                filterBy="#{item.idProcedimientoPaso.idProcedimiento.nombre}"
+                                filterMatchMode="contains" filterPlaceholder="#{msg['ppe.buscarProcedimiento']}">
+                                <h:outputText value="#{item.idProcedimientoPaso.idProcedimiento.nombre}" />
+                            </p:column>
 
                             <p:column headerText="#{msg['ppe.examen']}" field="idExamen.nombre"
                                 sortBy="#{item.idExamen.nombre}" filterBy="#{item.idExamen.nombre}"
@@ -115,12 +132,30 @@
 
                     <div class="dialog-form">
                         <div class="form-field">
+                            <p:outputLabel for="procedimiento" value="#{msg['procedimientoPaso.procedimiento']}"
+                                styleClass="form-label" />
+                            <p:selectOneMenu id="procedimiento"
+                                value="#{procedimientoPasoExamenModel.procedimientoSeleccionado}"
+                                converter="#{procedimientoConverter}"
+                                required="true" requiredMessage="#{msg['ppe.procedimientoRequerido']}"
+                                disabled="#{not procedimientoPasoExamenModel.estructuraEditable}"
+                                styleClass="full-width">
+                                <f:selectItem itemLabel="#{msg['procedimientoPaso.seleccionarProcedimiento']}" itemValue="#{null}" />
+                                <f:selectItems value="#{procedimientoPasoExamenModel.procedimientos}" var="procedimiento"
+                                    itemLabel="#{procedimiento.nombre}" itemValue="#{procedimiento}" />
+                                <p:ajax event="change"
+                                    listener="#{procedimientoPasoExamenModel.procedimientoCambio()}"
+                                    process="@this" update="idProcedimientoPaso" />
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="form-field">
                             <p:outputLabel for="idExamen" value="#{msg['ppe.examen']}" styleClass="form-label" />
                             <p:selectOneMenu id="idExamen"
                                 value="#{procedimientoPasoExamenModel.seleccionado.idExamen}"
                                 converter="#{examenConverter}"
-
-                                required="true" requiredMessage="#{msg['mensajes.error']}"
+                                required="true" requiredMessage="#{msg['ppe.examenRequerido']}"
+                                disabled="#{not procedimientoPasoExamenModel.estructuraEditable}"
                                 styleClass="full-width">
                                 <f:selectItem itemLabel="#{msg['ppe.seleccionarExamen']}" itemValue="#{null}" />
                                 <f:selectItems value="#{procedimientoPasoExamenModel.examenes}" var="examen"
@@ -133,11 +168,11 @@
                             <p:selectOneMenu id="idProcedimientoPaso"
                                 value="#{procedimientoPasoExamenModel.seleccionado.idProcedimientoPaso}"
                                 converter="#{procedimientoPasoConverter}"
-
-                                required="true" requiredMessage="#{msg['mensajes.error']}"
+                                required="true" requiredMessage="#{msg['ppe.pasoRequerido']}"
+                                disabled="#{not procedimientoPasoExamenModel.estructuraEditable}"
                                 styleClass="full-width">
                                 <f:selectItem itemLabel="#{msg['ppe.seleccionarPaso']}" itemValue="#{null}" />
-                                <f:selectItems value="#{procedimientoPasoExamenModel.procedimientosPaso}" var="paso"
+                                <f:selectItems value="#{procedimientoPasoExamenModel.pasosDelProcedimiento}" var="paso"
                                     itemLabel="#{paso.nombre}" itemValue="#{paso}" />
                             </p:selectOneMenu>
                         </div>
@@ -176,7 +211,7 @@
                             procesar="@this edicionContenido"
                             actualizar="messages ppeTable edicionDialog"
                             oncompleteCancelar="PF('ppeDialog').hide()"
-                            oncompleteGuardar="if (!args.validationFailed) PF('ppeDialog').hide()" />
+                            oncompleteGuardar="if (args.validationFailed) PF('ppeDialog').show(); else PF('ppeDialog').hide()" />
                     </div>
                 </h:panelGroup>
             </p:outputPanel>

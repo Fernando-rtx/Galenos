@@ -42,6 +42,15 @@
                             <p class="page-subtitle">
                                 #{msg['secuencia.subtitulo']}
                             </p>
+                            <nav class="procedure-flow" aria-label="#{msg['procedimiento.flow']}">
+                                <h:link outcome="/paginas/Procedimiento" value="#{msg['nav.procedimiento']}" />
+                                <span aria-hidden="true">›</span>
+                                <h:link outcome="/paginas/ProcedimientoPaso" value="#{msg['nav.procedimientoPaso']}" />
+                                <span aria-hidden="true">›</span>
+                                <strong>#{msg['nav.secuencia']}</strong>
+                                <span aria-hidden="true">›</span>
+                                <h:link outcome="/paginas/ProcedimientoPasoExamen" value="#{msg['nav.procedimientoPasoExamen']}" />
+                            </nav>
                         </div>
 
                         <crud:botones-top
@@ -54,7 +63,7 @@
 
                     <p:messages
                         id="messages"
-                        showDetail="true"
+                        showDetail="false"
                         closable="true" />
 
                     <div class="table-section">
@@ -97,7 +106,7 @@
                                 <h:outputText
                                     value="#{empty item.tipoSecuencia
                                              ? msg['secuencia.sinTipo']
-                                             : item.tipoSecuencia}"
+                                             : procedimientoPasoSecuenciaModel.getTipoSecuenciaLabel(item.tipoSecuencia)}"
                                     styleClass="#{empty item.tipoSecuencia
                                                   ? 'empty-note'
                                                   : ''}" />
@@ -113,13 +122,15 @@
                             </p:column>
 
                             <p:column
-                                headerText="#{msg['secuencia.pasoReferencia']}"
+                                headerText="#{msg['secuencia.pasoSiguiente']}"
                                 field="idProcedimientoPasoReferencia">
 
                                 <h:outputText
                                     value="#{empty item.idProcedimientoPasoReferencia
                                              ? msg['secuencia.sinReferencia']
-                                             : item.idProcedimientoPasoReferencia}"
+                                             : (empty procedimientoPasoSecuenciaModel.getNombrePasoSiguiente(item)
+                                                ? msg['secuencia.pasoNoDisponible']
+                                                : procedimientoPasoSecuenciaModel.getNombrePasoSiguiente(item))}"
                                     styleClass="#{empty item.idProcedimientoPasoReferencia
                                                   ? 'empty-note'
                                                   : ''}" />
@@ -167,27 +178,58 @@
                     <div class="dialog-form">
                         <div class="form-field">
                             <p:outputLabel
-                                for="idProcedimientoPaso"
+                                for="procedimiento"
+                                value="#{msg['procedimientoPaso.procedimiento']}"
+                                styleClass="form-label" />
+
+                            <p:selectOneMenu
+                                id="procedimiento"
+                                value="#{procedimientoPasoSecuenciaModel.procedimientoSeleccionado}"
+                                converter="#{procedimientoConverter}"
+                                required="true"
+                                requiredMessage="#{msg['secuencia.procedimientoRequerido']}"
+                                disabled="#{not procedimientoPasoSecuenciaModel.estructuraEditable}"
+                                styleClass="full-width">
+                                <f:selectItem
+                                    itemLabel="#{msg['procedimientoPaso.seleccionarProcedimiento']}"
+                                    itemValue="#{null}" />
+                                <f:selectItems
+                                    value="#{procedimientoPasoSecuenciaModel.procedimientos}"
+                                    var="procedimiento"
+                                    itemLabel="#{procedimiento.nombre}"
+                                    itemValue="#{procedimiento}" />
+                                <p:ajax event="change"
+                                    listener="#{procedimientoPasoSecuenciaModel.procedimientoCambio()}"
+                                    process="@this" update="pasoOrigen pasoSiguiente" />
+                            </p:selectOneMenu>
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="pasoOrigen"
                                 value="#{msg['secuencia.pasoOrigen']}"
                                 styleClass="form-label" />
 
                             <p:selectOneMenu
-                                id="idProcedimientoPaso"
+                                id="pasoOrigen"
                                 value="#{procedimientoPasoSecuenciaModel.seleccionado.idProcedimientoPaso}"
                                 converter="#{procedimientoPasoConverter}"
-
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}"
+                                requiredMessage="#{msg['secuencia.pasoOrigenRequerido']}"
+                                disabled="#{not procedimientoPasoSecuenciaModel.estructuraEditable}"
                                 styleClass="full-width">
 
                                 <f:selectItem
                                     itemLabel="#{msg['secuencia.seleccionarPaso']}"
                                     itemValue="#{null}" />
                                 <f:selectItems
-                                    value="#{procedimientoPasoSecuenciaModel.procedimientosPaso}"
+                                    value="#{procedimientoPasoSecuenciaModel.pasosDelProcedimiento}"
                                     var="paso"
                                     itemLabel="#{paso.nombre}"
                                     itemValue="#{paso}" />
+                                <p:ajax event="change"
+                                    listener="#{procedimientoPasoSecuenciaModel.pasoOrigenCambio()}"
+                                    process="@this" update="pasoSiguiente" />
                             </p:selectOneMenu>
                         </div>
 
@@ -197,11 +239,18 @@
                                 value="#{msg['secuencia.tipo']}"
                                 styleClass="form-label" />
 
-                            <p:inputText
+                            <p:selectOneMenu
                                 id="tipoSecuencia"
                                 value="#{procedimientoPasoSecuenciaModel.seleccionado.tipoSecuencia}"
-                                placeholder="#{msg['secuencia.tipoPlaceholder']}"
-                                maxlength="20" />
+                                required="true"
+                                requiredMessage="#{msg['secuencia.tipoRequerido']}"
+                                styleClass="full-width">
+                                <f:selectItem itemLabel="#{msg['secuencia.seleccionarTipo']}" itemValue="#{null}" />
+                                <f:selectItems value="#{procedimientoPasoSecuenciaModel.tiposSecuencia}"
+                                    var="tipo"
+                                    itemLabel="#{procedimientoPasoSecuenciaModel.getTipoSecuenciaLabel(tipo)}"
+                                    itemValue="#{tipo}" />
+                            </p:selectOneMenu>
 
                             <span class="form-helper">
                                 #{msg['secuencia.tipoAyuda']}
@@ -210,17 +259,30 @@
 
                         <div class="form-field">
                             <p:outputLabel
-                                for="idProcedimientoPasoReferencia"
-                                value="#{msg['secuencia.pasoReferencia']}"
+                                for="pasoSiguiente"
+                                value="#{msg['secuencia.pasoSiguiente']}"
                                 styleClass="form-label" />
 
-                            <p:inputText
-                                id="idProcedimientoPasoReferencia"
-                                value="#{procedimientoPasoSecuenciaModel.seleccionado.idProcedimientoPasoReferencia}"
-                                placeholder="#{msg['secuencia.referenciaPlaceholder']}" />
+                            <p:selectOneMenu
+                                id="pasoSiguiente"
+                                value="#{procedimientoPasoSecuenciaModel.pasoSiguienteSeleccionado}"
+                                converter="#{procedimientoPasoConverter}"
+                                required="true"
+                                requiredMessage="#{msg['secuencia.pasoDestinoRequerido']}"
+                                disabled="#{not procedimientoPasoSecuenciaModel.pasoSiguienteEditable}"
+                                styleClass="full-width">
+                                <f:selectItem
+                                    itemLabel="#{msg['secuencia.seleccionarPasoSiguiente']}"
+                                    itemValue="#{null}" />
+                                <f:selectItems
+                                    value="#{procedimientoPasoSecuenciaModel.pasosSiguientesDisponibles}"
+                                    var="paso"
+                                    itemLabel="#{paso.nombre}"
+                                    itemValue="#{paso}" />
+                            </p:selectOneMenu>
 
                             <span class="form-helper">
-                                #{msg['secuencia.referenciaAyuda']}
+                                #{msg['secuencia.pasoSiguienteAyuda']}
                             </span>
                         </div>
                     </div>
@@ -243,7 +305,7 @@
                             procesar="@this edicionContenido"
                             actualizar="messages secuenciasTable edicionDialog"
                             oncompleteCancelar="PF('secuenciaDialog').hide()"
-                            oncompleteGuardar="if (!args.validationFailed) PF('secuenciaDialog').hide()" />
+                            oncompleteGuardar="if (args.validationFailed) PF('secuenciaDialog').show(); else PF('secuenciaDialog').hide()" />
                     </div>
                 </h:panelGroup>
             </p:outputPanel>

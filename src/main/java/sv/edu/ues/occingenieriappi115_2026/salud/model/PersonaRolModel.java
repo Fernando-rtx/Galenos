@@ -30,6 +30,7 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     private transient FacesContext facesContext;
     private PersonaRol seleccionado;
     private Persona personaContexto;
+    private UUID clinicaOriginalId;
     private List<Persona> personas;
     private List<Rol> roles;
     private List<Clinica> clinicas;
@@ -95,6 +96,19 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
         return clinicas;
     }
 
+    public List<Clinica> getClinicasDisponibles() {
+        UUID clinicaActual = getEstado() == ESTADO_CRUD.EDICION ? clinicaOriginalId : null;
+        List<Clinica> catalogo = getClinicas();
+        if (catalogo == null) {
+            return List.of();
+        }
+        return catalogo.stream()
+                .filter(clinica -> clinica != null
+                && (Boolean.TRUE.equals(clinica.getActivo())
+                || (clinicaActual != null && clinicaActual.equals(clinica.getIdClinica()))))
+                .toList();
+    }
+
     public String getPersonaSeleccionadaId() {
         return seleccionado == null || seleccionado.getIdPersona() == null
                 ? null : seleccionado.getIdPersona().getIdPersona().toString();
@@ -130,6 +144,7 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
 
     public void nuevo() {
         seleccionado = new PersonaRol();
+        clinicaOriginalId = null;
         seleccionado.setFechaCreacion(new Date());
         seleccionado.setIdPersona(personaContexto);
         setEstado(ESTADO_CRUD.CREACION);
@@ -195,6 +210,8 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
 
     public void seleccionar(PersonaRol seleccionado) {
         this.seleccionado = seleccionado;
+        clinicaOriginalId = seleccionado == null || seleccionado.getIdClinica() == null
+                ? null : seleccionado.getIdClinica().getIdClinica();
         setEstado(ESTADO_CRUD.EDICION);
     }
 
@@ -215,6 +232,7 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
 
     public void cancelar() {
         seleccionado = null;
+        clinicaOriginalId = null;
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
@@ -284,6 +302,22 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
         if (seleccionado.getIdClinica() == null) {
             agregarError("personaRol.clinicaRequerida");
             valido = false;
+        } else if (seleccionado.getIdClinica().getIdClinica() == null) {
+            agregarError("personaRol.clinicaNoExiste");
+            valido = false;
+        } else {
+            Clinica clinicaPersistida = clinicaDAO.buscarPorId(
+                    seleccionado.getIdClinica().getIdClinica());
+            if (clinicaPersistida == null) {
+                agregarError("personaRol.clinicaNoExiste");
+                valido = false;
+            } else if (!Boolean.TRUE.equals(clinicaPersistida.getActivo())
+                    && !clinicaPersistida.getIdClinica().equals(clinicaOriginalId)) {
+                agregarError("personaRol.clinicaInactiva");
+                valido = false;
+            } else {
+                seleccionado.setIdClinica(clinicaPersistida);
+            }
         }
         return valido;
     }
