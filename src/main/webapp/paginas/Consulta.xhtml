@@ -47,13 +47,18 @@
                             </p>
                         </div>
 
+                        <h:panelGroup rendered="#{consultaModel.clinicaSeleccionada}">
                         <crud:botones-top
                             model="#{consultaModel}"
                             actualizar="messages consultasTable edicionDialog"
                             resetNuevo="true"
                             oncompleteNuevo="PF('consultaDialog').show()" />
+                        </h:panelGroup>
                     </div>
 
+                    <h:panelGroup rendered="#{not consultaModel.clinicaSeleccionada}" layout="block" role="status">
+                        <h:outputText value="#{msg['clinicaActual.requerida']}" styleClass="form-helper" />
+                    </h:panelGroup>
                     <div class="section-divider"></div>
 
                     <p:messages
@@ -273,6 +278,7 @@
 
                                     <p:autoComplete
                                         id="consultaPersonaRol"
+                                        disabled="#{consultaModel.estado eq 'EDICION'}"
                                         value="#{consultaModel.seleccionado.idPersonaRol}"
                                         converter="#{personaRolConverter}"
                                         completeMethod="#{consultaModel.buscarPacientes}"
@@ -294,6 +300,11 @@
                                                 value="#{paciente.idPersona.nombres} #{paciente.idPersona.apellidos}" />
                                         </p:column>
 
+                                        <p:column headerText="#{msg['consulta.fechaNacimiento']}">
+                                            <h:outputText value="#{paciente.idPersona.fechaNacimiento}">
+                                                <f:convertDateTime pattern="dd/MM/yyyy" timeZone="America/El_Salvador" />
+                                            </h:outputText>
+                                        </p:column>
                                         <p:column headerText="#{msg['consulta.documentoDui']}">
                                             <h:outputText
                                                 value="#{empty consultaModel.getDui(paciente)
@@ -384,6 +395,7 @@
 
                                             <p:selectOneMenu
                                                 id="procedimientoIdProcedimiento"
+                                                disabled="#{consultaProcedimientoModel.estado eq 'EDICION'}"
                                                 value="#{consultaProcedimientoModel.seleccionado.idProcedimiento}"
                                                 required="true"
                                                 requiredMessage="#{msg['mensajes.error']}">
@@ -474,13 +486,7 @@
                         <p:tab title="#{msg['consulta.tab.pasos']}"
                                disabled="#{consultaModel.seleccionado.idConsulta eq null}">
                             <p:outputPanel id="pasosContenido">
-                                <p:commandButton
-                                    value="#{msg['consultaProcedimientoPaso.nuevo']}"
-                                    icon="pi pi-plus"
-                                    action="#{consultaProcedimientoPasoModel.nuevo()}"
-                                    process="@this"
-                                    update="pasosContenido"
-                                    disabled="#{consultaProcedimientoModel.getProcedimientosPorConsulta(consultaModel.seleccionado).isEmpty()}" />
+                                <h:outputText value="#{msg['consultaFlujo.pasoAutomaticoAyuda']}" styleClass="form-helper" />
 
                                 <p:dataTable
                                     id="consultaProcedimientoPasoTable"
@@ -555,6 +561,7 @@
 
                                             <p:selectOneMenu
                                                 id="pasoConsultaProcedimiento"
+                                                disabled="true"
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.idConsultaProcedimiento}"
                                                 converter="#{consultaProcedimientoConverter}"
                                                 required="true"
@@ -577,37 +584,11 @@
                                         <div class="form-field">
                                             <p:outputLabel
                                                 for="pasoPersonaRol"
-                                                value="#{msg['consultaProcedimientoPaso.responsableMedico']}"
+                                                value="#{msg['consultaFlujo.responsable']}"
                                                 styleClass="form-label" />
 
-                                            <p:autoComplete
-                                                id="pasoPersonaRol"
-                                                value="#{consultaProcedimientoPasoModel.seleccionado.idPersonaRol}"
-                                                converter="#{personaRolConverter}"
-                                                completeMethod="#{consultaProcedimientoPasoModel.buscarMedicos}"
-                                                var="medico"
-                                                itemLabel="#{consultaProcedimientoPasoModel.getEtiquetaMedico(medico)}"
-                                                itemValue="#{medico}"
-                                                placeholder="#{msg['consultaProcedimientoPaso.buscarMedicoPlaceholder']}"
-                                                forceSelection="true"
-                                                dropdown="false"
-                                                minQueryLength="2"
-                                                queryDelay="250"
-                                                scrollHeight="240"
-                                                emptyMessage="#{msg['consultaProcedimientoPaso.sinMedicos']}"
-                                                required="true"
-                                                requiredMessage="#{msg['mensajes.error']}"
-                                                validator="#{consultaProcedimientoPasoModel.validarResponsable}">
-
-                                                <p:column headerText="#{msg['consultaProcedimientoPaso.responsableMedico']}">
-                                                    <h:outputText
-                                                        value="#{medico.idPersona.nombres} #{medico.idPersona.apellidos}" />
-                                                </p:column>
-
-                                                <p:column headerText="#{msg['consultaProcedimientoPaso.especialidad']}">
-                                                    <h:outputText value="#{medico.idRol.nombre}" />
-                                                </p:column>
-                                            </p:autoComplete>
+                                            <h:outputText id="pasoPersonaRol"
+                                                value="#{consultaProcedimientoPasoModel.getEtiquetaMedico(consultaProcedimientoPasoModel.seleccionado.idPersonaRol)}" />
 
                                             <p:message for="pasoPersonaRol" />
                                         </div>

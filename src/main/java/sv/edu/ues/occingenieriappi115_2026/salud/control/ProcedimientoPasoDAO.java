@@ -5,7 +5,13 @@ import jakarta.ejb.Stateless;
 import jakarta.persistence.TypedQuery;
 import java.util.List;
 import java.util.UUID;
+import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPaso;
+import sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPasoSecuencia;
 
 /**
  * DAO concreto para ProcedimientoPaso.
@@ -24,6 +30,58 @@ public class ProcedimientoPasoDAO
     /** Construye el DAO indicando que administra ProcedimientoPaso. */
     public ProcedimientoPasoDAO() {
         super(ProcedimientoPaso.class);
+    }
+
+    /** Contrato compartido: origen → referencia es origen → siguiente. */
+    public ProcedimientoPaso obtenerPasoInicial(UUID idProcedimiento) {
+        List<ProcedimientoPaso> pasos = findByIdProcedimiento(idProcedimiento, 0, Integer.MAX_VALUE);
+        List<ProcedimientoPasoSecuencia> secuencias = getEntityManager().createQuery("""
+                SELECT s FROM ProcedimientoPasoSecuencia s
+                WHERE s.idProcedimientoPaso.idProcedimiento.idProcedimiento = :id
+                """, ProcedimientoPasoSecuencia.class)
+                .setParameter("id", idProcedimiento).getResultList();
+        return determinarPasoInicial(pasos, secuencias);
+    }
+
+    static ProcedimientoPaso determinarPasoInicial(List<ProcedimientoPaso> pasos,
+            List<ProcedimientoPasoSecuencia> secuencias) {
+        Map<UUID, ProcedimientoPaso> porId = new HashMap<>();
+        Map<UUID, Set<UUID>> siguientes = new HashMap<>();
+        Map<UUID, Integer> entradas = new HashMap<>();
+        for (ProcedimientoPaso paso : pasos) {
+            porId.put(paso.getIdProcedimientoPaso(), paso);
+            entradas.put(paso.getIdProcedimientoPaso(), 0);
+        }
+        for (ProcedimientoPasoSecuencia s : secuencias) {
+            UUID origen = s.getIdProcedimientoPaso().getIdProcedimientoPaso();
+            UUID destino = s.getIdProcedimientoPasoReferencia();
+            if (!porId.containsKey(origen) || !porId.containsKey(destino)) {
+                throw new FlujoConsultaException("consultaFlujo.plantillaInvalida");
+            }
+            if (siguientes.computeIfAbsent(origen, key -> new HashSet<>()).add(destino)) {
+                entradas.compute(destino, (key, n) -> n + 1);
+            }
+        }
+        List<UUID> raices = entradas.entrySet().stream().filter(e -> e.getValue() == 0)
+                .map(Map.Entry::getKey).toList();
+        if (raices.size() != 1) {
+            throw new FlujoConsultaException("consultaFlujo.plantillaInvalida");
+        }
+        var pendientes = new ArrayDeque<>(raices);
+        int visitados = 0;
+        while (!pendientes.isEmpty()) {
+            UUID actual = pendientes.remove();
+            visitados++;
+            for (UUID siguiente : siguientes.getOrDefault(actual, Set.of())) {
+                if (entradas.compute(siguiente, (key, n) -> n - 1) == 0) {
+                    pendientes.add(siguiente);
+                }
+            }
+        }
+        if (visitados != pasos.size()) {
+            throw new FlujoConsultaException("consultaFlujo.plantillaInvalida");
+        }
+        return porId.get(raices.getFirst());
     }
 
     /**
