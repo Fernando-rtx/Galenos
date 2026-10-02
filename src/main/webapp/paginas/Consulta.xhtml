@@ -78,8 +78,32 @@
                             value="#{msg['crud.dobleClicEditar']}"
                             styleClass="page-subtitle" />
 
+                        <p:outputPanel id="filtroFechas" layout="block" styleClass="consulta-filtros">
+                            <div class="form-field">
+                                <p:outputLabel for="fechaDesde" value="#{msg['consulta.desde']}" />
+                                <p:datePicker id="fechaDesde" value="#{consultaModel.fechaDesde}"
+                                              pattern="dd/MM/yyyy" showIcon="true" />
+                                <p:message for="fechaDesde" />
+                            </div>
+                            <div class="form-field">
+                                <p:outputLabel for="fechaHasta" value="#{msg['consulta.hasta']}" />
+                                <p:datePicker id="fechaHasta" value="#{consultaModel.fechaHasta}"
+                                              pattern="dd/MM/yyyy" showIcon="true" />
+                                <p:message for="fechaHasta" />
+                            </div>
+                            <p:commandButton value="#{msg['consulta.buscarFechas']}" icon="pi pi-search"
+                                action="#{consultaModel.aplicarFiltroFechas}" process="filtroFechas"
+                                update="messages consultasTable"
+                                oncomplete="if (!args.validationFailed) PF('consultasWidget').getPaginator().setPage(0)" />
+                            <p:commandButton value="#{msg['consulta.limpiarFechas']}" icon="pi pi-times"
+                                action="#{consultaModel.limpiarFiltroFechas}" process="@this"
+                                update="filtroFechas messages consultasTable" resetValues="true"
+                                oncomplete="PF('consultasWidget').getPaginator().setPage(0)" />
+                        </p:outputPanel>
+
                         <p:dataTable
                             id="consultasTable"
+                            widgetVar="consultasWidget"
                             value="#{consultaModel}"
                             var="item"
                             lazy="true"
@@ -108,7 +132,7 @@
                                 <h:outputText
                                     value="#{item.fechaInicio}"
                                     styleClass="consulta-date">
-                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                 </h:outputText>
                             </p:column>
 
@@ -120,7 +144,7 @@
                                 <h:outputText
                                     value="#{item.fechaFin}"
                                     styleClass="consulta-date">
-                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                 </h:outputText>
                             </p:column>
 

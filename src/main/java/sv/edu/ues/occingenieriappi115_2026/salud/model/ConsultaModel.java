@@ -14,6 +14,9 @@ import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
 import java.io.Serializable;
 import java.text.Normalizer;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Date;
 import java.util.List;
@@ -44,6 +47,11 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
     @EJB private ConsultaFlujoService flujoService;
     private UUID clinicaFormulario;
     private long revisionFormulario;
+    private static final ZoneId ZONA_CLINICA = ZoneId.of("America/El_Salvador");
+    private LocalDate fechaDesde;
+    private LocalDate fechaHasta;
+    private LocalDate desdeAplicado;
+    private LocalDate hastaAplicado;
     private Consulta seleccionado;
     private List<PersonaRol> personasRoles;
     private final Map<UUID, String> duiPorPersona = new HashMap<>();
@@ -96,7 +104,38 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
 
     @Override
     protected List<FiltroDAO> filtrosAdicionales() {
-        return List.of(new FiltroDAO("idPersonaRol.idClinica.idClinica", OperadorFiltro.IGUAL, clinicaActual()));
+        List<FiltroDAO> filtros = new ArrayList<>();
+        filtros.add(new FiltroDAO("idPersonaRol.idClinica.idClinica", OperadorFiltro.IGUAL, clinicaActual()));
+        if (desdeAplicado != null) {
+            filtros.add(new FiltroDAO("fechaInicio", OperadorFiltro.MAYOR_O_IGUAL,
+                    Date.from(desdeAplicado.atStartOfDay(ZONA_CLINICA).toInstant())));
+        }
+        if (hastaAplicado != null) {
+            filtros.add(new FiltroDAO("fechaInicio", OperadorFiltro.MENOR_QUE,
+                    Date.from(hastaAplicado.plusDays(1).atStartOfDay(ZONA_CLINICA).toInstant())));
+        }
+        return filtros;
+    }
+
+    public LocalDate getFechaDesde() { return fechaDesde; }
+    public void setFechaDesde(LocalDate fecha) { fechaDesde = fecha; }
+    public LocalDate getFechaHasta() { return fechaHasta; }
+    public void setFechaHasta(LocalDate fecha) { fechaHasta = fecha; }
+
+    public void aplicarFiltroFechas() {
+        if (fechaDesde != null && fechaHasta != null && fechaDesde.isAfter(fechaHasta)) {
+            registrarError("consulta.rangoInvalido");
+            return;
+        }
+        desdeAplicado = fechaDesde;
+        hastaAplicado = fechaHasta;
+    }
+
+    public void limpiarFiltroFechas() {
+        fechaDesde = null;
+        fechaHasta = null;
+        desdeAplicado = null;
+        hastaAplicado = null;
     }
 
     @Override
