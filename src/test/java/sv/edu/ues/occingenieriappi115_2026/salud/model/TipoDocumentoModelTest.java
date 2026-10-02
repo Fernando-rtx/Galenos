@@ -6,6 +6,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoDocumento;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -48,6 +49,9 @@ class TipoDocumentoModelTest {
         TipoDocumentoModel model = new TipoDocumentoModel(dao);
         model.nuevo();
         TipoDocumento seleccionado = model.getSeleccionado();
+        seleccionado.setNombre("DUI");
+        seleccionado.setActivo(true);
+        seleccionado.setExpresionRegular("^[0-9]{8}-[0-9]$");
 
         model.guardar();
 
@@ -60,7 +64,10 @@ class TipoDocumentoModelTest {
         TipoDocumentoDAO dao = mock(TipoDocumentoDAO.class);
         TipoDocumentoModel model = new TipoDocumentoModel(dao);
         TipoDocumento tipoDocumento = new TipoDocumento();
-        TipoDocumento actualizado = new TipoDocumento();
+        tipoDocumento.setNombre("Pasaporte");
+        tipoDocumento.setActivo(false);
+        tipoDocumento.setExpresionRegular("^[A-Z0-9]{6,12}$");
+        TipoDocumento actualizado = tipoDocumento;
         model.seleccionar(tipoDocumento);
         when(dao.actualizar(tipoDocumento)).thenReturn(actualizado);
 
@@ -69,6 +76,9 @@ class TipoDocumentoModelTest {
         verify(dao).actualizar(tipoDocumento);
         assertSame(actualizado, model.getSeleccionado());
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+        assertEquals("Pasaporte", model.getSeleccionado().getNombre());
+        assertFalse(model.getSeleccionado().getActivo());
+        assertEquals("^[A-Z0-9]{6,12}$", model.getSeleccionado().getExpresionRegular());
     }
 
     @Test
@@ -90,5 +100,36 @@ class TipoDocumentoModelTest {
         assertDoesNotThrow(model::guardar);
 
         verifyNoInteractions(dao);
+    }
+
+    @Test
+    void tipoInactivoConRegexConfiguradaSeConservaAlGuardar() {
+        TipoDocumentoDAO dao = mock(TipoDocumentoDAO.class);
+        TipoDocumentoModel model = new TipoDocumentoModel(dao);
+        model.nuevo();
+        TipoDocumento seleccionado = model.getSeleccionado();
+        seleccionado.setNombre("Pasaporte");
+        seleccionado.setActivo(false);
+        seleccionado.setExpresionRegular("^[A-Z]{2}[0-9]{6}$");
+
+        model.guardar();
+
+        verify(dao).guardar(seleccionado);
+        assertFalse(seleccionado.getActivo());
+        assertEquals("^[A-Z]{2}[0-9]{6}$", seleccionado.getExpresionRegular());
+    }
+
+    @Test
+    void expresionRegularInvalidaImpidePersistirTipoDocumento() {
+        TipoDocumentoDAO dao = mock(TipoDocumentoDAO.class);
+        TipoDocumentoModel model = new TipoDocumentoModel(dao);
+        model.nuevo();
+        model.getSeleccionado().setNombre("DUI");
+        model.getSeleccionado().setExpresionRegular("[0-9");
+
+        model.guardar();
+
+        verifyNoInteractions(dao);
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
     }
 }

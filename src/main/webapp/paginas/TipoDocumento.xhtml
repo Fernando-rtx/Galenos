@@ -123,6 +123,13 @@
                                                 : 'secondary'}" />
                             </p:column>
 
+                            <p:column headerText="#{msg['tipoDocumento.expresionRegular']}">
+                                <h:outputText value="#{empty item.expresionRegular
+                                                       ? msg['comun.sinDato']
+                                                       : item.expresionRegular}"
+                                              styleClass="regex-value" />
+                            </p:column>
+
                             <p:column
                                 headerText="#{msg['tipoDocumento.indicaciones']}"
                                 styleClass="observaciones-cell">
@@ -189,7 +196,9 @@
                                 value="#{tipoDocumentoModel.seleccionado.nombre}"
                                 placeholder="#{msg['tipoDocumento.nombrePlaceholder']}"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}" />
+                                requiredMessage="#{msg['tipoDocumento.nombreRequerido']}" />
+
+                            <p:message for="nombre" />
 
                             <span class="form-helper">
                                 #{msg['tipoDocumento.nombreAyuda']}
@@ -220,6 +229,9 @@
                                 id="expresionRegular"
                                 value="#{tipoDocumentoModel.seleccionado.expresionRegular}"
                                 placeholder="#{msg['tipoDocumento.expresionRegularPlaceholder']}" />
+
+                            <span class="form-helper">#{msg['tipoDocumento.expresionRegularAyuda']}</span>
+                            <p:message for="expresionRegular" />
                         </div>
 
                         <div class="toggle-field">

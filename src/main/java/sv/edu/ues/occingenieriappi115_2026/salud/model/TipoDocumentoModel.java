@@ -1,9 +1,15 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.component.UIComponent;
+import jakarta.faces.component.UIInput;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoDocumentoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoDocumento;
 
@@ -63,6 +69,19 @@ public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements 
         if (seleccionado == null) {
             return;
         }
+        if (seleccionado.getNombre() == null || seleccionado.getNombre().isBlank()) {
+            marcarError("nombre", "tipoDocumento.nombreRequerido");
+            return;
+        }
+        String expresion = seleccionado.getExpresionRegular();
+        if (expresion != null && !expresion.isBlank()) {
+            try {
+                Pattern.compile(expresion);
+            } catch (PatternSyntaxException ex) {
+                marcarError("expresionRegular", "tipoDocumento.expresionRegularInvalida");
+                return;
+            }
+        }
         switch (getEstado()) {
             case CREACION -> getDao().guardar(seleccionado);
             case EDICION -> seleccionado = getDao().actualizar(seleccionado);
@@ -70,11 +89,49 @@ public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements 
             }
         }
         setEstado(ESTADO_CRUD.LISTADO);
+        agregarMensaje(FacesMessage.SEVERITY_INFO, "mensajes.guardado");
     }
 
     public void cancelar() {
         // Restablece el listado sin escribir cambios en PostgreSQL.
         seleccionado = null;
         setEstado(ESTADO_CRUD.LISTADO);
+    }
+
+    private void marcarError(String idComponente, String clave) {
+        FacesContext contexto;
+        try {
+            contexto = FacesContext.getCurrentInstance();
+        } catch (LinkageError ex) {
+            return;
+        }
+        if (contexto == null) {
+            return;
+        }
+        contexto.validationFailed();
+        String mensaje = contexto.getApplication().getResourceBundle(contexto, "msg").getString(clave);
+        UIComponent componente = buscarComponente(contexto.getViewRoot(), idComponente);
+        if (componente instanceof UIInput entrada) {
+            entrada.setValid(false);
+        }
+        String clientId = componente == null ? null : componente.getClientId(contexto);
+        contexto.addMessage(clientId, new FacesMessage(FacesMessage.SEVERITY_ERROR, mensaje, null));
+    }
+
+    private UIComponent buscarComponente(UIComponent componente, String id) {
+        if (componente == null) {
+            return null;
+        }
+        if (id.equals(componente.getId())) {
+            return componente;
+        }
+        var hijos = componente.getFacetsAndChildren();
+        while (hijos.hasNext()) {
+            UIComponent encontrado = buscarComponente(hijos.next(), id);
+            if (encontrado != null) {
+                return encontrado;
+            }
+        }
+        return null;
     }
 }

@@ -222,6 +222,75 @@ class DocumentoModelTest {
     }
 
     @Test
+    void tipoActivoYValorValidoSeResuelvenDesdeElDaoYSeGuardan() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        TipoDocumento tipo = new TipoDocumento(UUID.randomUUID());
+        tipo.setActivo(true);
+        tipo.setExpresionRegular("^[0-9]{4}$");
+        when(tipos.buscarPorId(tipo.getIdTipoDocumento())).thenReturn(tipo);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
+        modelo.nuevo();
+        Documento documento = modelo.getSeleccionado();
+        documento.setIdPersona(new Persona());
+        documento.setIdTipoDocumento(new TipoDocumento(tipo.getIdTipoDocumento()));
+        documento.setValor("1234");
+
+        modelo.guardar();
+
+        verify(dao).guardar(documento);
+        assertSame(tipo, documento.getIdTipoDocumento());
+    }
+
+    @Test
+    void tipoInactivoEnviadoDirectamenteSeRechazaAlCrear() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        TipoDocumento inactivo = new TipoDocumento(UUID.randomUUID());
+        inactivo.setActivo(false);
+        when(tipos.buscarPorId(inactivo.getIdTipoDocumento())).thenReturn(inactivo);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
+        modelo.nuevo();
+        modelo.getSeleccionado().setIdPersona(new Persona());
+        modelo.getSeleccionado().setIdTipoDocumento(inactivo);
+        modelo.getSeleccionado().setValor("1234");
+
+        modelo.guardar();
+
+        verifyNoInteractions(dao);
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
+    @Test
+    void cambiarTipoDuranteEdicionSeIgnoraYLaMutacionDirectaSeRechaza() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        TipoDocumento original = new TipoDocumento(UUID.randomUUID());
+        original.setActivo(true);
+        original.setExpresionRegular("^[0-9]{4}$");
+        TipoDocumento alternativo = new TipoDocumento(UUID.randomUUID());
+        alternativo.setActivo(true);
+        when(tipos.buscarPorId(original.getIdTipoDocumento())).thenReturn(original);
+        when(tipos.buscarPorId(alternativo.getIdTipoDocumento())).thenReturn(alternativo);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
+        Documento documento = new Documento(UUID.randomUUID());
+        documento.setIdPersona(new Persona());
+        documento.setIdTipoDocumento(original);
+        documento.setValor("1234");
+        modelo.seleccionar(documento);
+
+        modelo.setTipoDocumentoSeleccionadoId(alternativo.getIdTipoDocumento().toString());
+        assertSame(original, documento.getIdTipoDocumento());
+        documento.setIdTipoDocumento(alternativo);
+
+        modelo.guardar();
+
+        verify(dao, never()).actualizar(any());
+        assertSame(original, documento.getIdTipoDocumento());
+        assertEquals(ESTADO_CRUD.EDICION, modelo.getEstado());
+    }
+
+    @Test
     void personaContextualFiltraDocumentosYPreasignaLaRelacion() {
         DocumentoDAO dao = mock(DocumentoDAO.class);
         Persona persona = new Persona(UUID.randomUUID());
@@ -245,15 +314,18 @@ class DocumentoModelTest {
     @Test
     void tipoDuplicadoParaLaMismaPersonaImpideGuardar() {
         DocumentoDAO dao = mock(DocumentoDAO.class);
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
         Persona persona = new Persona(UUID.randomUUID());
         TipoDocumento dui = new TipoDocumento(UUID.randomUUID());
         Documento existente = new Documento(UUID.randomUUID());
         existente.setIdPersona(persona);
         existente.setIdTipoDocumento(dui);
         existente.setValor("01234567-8");
+        dui.setActivo(true);
+        when(tipos.buscarPorId(dui.getIdTipoDocumento())).thenReturn(dui);
         when(dao.obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList()))
                 .thenReturn(List.of(existente));
-        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
         modelo.nuevoParaPersona(persona);
         modelo.getSeleccionado().setIdTipoDocumento(dui);
         modelo.getSeleccionado().setValor("06887861-1");
@@ -267,16 +339,20 @@ class DocumentoModelTest {
     @Test
     void editarDocumentoConservandoSuTipoNoSeConsideraDuplicado() {
         DocumentoDAO dao = mock(DocumentoDAO.class);
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
         Persona persona = new Persona(UUID.randomUUID());
         TipoDocumento dui = new TipoDocumento(UUID.randomUUID());
+        dui.setActivo(true);
+        dui.setExpresionRegular("^[0-9-]+$");
         Documento existente = new Documento(UUID.randomUUID());
         existente.setIdPersona(persona);
         existente.setIdTipoDocumento(dui);
         existente.setValor("01234567-8");
         when(dao.obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList()))
                 .thenReturn(List.of(existente));
+        when(tipos.buscarPorId(dui.getIdTipoDocumento())).thenReturn(dui);
         when(dao.actualizar(existente)).thenReturn(existente);
-        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
         modelo.seleccionar(existente);
 
         modelo.guardar();

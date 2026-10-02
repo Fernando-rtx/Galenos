@@ -37,6 +37,7 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     @Inject
     private transient FacesContext facesContext;
     private Documento seleccionado;
+    private UUID tipoDocumentoOriginalId;
     private Persona personaContexto;
     private List<Persona> personas;
 
@@ -118,12 +119,20 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
 
     public void setTipoDocumentoSeleccionadoId(String id) {
         if (seleccionado != null) {
-            seleccionado.setIdTipoDocumento(buscarTipoDocumento(id));
+            TipoDocumento tipo = buscarTipoDocumento(id);
+            if (getEstado() == ESTADO_CRUD.EDICION) {
+                UUID idRecibido = tipo == null ? null : tipo.getIdTipoDocumento();
+                if (!java.util.Objects.equals(tipoDocumentoOriginalId, idRecibido)) {
+                    return;
+                }
+            }
+            seleccionado.setIdTipoDocumento(tipo);
         }
     }
 
     public void nuevo() {
         seleccionado = new Documento();
+        tipoDocumentoOriginalId = null;
         seleccionado.setIdPersona(personaContexto);
         setEstado(ESTADO_CRUD.CREACION);
     }
@@ -184,6 +193,8 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
 
     public void seleccionar(Documento seleccionado) {
         this.seleccionado = seleccionado;
+        this.tipoDocumentoOriginalId = seleccionado == null || seleccionado.getIdTipoDocumento() == null
+                ? null : seleccionado.getIdTipoDocumento().getIdTipoDocumento();
         setEstado(ESTADO_CRUD.EDICION);
     }
 
@@ -193,6 +204,9 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         }
         seleccionado.setValor(normalizar(seleccionado.getValor()));
         seleccionado.setRutaFisica(normalizar(seleccionado.getRutaFisica()));
+        if (!resolverYValidarTipoDocumento()) {
+            return;
+        }
         if (!validarAntesDeGuardar()) {
             return;
         }
@@ -202,10 +216,12 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
             case LISTADO -> { }
         }
         setEstado(ESTADO_CRUD.LISTADO);
+        agregarMensaje("documento.guardado", FacesMessage.SEVERITY_INFO);
     }
 
     public void cancelar() {
         seleccionado = null;
+        tipoDocumentoOriginalId = null;
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
@@ -251,20 +267,46 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
             valido = false;
         }
         if (seleccionado.getIdTipoDocumento() == null) {
-            agregarError("documentoTipo", "documento.tipoRequerido");
+            agregarError("tipo", "documento.tipoRequerido");
             valido = false;
         } else if (tieneTipoDuplicadoParaPersona()) {
-            agregarError("documentoTipo", "documento.tipoDuplicado");
+            agregarError("tipo", "documento.tipoDuplicado");
             valido = false;
         }
         if (seleccionado.getValor() == null || seleccionado.getValor().isBlank()) {
-            agregarError("documentoValor", "documento.valorRequerido");
+            agregarError("valor", "documento.valorRequerido");
             valido = false;
         } else if (!cumpleExpresionRegular(seleccionado.getValor())) {
-            agregarError("documentoValor", "documento.valorFormato");
+            agregarError("valor", "documento.valorFormato");
             valido = false;
         }
         return valido;
+    }
+
+    private boolean resolverYValidarTipoDocumento() {
+        TipoDocumento tipoRecibido = seleccionado.getIdTipoDocumento();
+        UUID idTipoRecibido = tipoRecibido == null ? null : tipoRecibido.getIdTipoDocumento();
+        if (getEstado() == ESTADO_CRUD.EDICION
+                && !java.util.Objects.equals(tipoDocumentoOriginalId, idTipoRecibido)) {
+            seleccionado.setIdTipoDocumento(tipoDocumentoOriginalId == null
+                    ? null : tipoDocumentoDAO.buscarPorId(tipoDocumentoOriginalId));
+            agregarError("tipo", "documento.tipoNoEditable");
+            return false;
+        }
+        if (idTipoRecibido == null) {
+            return true;
+        }
+        TipoDocumento tipoPersistido = tipoDocumentoDAO.buscarPorId(idTipoRecibido);
+        if (tipoPersistido == null) {
+            agregarError("tipo", "documento.tipoRequerido");
+            return false;
+        }
+        if (getEstado() == ESTADO_CRUD.CREACION && !Boolean.TRUE.equals(tipoPersistido.getActivo())) {
+            agregarError("tipo", "documento.tipoInactivo");
+            return false;
+        }
+        seleccionado.setIdTipoDocumento(tipoPersistido);
+        return true;
     }
 
     private boolean tieneTipoDuplicadoParaPersona() {
@@ -297,7 +339,7 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         try {
             return Pattern.compile(expresion).matcher(valor).matches();
         } catch (PatternSyntaxException ex) {
-            return true;
+            return false;
         }
     }
 
