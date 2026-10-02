@@ -59,7 +59,12 @@ class TraduccionesTest {
         var views = doc.getElementsByTagNameNS("jakarta.faces.core", "view");
         assertEquals(1, views.getLength());
         assertEquals("#{idiomaBean.locale}", views.item(0).getAttributes().getNamedItem("locale").getNodeValue());
-        var ajax = doc.getElementsByTagNameNS("primefaces", "ajax").item(0).getAttributes();
+        var xpath = javax.xml.xpath.XPathFactory.newInstance().newXPath();
+        var idioma = (org.w3c.dom.Node) xpath.evaluate(
+                "//*[local-name()='selectOneMenu' and @id='idioma']/*[local-name()='ajax']",
+                doc, javax.xml.xpath.XPathConstants.NODE);
+        assertNotNull(idioma);
+        var ajax = idioma.getAttributes();
         assertEquals("@this", ajax.getNamedItem("process").getNodeValue());
         assertEquals("@all", ajax.getNamedItem("update").getNodeValue());
     }
