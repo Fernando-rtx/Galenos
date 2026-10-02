@@ -209,6 +209,9 @@
                 id="edicionContenido"
                 layout="block">
 
+                <p:messages id="consultaMessages" globalOnly="true"
+                            showDetail="false" closable="true" />
+
                 <h:panelGroup rendered="#{consultaModel.seleccionado ne null}">
                     <p:tabView id="consultaTabs">
 
@@ -244,7 +247,7 @@
                                         value="#{consultaModel.seleccionado.fechaInicio}"
                                         showIcon="true"
                                         pattern="dd/MM/yyyy HH:mm"
-                                        showTime="true" timeInput="true"
+                                        showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                         required="true"
                                         requiredMessage="#{msg['mensajes.error']}" />
 
@@ -262,7 +265,7 @@
                                         value="#{consultaModel.seleccionado.fechaFin}"
                                         showIcon="true"
                                         pattern="dd/MM/yyyy HH:mm"
-                                        showTime="true" timeInput="true"
+                                        showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                         validator="#{consultaModel.validarFechaFin}" />
 
                                     <p:message for="consultaFechaFin" />
@@ -347,7 +350,7 @@
                                     procesar="detalleConsulta"
                                     actualizar=":layoutForm:messages consultasTable edicionDialog"
                                     oncompleteCancelar="PF('consultaDialog').hide()"
-                                    oncompleteGuardar="if (!args.validationFailed) PF('consultaDialog').hide()" />
+                                    oncompleteGuardar="if (args.validationFailed) PF('consultaDialog').show(); else PF('consultaDialog').hide()" />
                             </div>
                         </p:tab>
 
@@ -385,14 +388,14 @@
                                     <p:column
                                         headerText="#{msg['consultaProcedimiento.fechaInicio']}">
                                         <h:outputText value="#{procedimiento.fechaInicio}">
-                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                         </h:outputText>
                                     </p:column>
 
                                     <p:column
                                         headerText="#{msg['consultaProcedimiento.fechaFin']}">
                                         <h:outputText value="#{procedimiento.fechaFin}">
-                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                         </h:outputText>
                                     </p:column>
 
@@ -450,7 +453,7 @@
                                                 value="#{consultaProcedimientoModel.seleccionado.fechaInicio}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" timeInput="true"
+                                                showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 required="true"
                                                 requiredMessage="#{msg['mensajes.error']}" />
 
@@ -468,7 +471,7 @@
                                                 value="#{consultaProcedimientoModel.seleccionado.fechaFin}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" timeInput="true"
+                                                showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 validator="#{consultaProcedimientoModel.validarFechaFin}" />
 
                                             <p:message for="procedimientoFechaFin" />
@@ -501,7 +504,7 @@
                                             value="#{msg['crud.guardar']}"
                                             action="#{consultaProcedimientoModel.guardar()}"
                                             process="procedimientoForm"
-                                            update=":layoutForm:messages :layoutForm:consultaTabs:procedimientosContenido :layoutForm:consultaTabs:pasosContenido" />
+                                            update=":layoutForm:messages :layoutForm:consultaMessages :layoutForm:consultaTabs:procedimientosContenido :layoutForm:consultaTabs:pasosContenido" />
                                     </div>
                                 </h:panelGroup>
                             </p:outputPanel>
@@ -546,14 +549,14 @@
                                     <p:column
                                         headerText="#{msg['consultaProcedimientoPaso.fechaInicio']}">
                                         <h:outputText value="#{paso.fechaInicio}">
-                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                         </h:outputText>
                                     </p:column>
 
                                     <p:column
                                         headerText="#{msg['consultaProcedimientoPaso.fechaFin']}">
                                         <h:outputText value="#{paso.fechaFin}">
-                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                         </h:outputText>
                                     </p:column>
 
@@ -628,7 +631,7 @@
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.fechaInicio}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" timeInput="true"
+                                                showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 required="true"
                                                 requiredMessage="#{msg['mensajes.error']}" />
 
@@ -646,7 +649,7 @@
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.fechaFin}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" timeInput="true"
+                                                showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 validator="#{consultaProcedimientoPasoModel.validarFechaFin}" />
 
                                             <p:message for="pasoFechaFin" />
@@ -697,7 +700,7 @@
                                             value="#{msg['crud.guardar']}"
                                             action="#{consultaProcedimientoPasoModel.guardar()}"
                                             process="pasoForm"
-                                            update=":layoutForm:messages pasosContenido" />
+                                            update=":layoutForm:messages :layoutForm:consultaMessages pasosContenido" />
                                     </div>
                                 </h:panelGroup>
                             </p:outputPanel>
