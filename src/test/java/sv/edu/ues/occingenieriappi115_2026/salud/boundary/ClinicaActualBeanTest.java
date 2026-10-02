@@ -9,6 +9,19 @@ import static org.mockito.Mockito.*;
 
 class ClinicaActualBeanTest {
     @Test
+    void falloDeConexionNoRompeVistaYPermiteRecuperarse() {
+        ClinicaDAO dao = mock(ClinicaDAO.class);
+        when(dao.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
+                .thenThrow(new IllegalStateException("conexión no disponible"))
+                .thenReturn(java.util.List.of());
+        ClinicaActualBean bean = new ClinicaActualBean(dao);
+        assertTrue(bean.getClinicas().isEmpty());
+        assertFalse(bean.isCatalogoDisponible());
+        assertTrue(bean.getClinicas().isEmpty());
+        assertTrue(bean.isCatalogoDisponible());
+    }
+
+    @Test
     void sesionesIndependientesYCambiosInvalidanFormularios() {
         ClinicaDAO dao = mock(ClinicaDAO.class);
         UUID a = UUID.randomUUID(), b = UUID.randomUUID();

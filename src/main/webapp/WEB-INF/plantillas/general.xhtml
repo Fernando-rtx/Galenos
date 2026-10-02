@@ -43,9 +43,11 @@
                             <f:selectItems value="#{clinicaActualBean.clinicas}" var="clinica"
                                            itemLabel="#{clinica.nombre}" itemValue="#{clinica.idClinica}" />
                             <p:ajax listener="#{clinicaActualBean.cambiarClinica}" process="@this"
-                                    update="contextoMessages"
+                                    update="clinicaActual contextoMessages"
                                     oncomplete="if (!args.validationFailed) window.location.reload()" />
                         </p:selectOneMenu>
+                        <h:outputText rendered="#{not clinicaActualBean.catalogoDisponible}"
+                                      value="#{msg['clinicaActual.errorCarga']}" role="status" />
                         <p:outputLabel
                             for="idioma"
                             value="#{msg['idioma.seleccionar']}" />
