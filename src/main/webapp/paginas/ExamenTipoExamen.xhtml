@@ -81,8 +81,10 @@
 
                             <p:ajax
                                 event="rowSelect"
-                                listener="#{examenTipoExamenModel.seleccionar(item)}"
+                                listener="#{examenTipoExamenModel.seleccionar(examenTipoExamenModel.seleccionado)}"
+                                process="@this"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('examenTipoExamenDialog').show()" />
 
                             <p:column
@@ -192,10 +194,10 @@
                                 value="#{examenTipoExamenModel.seleccionado.idExamen}"
                                 converter="#{examenConverter}"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}">
+                                requiredMessage="#{msg['examen.seleccioneExamen']}">
 
                                 <f:selectItem
-                                    itemLabel="-- Seleccionar --"
+                                    itemLabel="#{msg['crud.seleccionar']}"
                                     itemValue="#{null}" />
 
                                 <f:selectItems
@@ -204,6 +206,7 @@
                                     itemLabel="#{ex.nombre}"
                                     itemValue="#{ex}" />
                             </p:selectOneMenu>
+                            <p:message for="idExamen" />
                         </div>
 
                         <div class="form-field">
@@ -217,10 +220,11 @@
                                 value="#{examenTipoExamenModel.seleccionado.idTipoExamen}"
                                 converter="#{tipoExamenConverter}"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}">
+                                disabled="#{examenTipoExamenModel.estado eq 'EDICION'}"
+                                requiredMessage="#{msg['examen.seleccioneTipo']}">
 
                                 <f:selectItem
-                                    itemLabel="-- Seleccionar --"
+                                    itemLabel="#{msg['crud.seleccionar']}"
                                     itemValue="#{null}" />
 
                                 <f:selectItems
@@ -229,6 +233,7 @@
                                     itemLabel="#{te.nombre}"
                                     itemValue="#{te}" />
                             </p:selectOneMenu>
+                            <p:message for="idTipoExamen" />
                         </div>
 
                         <div class="form-field">
