@@ -154,7 +154,9 @@ class DocumentoModelTest {
         when(d.actualizar(nuevo)).thenReturn(actualizado);
         m.seleccionar(nuevo);
         m.guardar();
-        assertSame(actualizado, m.getSeleccionado());
+        verify(d).actualizar(nuevo);
+        assertNull(m.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, m.getEstado());
     }
 
     @Test
@@ -240,6 +242,80 @@ class DocumentoModelTest {
 
         verify(dao).guardar(documento);
         assertSame(tipo, documento.getIdTipoDocumento());
+    }
+
+    @Test
+    void alCrearRecargaLaColeccionDeLaPersonaDesdeElDao() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoDocumento tipo = new TipoDocumento(UUID.randomUUID());
+        tipo.setActivo(true);
+        tipo.setExpresionRegular("^PAS-[0-9]+$");
+        when(tipos.buscarPorId(tipo.getIdTipoDocumento())).thenReturn(tipo);
+        Documento documento = new Documento(UUID.randomUUID());
+        documento.setIdPersona(persona);
+        documento.setIdTipoDocumento(tipo);
+        documento.setValor("PAS-123");
+        when(dao.obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList()))
+                .thenReturn(List.of(), List.of(documento));
+        when(dao.guardar(any(Documento.class))).thenAnswer(invocacion -> invocacion.getArgument(0));
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
+        modelo.nuevoParaPersona(persona);
+        modelo.getSeleccionado().setIdTipoDocumento(tipo);
+        modelo.getSeleccionado().setValor("PAS-123");
+
+        modelo.guardar();
+
+        assertEquals(List.of(documento), modelo.getDocumentosPorPersona(persona));
+        assertNull(modelo.getSeleccionado(), "el formulario debe quedar limpio tras guardar");
+        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+        verify(dao, times(2)).obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList());
+    }
+
+    @Test
+    void alEditarRecargaLaColeccionConElValorActualizado() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoDocumento tipo = new TipoDocumento(UUID.randomUUID());
+        tipo.setActivo(true);
+        tipo.setExpresionRegular("^[0-9]+$");
+        when(tipos.buscarPorId(tipo.getIdTipoDocumento())).thenReturn(tipo);
+        Documento documento = new Documento(UUID.randomUUID());
+        documento.setIdPersona(persona);
+        documento.setIdTipoDocumento(tipo);
+        documento.setValor("123");
+        when(dao.obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList()))
+                .thenReturn(List.of(documento), List.of(documento));
+        when(dao.actualizar(documento)).thenReturn(documento);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
+        assertEquals(List.of(documento), modelo.getDocumentosPorPersona(persona));
+        modelo.seleccionar(documento);
+        documento.setValor("456");
+
+        modelo.guardar();
+
+        assertEquals("456", modelo.getDocumentosPorPersona(persona).get(0).getValor());
+        assertNull(modelo.getSeleccionado());
+        verify(dao, times(2)).obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList());
+    }
+
+    @Test
+    void alLimpiarContextoLaSiguienteAperturaVuelveACargarDocumentos() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        Documento documentoExistente = new Documento(UUID.randomUUID());
+        Documento documentoActualizado = new Documento(UUID.randomUUID());
+        when(dao.obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList()))
+                .thenReturn(List.of(documentoExistente), List.of(documentoActualizado));
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
+
+        assertEquals(List.of(documentoExistente), modelo.getDocumentosPorPersona(persona));
+        modelo.limpiarContexto();
+
+        assertEquals(List.of(documentoActualizado), modelo.getDocumentosPorPersona(persona));
+        verify(dao, times(2)).obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList());
     }
 
     @Test

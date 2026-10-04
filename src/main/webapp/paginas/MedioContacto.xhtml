@@ -52,6 +52,7 @@
                                   #{medioContactoModel.personaContexto.apellidos}</h:panelGroup>
                     <div class="section-divider"></div>
                     <p:messages id="messages"
+                                globalOnly="true"
                                 showDetail="false"
                                 closable="true" />
 
@@ -69,9 +70,11 @@
                                  rowKey="#{medioContactoModel.getRowKey(item)}"
                                  emptyMessage="#{msg['medioContacto.sinRegistros']}"
                                  styleClass="clinical-table medio-contacto-table">
-                        <p:ajax event="rowSelect"
-                                listener="#{medioContactoModel.seleccionar(item)}"
+                        <p:ajax event="rowDblselect"
+                                listener="#{medioContactoModel.seleccionar(medioContactoModel.seleccionado)}"
+                                process="@this"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('contactoDialog').show()" />
                         <p:column headerText="#{msg['medioContacto.persona']}"
                                   field="idPersona.nombres">
@@ -87,16 +90,6 @@
                                   filterMatchMode="contains">
                             <h:outputText value="#{item.valor}"
                                           styleClass="valor-contacto" />
-                        </p:column>
-                        <p:column headerText="#{msg['comun.acciones']}"
-                                  styleClass="action-cell">
-                            <p:commandButton icon="pi pi-pencil"
-                                             title="#{msg['crud.editar']}"
-                                             action="#{medioContactoModel.seleccionar(item)}"
-                                             process="@this"
-                                             update="edicionDialog"
-                                             oncomplete="PF('contactoDialog').show()"
-                                             styleClass="edit-button" />
                         </p:column>
                     </p:dataTable>
                 </div>
@@ -141,15 +134,16 @@
                             <p:selectOneMenu id="tipo"
                                              value="#{medioContactoModel.tipoMedioSeleccionadoId}"
                                              required="true"
+                                             disabled="#{medioContactoModel.estado eq 'EDICION'}"
                                              requiredMessage="#{msg['medioContacto.tipoRequerido']}"
                                              styleClass="selector-wide">
                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                               itemValue="#{null}"
                                               noSelectionOption="true" />
-                                <f:selectItems value="#{medioContactoModel.tiposMedioContacto}"
+                                <f:selectItems value="#{medioContactoModel.tiposMedioContactoAsignables}"
                                                var="tipo"
                                                itemValue="#{tipo.idTipoMedioContacto}"
-                                               itemLabel="#{tipo.nombre}" />
+                                               itemLabel="#{tipo.activo eq true ? tipo.nombre : tipo.nombre.concat(' (').concat(msg['tipoMedioContacto.inactivo']).concat(')')}" />
 
                                 <p:ajax
                                     process="@this" />

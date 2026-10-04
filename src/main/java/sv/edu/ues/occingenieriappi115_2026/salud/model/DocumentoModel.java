@@ -40,6 +40,8 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     private UUID tipoDocumentoOriginalId;
     private Persona personaContexto;
     private List<Persona> personas;
+    private UUID personaDocumentosCargadosId;
+    private List<Documento> documentosPersona;
 
     public DocumentoModel() {
     }
@@ -149,10 +151,24 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         if (persona == null || persona.getIdPersona() == null) {
             return List.of();
         }
-        return getDao().obtenerPagina(0, Integer.MAX_VALUE,
+        if (documentosPersona == null
+                || !persona.getIdPersona().equals(personaDocumentosCargadosId)) {
+            recargarDocumentosPorPersona(persona);
+        }
+        return documentosPersona;
+    }
+
+    private void recargarDocumentosPorPersona(Persona persona) {
+        if (persona == null || persona.getIdPersona() == null) {
+            personaDocumentosCargadosId = null;
+            documentosPersona = List.of();
+            return;
+        }
+        documentosPersona = getDao().obtenerPagina(0, Integer.MAX_VALUE,
                 List.of(new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL,
                         persona.getIdPersona())),
                 List.of());
+        personaDocumentosCargadosId = persona.getIdPersona();
     }
 
     /**
@@ -166,6 +182,7 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
             return;
         }
         personaContexto = persona;
+        recargarDocumentosPorPersona(persona);
         nuevo();
     }
 
@@ -202,6 +219,7 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         if (seleccionado == null) {
             return;
         }
+        Persona personaDocumento = seleccionado.getIdPersona();
         seleccionado.setValor(normalizar(seleccionado.getValor()));
         seleccionado.setRutaFisica(normalizar(seleccionado.getRutaFisica()));
         if (!resolverYValidarTipoDocumento()) {
@@ -215,6 +233,9 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
             case EDICION -> seleccionado = getDao().actualizar(seleccionado);
             case LISTADO -> { }
         }
+        recargarDocumentosPorPersona(personaDocumento);
+        seleccionado = null;
+        tipoDocumentoOriginalId = null;
         setEstado(ESTADO_CRUD.LISTADO);
         agregarMensaje("documento.guardado", FacesMessage.SEVERITY_INFO);
     }
@@ -225,6 +246,12 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
+    public void limpiarContexto() {
+        personaContexto = null;
+        personaDocumentosCargadosId = null;
+        documentosPersona = null;
+    }
+
     public void eliminarSeleccionadoParaPersona(Persona persona) {
         if (!perteneceAPersona(seleccionado, persona)
                 || seleccionado.getIdDocumento() == null) {
@@ -232,6 +259,7 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         }
         try {
             if (getDao().eliminar(seleccionado.getIdDocumento())) {
+                recargarDocumentosPorPersona(persona);
                 cancelar();
                 agregarMensaje("documento.eliminado", FacesMessage.SEVERITY_INFO);
             } else {
@@ -261,26 +289,31 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     }
 
     private boolean validarAntesDeGuardar() {
-        boolean valido = true;
         if (seleccionado.getIdPersona() == null) {
             agregarError(null, "documento.personaRequerida");
-            valido = false;
+            return false;
         }
         if (seleccionado.getIdTipoDocumento() == null) {
             agregarError("tipo", "documento.tipoRequerido");
-            valido = false;
-        } else if (tieneTipoDuplicadoParaPersona()) {
-            agregarError("tipo", "documento.tipoDuplicado");
-            valido = false;
+            return false;
         }
         if (seleccionado.getValor() == null || seleccionado.getValor().isBlank()) {
             agregarError("valor", "documento.valorRequerido");
-            valido = false;
-        } else if (!cumpleExpresionRegular(seleccionado.getValor())) {
-            agregarError("valor", "documento.valorFormato");
-            valido = false;
+            return false;
         }
-        return valido;
+        if (!cumpleExpresionRegular(seleccionado.getValor())) {
+            agregarError("valor", "documento.valorFormato");
+            return false;
+        }
+        UUID idDocumentoExcluir = getEstado() == ESTADO_CRUD.EDICION
+                ? seleccionado.getIdDocumento() : null;
+        if (documentoDAO.existeDocumento(
+                seleccionado.getIdTipoDocumento().getIdTipoDocumento(),
+                seleccionado.getValor(), idDocumentoExcluir)) {
+            agregarError("valor", "documento.duplicadoGlobal");
+            return false;
+        }
+        return true;
     }
 
     private boolean resolverYValidarTipoDocumento() {
