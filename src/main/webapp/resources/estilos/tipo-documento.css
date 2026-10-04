@@ -205,6 +205,10 @@
     overflow-wrap: anywhere;
 }
 
+.regex-input {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 /* Diálogo y formulario para alta y edición de tipos documentales. */
 .clinical-dialog.ui-dialog {
     border: 0;

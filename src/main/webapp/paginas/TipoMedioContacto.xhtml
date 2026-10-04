@@ -127,6 +127,13 @@
                                                 : 'secondary'}" />
                             </p:column>
 
+                            <p:column headerText="#{msg['tipoMedioContacto.expresionRegular']}">
+                                <h:outputText value="#{empty item.expresionRegular
+                                                       ? msg['comun.sinDato']
+                                                       : item.expresionRegular}"
+                                              styleClass="regex-value" />
+                            </p:column>
+
                             <p:column
                                 headerText="#{msg['tipoMedioContacto.indicaciones']}"
                                 styleClass="observaciones-cell">
@@ -204,34 +211,41 @@
                         </div>
 
                         <div class="form-field">
-                            <p:outputLabel
-                                for="indicaciones"
-                                value="#{msg['tipoMedioContacto.indicaciones']} *"
-                                styleClass="form-label" />
-
-                            <p:inputTextarea
-                                id="indicaciones"
-                                value="#{tipoMedioContactoModel.seleccionado.indicaciones}"
-                                rows="4"
-                                autoResize="false"
-                                placeholder="#{msg['tipoMedioContacto.indicacionesPlaceholder']}" />
-                            <p:message for="indicaciones" showSummary="true" showDetail="false" />
+                            <p:outputLabel for="formatoSugerido"
+                                           value="#{msg['tipoMedioContacto.formatoSugerido']}"
+                                           styleClass="form-label" />
+                            <p:selectOneMenu id="formatoSugerido"
+                                             value="#{tipoMedioContactoModel.formatoSugerido}">
+                                <f:selectItems value="#{tipoMedioContactoModel.formatosSugeridos}"
+                                               var="formato"
+                                               itemValue="#{formato}"
+                                               itemLabel="#{msg[formato.clave]}" />
+                                <p:ajax process="@this" update="expresionRegular" />
+                            </p:selectOneMenu>
                         </div>
 
                         <div class="form-field">
-                            <p:outputLabel
-                                for="formatoContacto"
-                                value="#{msg['tipoMedioContacto.formato']} *"
-                                styleClass="form-label" />
+                            <p:outputLabel for="expresionRegular"
+                                           value="#{msg['tipoMedioContacto.expresionRegular']}"
+                                           styleClass="form-label" />
+                            <p:inputText id="expresionRegular"
+                                         styleClass="regex-input"
+                                         value="#{tipoMedioContactoModel.seleccionado.expresionRegular}"
+                                         placeholder="#{msg['tipoMedioContacto.expresionRegularPlaceholder']}" />
+                            <span class="form-helper">#{msg['tipoMedioContacto.expresionRegularAyuda']}</span>
+                            <p:message for="expresionRegular" showSummary="true" showDetail="false" />
+                        </div>
 
-                            <p:selectOneMenu id="formatoContacto"
-                                value="#{tipoMedioContactoModel.formatoContacto}">
-                                <f:selectItem itemLabel="#{msg['tipoMedioContacto.seleccionarFormato']}"
-                                    itemValue="#{null}" noSelectionOption="true" />
-                                <f:selectItems value="#{tipoMedioContactoModel.formatosContacto}"
-                                    var="formato" itemValue="#{formato}" itemLabel="#{msg[formato.clave]}" />
-                            </p:selectOneMenu>
-                            <p:message for="formatoContacto" showSummary="true" showDetail="false" />
+                        <div class="form-field">
+                            <p:outputLabel for="indicaciones"
+                                           value="#{msg['tipoMedioContacto.indicaciones']} *"
+                                           styleClass="form-label" />
+                            <p:inputTextarea id="indicaciones"
+                                             value="#{tipoMedioContactoModel.seleccionado.indicaciones}"
+                                             rows="4"
+                                             autoResize="false"
+                                             placeholder="#{msg['tipoMedioContacto.indicacionesPlaceholder']}" />
+                            <p:message for="indicaciones" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="toggle-field">

@@ -418,6 +418,17 @@
     outline-offset: 3px;
 }
 
+.regex-value {
+    color: #405767;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+}
+
+.regex-input {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 @media (max-width: 480px) {
     .tipo-contacto-dialog .crud-actions-bottom .ui-button {
         flex: 1;
