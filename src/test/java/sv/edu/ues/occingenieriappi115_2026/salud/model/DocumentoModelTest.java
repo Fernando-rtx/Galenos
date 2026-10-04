@@ -388,7 +388,7 @@ class DocumentoModelTest {
     }
 
     @Test
-    void tipoDuplicadoParaLaMismaPersonaImpideGuardar() {
+    void mismaPersonaNoPuedeCrearDeNuevoLaMismaCombinacionTipoYValor() {
         DocumentoDAO dao = mock(DocumentoDAO.class);
         TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
         Persona persona = new Persona(UUID.randomUUID());
@@ -396,11 +396,13 @@ class DocumentoModelTest {
         Documento existente = new Documento(UUID.randomUUID());
         existente.setIdPersona(persona);
         existente.setIdTipoDocumento(dui);
-        existente.setValor("01234567-8");
+        existente.setValor("06887861-1");
         dui.setActivo(true);
+        dui.setExpresionRegular("^[0-9]{8}-[0-9]$");
         when(tipos.buscarPorId(dui.getIdTipoDocumento())).thenReturn(dui);
         when(dao.obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList()))
                 .thenReturn(List.of(existente));
+        when(dao.existeDocumento(dui.getIdTipoDocumento(), "06887861-1", null)).thenReturn(true);
         DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
         modelo.nuevoParaPersona(persona);
         modelo.getSeleccionado().setIdTipoDocumento(dui);
@@ -409,7 +411,78 @@ class DocumentoModelTest {
         modelo.guardar();
 
         verify(dao, never()).guardar(any(Documento.class));
+        verify(dao).existeDocumento(dui.getIdTipoDocumento(), "06887861-1", null);
         assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+        assertEquals("06887861-1", modelo.getSeleccionado().getValor());
+    }
+
+    @Test
+    void documentoDuplicadoGlobalSeRechazaAunqueSeaDeOtraPersona() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        Persona personaA = new Persona(UUID.randomUUID());
+        Persona personaB = new Persona(UUID.randomUUID());
+        TipoDocumento dui = new TipoDocumento(UUID.randomUUID());
+        dui.setActivo(true);
+        dui.setExpresionRegular("^[0-9]{8}-[0-9]$");
+        when(tipos.buscarPorId(dui.getIdTipoDocumento())).thenReturn(dui);
+        when(dao.existeDocumento(dui.getIdTipoDocumento(), "06887861-1", null)).thenReturn(true);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
+        modelo.nuevoParaPersona(personaB);
+        modelo.getSeleccionado().setIdTipoDocumento(dui);
+        modelo.getSeleccionado().setValor("06887861-1");
+
+        modelo.guardar();
+
+        verify(dao, never()).guardar(any(Documento.class));
+        verify(dao).existeDocumento(dui.getIdTipoDocumento(), "06887861-1", null);
+        assertEquals(personaB, modelo.getSeleccionado().getIdPersona());
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+        assertNotEquals(personaA.getIdPersona(), personaB.getIdPersona());
+    }
+
+    @Test
+    void mismoValorConTipoDiferenteSePermite() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoDocumento pasaporte = new TipoDocumento(UUID.randomUUID());
+        pasaporte.setActivo(true);
+        pasaporte.setExpresionRegular("^[0-9-]+$");
+        when(tipos.buscarPorId(pasaporte.getIdTipoDocumento())).thenReturn(pasaporte);
+        when(dao.existeDocumento(pasaporte.getIdTipoDocumento(), "12345678-9", null)).thenReturn(false);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
+        modelo.nuevoParaPersona(persona);
+        Documento nuevo = modelo.getSeleccionado();
+        nuevo.setIdTipoDocumento(pasaporte);
+        nuevo.setValor("12345678-9");
+
+        modelo.guardar();
+
+        verify(dao).guardar(nuevo);
+        verify(dao).existeDocumento(pasaporte.getIdTipoDocumento(), "12345678-9", null);
+    }
+
+    @Test
+    void valorDiferenteDelMismoTipoSePermite() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoDocumento dui = new TipoDocumento(UUID.randomUUID());
+        dui.setActivo(true);
+        dui.setExpresionRegular("^[0-9]{8}-[0-9]$");
+        when(tipos.buscarPorId(dui.getIdTipoDocumento())).thenReturn(dui);
+        when(dao.existeDocumento(dui.getIdTipoDocumento(), "01234567-8", null)).thenReturn(false);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
+        modelo.nuevoParaPersona(persona);
+        Documento nuevo = modelo.getSeleccionado();
+        nuevo.setIdTipoDocumento(dui);
+        nuevo.setValor("01234567-8");
+
+        modelo.guardar();
+
+        verify(dao).guardar(nuevo);
+        verify(dao).existeDocumento(dui.getIdTipoDocumento(), "01234567-8", null);
     }
 
     @Test
@@ -434,7 +507,36 @@ class DocumentoModelTest {
         modelo.guardar();
 
         verify(dao).actualizar(existente);
+        verify(dao).existeDocumento(dui.getIdTipoDocumento(), "01234567-8", existente.getIdDocumento());
         assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+    }
+
+    @Test
+    void editarHaciaUnaCombinacionDeOtroDocumentoSeRechazaExcluyendoElActual() {
+        DocumentoDAO dao = mock(DocumentoDAO.class);
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoDocumento dui = new TipoDocumento(UUID.randomUUID());
+        dui.setActivo(true);
+        dui.setExpresionRegular("^[0-9]{8}-[0-9]$");
+        Documento documentoB = new Documento(UUID.randomUUID());
+        documentoB.setIdPersona(persona);
+        documentoB.setIdTipoDocumento(dui);
+        documentoB.setValor("01234567-8");
+        when(tipos.buscarPorId(dui.getIdTipoDocumento())).thenReturn(dui);
+        when(dao.existeDocumento(dui.getIdTipoDocumento(), "06887861-1", documentoB.getIdDocumento()))
+                .thenReturn(true);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
+        modelo.seleccionar(documentoB);
+        documentoB.setValor("06887861-1");
+
+        modelo.guardar();
+
+        verify(dao).existeDocumento(dui.getIdTipoDocumento(), "06887861-1", documentoB.getIdDocumento());
+        verify(dao, never()).actualizar(any(Documento.class));
+        assertSame(documentoB, modelo.getSeleccionado());
+        assertEquals("06887861-1", modelo.getSeleccionado().getValor());
+        assertEquals(ESTADO_CRUD.EDICION, modelo.getEstado());
     }
 
     @Test

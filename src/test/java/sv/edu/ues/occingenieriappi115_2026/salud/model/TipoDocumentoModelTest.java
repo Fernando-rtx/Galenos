@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -129,7 +130,169 @@ class TipoDocumentoModelTest {
 
         model.guardar();
 
-        verifyNoInteractions(dao);
+        verify(dao).existeNombreNormalizado("DUI", null);
+        verify(dao, never()).guardar(model.getSeleccionado());
+        verify(dao, never()).actualizar(model.getSeleccionado());
         assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+    }
+
+    @Test
+    void elegirPresetDuiRellenaExpresionDelCatalogo() {
+        TipoDocumentoModel model = new TipoDocumentoModel(mock(TipoDocumentoDAO.class));
+        model.nuevo();
+
+        model.setFormatoSugerido(FormatoRegexSugerido.DUI_SV);
+
+        assertEquals("^[0-9]{8}-[0-9]$", model.getSeleccionado().getExpresionRegular());
+    }
+
+    @Test
+    void personalizarConservaLaExpresionManual() {
+        TipoDocumentoModel model = new TipoDocumentoModel(mock(TipoDocumentoDAO.class));
+        model.nuevo();
+        model.setFormatoSugerido(FormatoRegexSugerido.DUI_SV);
+        model.setFormatoSugerido(FormatoRegexSugerido.PERSONALIZADO);
+        model.getSeleccionado().setExpresionRegular("^[A-Z]{2}[0-9]{7}$");
+
+        assertEquals("^[A-Z]{2}[0-9]{7}$", model.getSeleccionado().getExpresionRegular());
+        assertEquals(FormatoRegexSugerido.PERSONALIZADO, model.getFormatoSugerido());
+    }
+
+    @Test
+    void editarReconocePresetExactoSinModificarLaExpresionPersistida() {
+        TipoDocumentoModel model = new TipoDocumentoModel(mock(TipoDocumentoDAO.class));
+        TipoDocumento tipo = new TipoDocumento();
+        tipo.setExpresionRegular("^[0-9]{8}-[0-9]$");
+
+        model.seleccionar(tipo);
+
+        assertEquals(FormatoRegexSugerido.DUI_SV, model.getFormatoSugerido());
+        assertEquals("^[0-9]{8}-[0-9]$", tipo.getExpresionRegular());
+    }
+
+    @Test
+    void editarExpresionDesconocidaLaMuestraComoPersonalizadaSinAlterarla() {
+        TipoDocumentoModel model = new TipoDocumentoModel(mock(TipoDocumentoDAO.class));
+        TipoDocumento tipo = new TipoDocumento();
+        tipo.setExpresionRegular("^[A-Z]{2}[0-9]{7}$");
+
+        model.seleccionar(tipo);
+
+        assertEquals(FormatoRegexSugerido.PERSONALIZADO, model.getFormatoSugerido());
+        assertEquals("^[A-Z]{2}[0-9]{7}$", tipo.getExpresionRegular());
+    }
+
+    @Test
+    void nombreDuiDuplicadoSeRechazaAlCrear() {
+        TipoDocumentoDAO dao = mock(TipoDocumentoDAO.class);
+        when(dao.existeNombreNormalizado("DUI", null)).thenReturn(true);
+        TipoDocumentoModel model = new TipoDocumentoModel(dao);
+        model.nuevo();
+        model.getSeleccionado().setNombre("DUI");
+
+        model.guardar();
+
+        verify(dao).existeNombreNormalizado("DUI", null);
+        verify(dao, never()).guardar(model.getSeleccionado());
+        assertEquals("DUI", model.getSeleccionado().getNombre());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+    }
+
+    @Test
+    void nombreDuiEnMinusculasSeRechazaAlCrear() {
+        TipoDocumentoDAO dao = mock(TipoDocumentoDAO.class);
+        when(dao.existeNombreNormalizado("dui", null)).thenReturn(true);
+        TipoDocumentoModel model = new TipoDocumentoModel(dao);
+        model.nuevo();
+        model.getSeleccionado().setNombre("dui");
+
+        model.guardar();
+
+        verify(dao).existeNombreNormalizado("dui", null);
+        verify(dao, never()).guardar(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+    }
+
+    @Test
+    void nombreConEspaciosExterioresSeRechazaAlCrear() {
+        TipoDocumentoDAO dao = mock(TipoDocumentoDAO.class);
+        when(dao.existeNombreNormalizado(" DUI ", null)).thenReturn(true);
+        TipoDocumentoModel model = new TipoDocumentoModel(dao);
+        model.nuevo();
+        model.getSeleccionado().setNombre(" DUI ");
+
+        model.guardar();
+
+        verify(dao).existeNombreNormalizado(" DUI ", null);
+        verify(dao, never()).guardar(model.getSeleccionado());
+        assertEquals(" DUI ", model.getSeleccionado().getNombre());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+    }
+
+    @Test
+    void duiExistenteInactivoTambienImpideCrearOtro() {
+        TipoDocumentoDAO dao = mock(TipoDocumentoDAO.class);
+        when(dao.existeNombreNormalizado("DUI", null)).thenReturn(true);
+        TipoDocumentoModel model = new TipoDocumentoModel(dao);
+        model.nuevo();
+        model.getSeleccionado().setNombre("DUI");
+        model.getSeleccionado().setActivo(true);
+
+        model.guardar();
+
+        verify(dao).existeNombreNormalizado("DUI", null);
+        verify(dao, never()).guardar(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+    }
+
+    @Test
+    void editarConservandoNombreExcluyeElUuidActualYPermiteGuardar() {
+        TipoDocumentoDAO dao = mock(TipoDocumentoDAO.class);
+        TipoDocumento tipo = new TipoDocumento(java.util.UUID.randomUUID());
+        tipo.setNombre("DUI");
+        when(dao.existeNombreNormalizado("DUI", tipo.getIdTipoDocumento())).thenReturn(false);
+        when(dao.actualizar(tipo)).thenReturn(tipo);
+        TipoDocumentoModel model = new TipoDocumentoModel(dao);
+        model.seleccionar(tipo);
+
+        model.guardar();
+
+        verify(dao).existeNombreNormalizado("DUI", tipo.getIdTipoDocumento());
+        verify(dao).actualizar(tipo);
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+    }
+
+    @Test
+    void editarOtroTipoHaciaDuiExistenteSeRechazaYExcluyeSuPropioUuid() {
+        TipoDocumentoDAO dao = mock(TipoDocumentoDAO.class);
+        TipoDocumento tipo = new TipoDocumento(java.util.UUID.randomUUID());
+        tipo.setNombre("Pasaporte");
+        when(dao.existeNombreNormalizado("DUI", tipo.getIdTipoDocumento())).thenReturn(true);
+        TipoDocumentoModel model = new TipoDocumentoModel(dao);
+        model.seleccionar(tipo);
+        tipo.setNombre("DUI");
+
+        model.guardar();
+
+        verify(dao).existeNombreNormalizado("DUI", tipo.getIdTipoDocumento());
+        verify(dao, never()).actualizar(tipo);
+        assertEquals("DUI", model.getSeleccionado().getNombre());
+        assertEquals(ESTADO_CRUD.EDICION, model.getEstado());
+    }
+
+    @Test
+    void nombreDiferenteSePermiteYSeGuardaSinEspaciosExteriores() {
+        TipoDocumentoDAO dao = mock(TipoDocumentoDAO.class);
+        TipoDocumentoModel model = new TipoDocumentoModel(dao);
+        model.nuevo();
+        TipoDocumento seleccionado = model.getSeleccionado();
+        seleccionado.setNombre("  Pasaporte  ");
+
+        model.guardar();
+
+        verify(dao).existeNombreNormalizado("  Pasaporte  ", null);
+        verify(dao).guardar(seleccionado);
+        assertEquals("Pasaporte", seleccionado.getNombre());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
 }

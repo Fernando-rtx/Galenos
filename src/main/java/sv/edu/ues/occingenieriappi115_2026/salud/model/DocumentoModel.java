@@ -342,25 +342,6 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         return true;
     }
 
-    private boolean tieneTipoDuplicadoParaPersona() {
-        if (seleccionado.getIdPersona() == null
-                || seleccionado.getIdPersona().getIdPersona() == null
-                || seleccionado.getIdTipoDocumento() == null
-                || seleccionado.getIdTipoDocumento().getIdTipoDocumento() == null) {
-            return false;
-        }
-
-        UUID idSeleccionado = seleccionado.getIdDocumento();
-        UUID idTipoSeleccionado = seleccionado.getIdTipoDocumento().getIdTipoDocumento();
-        return getDocumentosPorPersona(seleccionado.getIdPersona()).stream()
-                .filter(documento -> documento != null && documento != seleccionado)
-                .filter(documento -> idSeleccionado == null
-                        || !idSeleccionado.equals(documento.getIdDocumento()))
-                .map(Documento::getIdTipoDocumento)
-                .filter(tipo -> tipo != null && tipo.getIdTipoDocumento() != null)
-                .anyMatch(tipo -> idTipoSeleccionado.equals(tipo.getIdTipoDocumento()));
-    }
-
     private boolean cumpleExpresionRegular(String valor) {
         if (seleccionado.getIdTipoDocumento() == null) {
             return true;

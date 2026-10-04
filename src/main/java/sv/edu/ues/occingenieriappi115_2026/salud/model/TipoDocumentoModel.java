@@ -8,6 +8,9 @@ import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoDocumentoDAO;
@@ -31,6 +34,7 @@ public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements 
 
     /** Registro enlazado al formulario; es nuevo o proviene de la tabla. */
     private TipoDocumento seleccionado;
+    private FormatoRegexSugerido formatoSugerido = FormatoRegexSugerido.PERSONALIZADO;
 
     public TipoDocumentoModel() {
     }
@@ -52,15 +56,37 @@ public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements 
         this.seleccionado = seleccionado;
     }
 
+    public FormatoRegexSugerido getFormatoSugerido() {
+        return formatoSugerido;
+    }
+
+    public void setFormatoSugerido(FormatoRegexSugerido formato) {
+        FormatoRegexSugerido nuevoFormato = formato == null
+                ? FormatoRegexSugerido.PERSONALIZADO : formato;
+        if (seleccionado != null && nuevoFormato != formatoSugerido) {
+            if (nuevoFormato.getExpresionRegular() != null) {
+                seleccionado.setExpresionRegular(nuevoFormato.getExpresionRegular());
+            }
+            formatoSugerido = nuevoFormato;
+        }
+    }
+
+    public List<FormatoRegexSugerido> getFormatosSugeridos() {
+        return Arrays.asList(FormatoRegexSugerido.values());
+    }
+
     public void nuevo() {
         // Prepara una entidad transitoria y cambia el formulario a creación.
         seleccionado = new TipoDocumento();
+        formatoSugerido = FormatoRegexSugerido.PERSONALIZADO;
         setEstado(ESTADO_CRUD.CREACION);
     }
 
     public void seleccionar(TipoDocumento seleccionado) {
         // Conserva la fila elegida para editarla durante las peticiones AJAX.
         this.seleccionado = seleccionado;
+        formatoSugerido = seleccionado == null ? FormatoRegexSugerido.PERSONALIZADO
+                : FormatoRegexSugerido.desdeExpresion(seleccionado.getExpresionRegular());
         setEstado(ESTADO_CRUD.EDICION);
     }
 
@@ -73,6 +99,12 @@ public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements 
             marcarError("nombre", "tipoDocumento.nombreRequerido");
             return;
         }
+        UUID idTipoDocumentoExcluir = getEstado() == ESTADO_CRUD.EDICION
+                ? seleccionado.getIdTipoDocumento() : null;
+        if (tipoDocumentoDAO.existeNombreNormalizado(seleccionado.getNombre(), idTipoDocumentoExcluir)) {
+            marcarError("nombre", "tipoDocumento.nombreDuplicado");
+            return;
+        }
         String expresion = seleccionado.getExpresionRegular();
         if (expresion != null && !expresion.isBlank()) {
             try {
@@ -82,6 +114,7 @@ public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements 
                 return;
             }
         }
+        seleccionado.setNombre(seleccionado.getNombre().strip());
         switch (getEstado()) {
             case CREACION -> getDao().guardar(seleccionado);
             case EDICION -> seleccionado = getDao().actualizar(seleccionado);
@@ -95,6 +128,7 @@ public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements 
     public void cancelar() {
         // Restablece el listado sin escribir cambios en PostgreSQL.
         seleccionado = null;
+        formatoSugerido = FormatoRegexSugerido.PERSONALIZADO;
         setEstado(ESTADO_CRUD.LISTADO);
     }
 
