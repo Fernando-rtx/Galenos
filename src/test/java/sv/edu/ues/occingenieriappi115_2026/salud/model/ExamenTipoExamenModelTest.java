@@ -61,11 +61,14 @@ class ExamenTipoExamenModelTest {
         Examen examen = examenPersistido();
         ExamenTipoExamen fila = asociacionPersistida(examen);
         TipoExamen tipo = fila.getIdTipoExamen();
+        tipo.setActivo(false);
+        when(tipos.obtenerTodos()).thenReturn(List.of(tipo));
         when(tipos.buscarPorId(tipo.getIdTipoExamen())).thenReturn(tipo);
         when(dao.buscarPorId(fila.getIdExamenTipoExamen())).thenReturn(fila);
         when(dao.countByIdExamenAndIdTipoExamen(examen.getIdExamen(), tipo.getIdTipoExamen())).thenReturn(1L);
         model.cargarPorExamen(examen);
         model.seleccionarAsociacion(evento(fila));
+        assertEquals(List.of(tipo), model.getTipoExamenes());
         model.getSeleccionado().setObservaciones(" Cambio ");
 
         model.guardarAsociacion();
@@ -78,35 +81,31 @@ class ExamenTipoExamenModelTest {
     }
 
     @Test
-    void editarTipoRechazaDuplicadoYPermiteTipoSinAsociacion() {
-        for (long existentes : List.of(0L, 1L)) {
-            ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
-            TipoExamenDAO tipos = mock(TipoExamenDAO.class);
-            ExamenTipoExamenModel model = new ExamenTipoExamenModel(dao, mock(ExamenDAO.class), tipos);
-            Examen examen = examenPersistido();
-            ExamenTipoExamen fila = asociacionPersistida(examen);
-            TipoExamen nuevoTipo = new TipoExamen(UUID.randomUUID());
-            when(tipos.buscarPorId(nuevoTipo.getIdTipoExamen())).thenReturn(nuevoTipo);
-            when(dao.buscarPorId(fila.getIdExamenTipoExamen())).thenReturn(fila);
-            when(dao.countByIdExamenAndIdTipoExamen(examen.getIdExamen(), nuevoTipo.getIdTipoExamen()))
-                    .thenReturn(existentes);
-            model.cargarPorExamen(examen);
-            model.seleccionarAsociacion(evento(fila));
-            model.setIdTipoExamenSeleccionado(nuevoTipo.getIdTipoExamen().toString());
-            model.facesContext = contexto();
+    void cambiarTipoDuranteEdicionEsImposibleYLaMutacionDirectaSeRechaza() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        TipoExamenDAO tipos = mock(TipoExamenDAO.class);
+        Examen examen = examenPersistido();
+        ExamenTipoExamen fila = asociacionPersistida(examen);
+        TipoExamen original = fila.getIdTipoExamen();
+        TipoExamen alternativo = new TipoExamen(UUID.randomUUID());
+        when(dao.buscarPorId(fila.getIdExamenTipoExamen())).thenReturn(fila);
+        when(tipos.buscarPorId(original.getIdTipoExamen())).thenReturn(original);
+        ExamenTipoExamenModel model = new ExamenTipoExamenModel(dao, mock(ExamenDAO.class), tipos);
+        model.cargarPorExamen(examen);
+        model.seleccionarAsociacion(evento(fila));
+        model.facesContext = contexto();
 
-            model.guardarAsociacion();
+        model.setIdTipoExamenSeleccionado(alternativo.getIdTipoExamen().toString());
+        assertEquals(original.getIdTipoExamen().toString(), model.getIdTipoExamenSeleccionado());
+        model.getSeleccionado().setIdTipoExamen(alternativo);
 
-            if (existentes == 0) {
-                verify(dao).actualizar(argThat(a -> a.getIdTipoExamen() == nuevoTipo));
-                verify(model.facesContext, never()).validationFailed();
-            } else {
-                verify(dao, never()).actualizar(any());
-                verify(model.facesContext).validationFailed();
-                assertNotNull(model.getSeleccionado());
-            }
-            verify(dao, never()).guardar(any());
-        }
+        model.guardarAsociacion();
+
+        verify(dao, never()).actualizar(any());
+        verify(dao, never()).countByIdExamenAndIdTipoExamen(any(), any());
+        verify(model.facesContext).validationFailed();
+        assertSame(original, model.getSeleccionado().getIdTipoExamen());
+        assertEquals(ESTADO_CRUD.EDICION, model.getEstado());
     }
 
     @Test
@@ -288,9 +287,13 @@ class ExamenTipoExamenModelTest {
     @Test
     void guardarAsociacionPersisteYRecargaSoloElExamenPadre() {
         ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
-        ExamenTipoExamenModel model = model(dao);
+        TipoExamenDAO tipos = mock(TipoExamenDAO.class);
         Examen examen = examenPersistido();
         TipoExamen tipo = new TipoExamen(UUID.randomUUID());
+        tipo.setActivo(true);
+        when(tipos.obtenerTodos()).thenReturn(List.of(tipo));
+        when(tipos.buscarPorId(tipo.getIdTipoExamen())).thenReturn(tipo);
+        ExamenTipoExamenModel model = new ExamenTipoExamenModel(dao, mock(ExamenDAO.class), tipos);
         model.nuevaAsociacion(examen);
         model.getSeleccionado().setIdTipoExamen(tipo);
         model.getSeleccionado().setObservaciones(" observacion ");
@@ -316,6 +319,7 @@ class ExamenTipoExamenModelTest {
         TipoExamenDAO tipoExamenDAO = mock(TipoExamenDAO.class);
         Examen examen = examenPersistido();
         TipoExamen tipo = new TipoExamen(UUID.randomUUID());
+        tipo.setActivo(true);
         when(examenDAO.obtenerTodos()).thenReturn(List.of());
         when(tipoExamenDAO.obtenerTodos()).thenReturn(List.of(tipo));
         when(tipoExamenDAO.buscarPorId(tipo.getIdTipoExamen())).thenReturn(tipo);
@@ -339,10 +343,14 @@ class ExamenTipoExamenModelTest {
     @Test
     void guardarAsociacionDuplicadaNoPersiste() {
         ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
-        ExamenTipoExamenModel model = model(dao);
+        TipoExamenDAO tipos = mock(TipoExamenDAO.class);
         Examen examen = examenPersistido();
         TipoExamen tipo = new TipoExamen(UUID.randomUUID());
+        tipo.setActivo(true);
+        when(tipos.obtenerTodos()).thenReturn(List.of(tipo));
+        when(tipos.buscarPorId(tipo.getIdTipoExamen())).thenReturn(tipo);
         FacesContext contexto = contexto();
+        ExamenTipoExamenModel model = new ExamenTipoExamenModel(dao, mock(ExamenDAO.class), tipos);
         model.facesContext = contexto;
         model.nuevaAsociacion(examen);
         model.getSeleccionado().setIdTipoExamen(tipo);
@@ -374,6 +382,89 @@ class ExamenTipoExamenModelTest {
                 "Tipo requerido".equals(mensaje.getSummary())));
         verify(contexto).validationFailed();
         assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+    }
+
+    @Test
+    void opcionesAlCrearSoloMuestranTiposActivos() {
+        TipoExamen activo = new TipoExamen(UUID.randomUUID());
+        activo.setActivo(true);
+        TipoExamen inactivo = new TipoExamen(UUID.randomUUID());
+        inactivo.setActivo(false);
+        TipoExamenDAO tipos = mock(TipoExamenDAO.class);
+        when(tipos.obtenerTodos()).thenReturn(List.of(activo, inactivo));
+        Examen examen = examenPersistido();
+        ExamenTipoExamenModel model = new ExamenTipoExamenModel(
+                mock(ExamenTipoExamenDAO.class), mock(ExamenDAO.class), tipos);
+
+        model.nuevaAsociacion(examen);
+
+        assertEquals(List.of(activo), model.getTipoExamenes());
+    }
+
+    @Test
+    void tipoInactivoEnviadoDirectamenteSeRechazaAlCrear() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        TipoExamenDAO tipos = mock(TipoExamenDAO.class);
+        TipoExamen inactivo = new TipoExamen(UUID.randomUUID());
+        inactivo.setActivo(false);
+        when(tipos.obtenerTodos()).thenReturn(List.of(inactivo));
+        when(tipos.buscarPorId(inactivo.getIdTipoExamen())).thenReturn(inactivo);
+        ExamenTipoExamenModel model = new ExamenTipoExamenModel(dao, mock(ExamenDAO.class), tipos);
+        model.nuevaAsociacion(examenPersistido());
+        model.getSeleccionado().setIdTipoExamen(inactivo);
+        model.facesContext = contexto();
+
+        model.guardarAsociacion();
+
+        verify(dao, never()).guardar(any());
+        verify(dao, never()).countByIdExamenAndIdTipoExamen(any(), any());
+        verify(model.facesContext).validationFailed();
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+        assertSame(inactivo, model.getSeleccionado().getIdTipoExamen());
+    }
+
+    @Test
+    void tipoInactivoTambienSeRechazaEnElCrudGenerico() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        TipoExamenDAO tipos = mock(TipoExamenDAO.class);
+        TipoExamen inactivo = new TipoExamen(UUID.randomUUID());
+        inactivo.setActivo(false);
+        when(tipos.obtenerTodos()).thenReturn(List.of(inactivo));
+        when(tipos.buscarPorId(inactivo.getIdTipoExamen())).thenReturn(inactivo);
+        ExamenTipoExamenModel model = new ExamenTipoExamenModel(dao, mock(ExamenDAO.class), tipos);
+        model.nuevo();
+        model.getSeleccionado().setIdTipoExamen(inactivo);
+        model.facesContext = contexto();
+
+        model.guardar();
+
+        verify(dao, never()).guardar(any());
+        verify(model.facesContext).validationFailed();
+        assertEquals(ESTADO_CRUD.CREACION, model.getEstado());
+    }
+
+    @Test
+    void crudGenericoTampocoPermiteCambiarTipoAlEditar() {
+        ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        TipoExamenDAO tipos = mock(TipoExamenDAO.class);
+        ExamenTipoExamen persistida = asociacionPersistida(examenPersistido());
+        ExamenTipoExamen enviada = new ExamenTipoExamen(persistida.getIdExamenTipoExamen());
+        enviada.setIdExamen(persistida.getIdExamen());
+        TipoExamen original = persistida.getIdTipoExamen();
+        TipoExamen alternativo = new TipoExamen(UUID.randomUUID());
+        enviada.setIdTipoExamen(alternativo);
+        when(dao.buscarPorId(persistida.getIdExamenTipoExamen())).thenReturn(persistida);
+        when(tipos.obtenerTodos()).thenReturn(List.of(original, alternativo));
+        ExamenTipoExamenModel model = new ExamenTipoExamenModel(dao, mock(ExamenDAO.class), tipos);
+        model.seleccionar(enviada);
+        model.facesContext = contexto();
+
+        model.guardar();
+
+        verify(dao, never()).actualizar(any());
+        verify(model.facesContext).validationFailed();
+        assertSame(original, enviada.getIdTipoExamen());
+        assertEquals(ESTADO_CRUD.EDICION, model.getEstado());
     }
 
     @Test
@@ -489,13 +580,18 @@ class ExamenTipoExamenModelTest {
         ExamenDAO examenDao = mock(ExamenDAO.class);
         TipoExamenDAO tipoExamenDao = mock(TipoExamenDAO.class);
         when(examenDao.obtenerTodos()).thenReturn(List.of(new Examen()));
-        when(tipoExamenDao.obtenerTodos()).thenReturn(List.of(new TipoExamen()));
+        TipoExamen activo = new TipoExamen();
+        activo.setActivo(true);
+        TipoExamen inactivo = new TipoExamen();
+        inactivo.setActivo(false);
+        when(tipoExamenDao.obtenerTodos()).thenReturn(List.of(activo, inactivo));
 
         ExamenTipoExamenModel model = new ExamenTipoExamenModel(
                 mock(ExamenTipoExamenDAO.class), examenDao, tipoExamenDao);
 
         assertEquals(1, model.getExamenes().size());
         assertEquals(1, model.getTipoExamenes().size());
+        assertSame(activo, model.getTipoExamenes().get(0));
     }
 
     private ExamenTipoExamenModel model(ExamenTipoExamenDAO dao) {
@@ -518,6 +614,9 @@ class ExamenTipoExamenModelTest {
             protected Object[][] getContents() {
                 return new Object[][]{
                     {"examen.errorQuitarAsociacion", "Error al quitar"},
+                    {"examen.tipoInactivo", "Tipo inactivo"},
+                    {"examen.tipoNoEditable", "Tipo no editable"},
+                    {"examen.asociacionGuardada", "Asociacion guardada"},
                     {"examen.asociacionQuitada", "Asociacion quitada"},
                     {"examen.tipoDuplicado", "Asociacion duplicada"},
                     {"examen.seleccioneExamen", "Examen requerido"},

@@ -108,6 +108,27 @@ class ExamenModelTest {
         return contexto;
     }
     @Test void nuevoInicializaActivo() { ExamenModel m = new ExamenModel(mock(ExamenDAO.class)); m.nuevo(); assertTrue(m.getSeleccionado().getActivo()); assertEquals(ESTADO_CRUD.CREACION, m.getEstado()); }
+    @Test void guardaEstadosActivoEInactivoAlCrearOActualizar() {
+        ExamenDAO dao = mock(ExamenDAO.class);
+        ExamenModel modelo = new ExamenModel(dao);
+        modelo.nuevo();
+        Examen creado = modelo.getSeleccionado();
+        creado.setActivo(false);
+
+        modelo.guardar();
+
+        verify(dao).guardar(argThat(examen -> Boolean.FALSE.equals(examen.getActivo())));
+        Examen editado = new Examen(UUID.randomUUID());
+        editado.setActivo(true);
+        when(dao.actualizar(editado)).thenReturn(editado);
+        modelo.seleccionar(editado);
+        editado.setActivo(false);
+
+        modelo.guardar();
+
+        verify(dao).actualizar(argThat(examen -> Boolean.FALSE.equals(examen.getActivo())));
+        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+    }
     @Test void seleccionarEdita() { ExamenModel m = new ExamenModel(mock(ExamenDAO.class)); Examen e = new Examen(); m.seleccionar(e); assertSame(e, m.getSeleccionado()); assertEquals(ESTADO_CRUD.EDICION, m.getEstado()); }
     @Test void dobleClicSeleccionaExamenDelEvento() { ExamenModel m = new ExamenModel(mock(ExamenDAO.class)); Examen e = new Examen(); SelectEvent<Examen> evento = mock(SelectEvent.class); when(evento.getObject()).thenReturn(e); m.seleccionarFila(evento); assertSame(e, m.getSeleccionado()); assertEquals(ESTADO_CRUD.EDICION, m.getEstado()); }
     @Test void guardarCreacionDelegaYDaoAsignaUuid() { ExamenDAO d = mock(ExamenDAO.class); doAnswer(i -> { Examen e=i.getArgument(0); e.setIdExamen(UUID.randomUUID()); return e; }).when(d).guardar(any()); ExamenModel m=new ExamenModel(d); m.nuevo(); m.guardar(); assertNotNull(m.getSeleccionado().getIdExamen()); verify(d).guardar(m.getSeleccionado()); }

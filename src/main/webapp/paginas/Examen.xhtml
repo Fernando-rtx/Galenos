@@ -201,6 +201,7 @@
                                             <p:selectOneMenu id="tipoExamen"
                                                              value="#{examenTipoExamenModel.idTipoExamenSeleccionado}"
                                                              required="true"
+                                                             disabled="#{examenTipoExamenModel.estado eq 'EDICION'}"
                                                              requiredMessage="#{msg['examen.seleccioneTipo']}">
                                                 <f:selectItem itemLabel="#{msg['crud.seleccionar']}"
                                                               itemValue="#{null}"

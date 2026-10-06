@@ -52,6 +52,7 @@
                                   #{personaRolModel.personaContexto.apellidos}</h:panelGroup>
                     <div class="section-divider"></div>
                     <p:messages id="messages"
+                                globalOnly="true"
                                 showDetail="false"
                                 closable="true" />
 
@@ -69,9 +70,11 @@
                                  rowKey="#{personaRolModel.getRowKey(item)}"
                                  emptyMessage="#{msg['personaRol.sinRegistros']}"
                                  styleClass="clinical-table persona-rol-table">
-                        <p:ajax event="rowSelect"
-                                listener="#{personaRolModel.seleccionar(item)}"
+                        <p:ajax event="rowDblselect"
+                                listener="#{personaRolModel.seleccionar(personaRolModel.seleccionado)}"
+                                process="@this"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('personaRolDialog').show()" />
                         <p:column headerText="#{msg['personaRol.persona']}"
                                   field="idPersona.nombres">
@@ -91,16 +94,6 @@
                             <h:outputText value="#{item.fechaCreacion}">
                                 <f:convertDateTime pattern="dd/MM/yyyy HH:mm" />
                             </h:outputText>
-                        </p:column>
-                        <p:column headerText="#{msg['comun.acciones']}"
-                                  styleClass="action-cell">
-                            <p:commandButton icon="pi pi-pencil"
-                                             title="#{msg['crud.editar']}"
-                                             action="#{personaRolModel.seleccionar(item)}"
-                                             process="@this"
-                                             update="edicionDialog"
-                                             oncomplete="PF('personaRolDialog').show()"
-                                             styleClass="edit-button" />
                         </p:column>
                     </p:dataTable>
                 </div>
@@ -145,6 +138,7 @@
                             <p:selectOneMenu id="rol"
                                              value="#{personaRolModel.rolSeleccionadoId}"
                                              required="true"
+                                             disabled="#{personaRolModel.estado eq 'EDICION'}"
                                              requiredMessage="#{msg['personaRol.rolRequerido']}"
                                              styleClass="selector-wide">
                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
@@ -164,12 +158,13 @@
                             <p:selectOneMenu id="clinica"
                                              value="#{personaRolModel.clinicaSeleccionadaId}"
                                              required="true"
+                                             disabled="#{personaRolModel.estado eq 'EDICION'}"
                                              requiredMessage="#{msg['personaRol.clinicaRequerida']}"
                                              styleClass="selector-wide">
                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                               itemValue="#{null}"
                                               noSelectionOption="true" />
-                                <f:selectItems value="#{personaRolModel.clinicas}"
+                                <f:selectItems value="#{personaRolModel.clinicasDisponibles}"
                                                var="clinica"
                                                itemValue="#{clinica.idClinica}"
                                                itemLabel="#{clinica.nombre}" />

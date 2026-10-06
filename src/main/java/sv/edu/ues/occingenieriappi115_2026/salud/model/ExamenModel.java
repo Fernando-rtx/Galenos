@@ -1,6 +1,7 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
@@ -97,6 +98,7 @@ public class ExamenModel extends AbstractModel<Examen> implements Serializable {
             case LISTADO -> { }
         }
         setEstado(ESTADO_CRUD.LISTADO);
+        agregarMensaje(FacesMessage.SEVERITY_INFO, "examen.guardado");
     }
 
     public void cancelar() {

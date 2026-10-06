@@ -198,6 +198,17 @@
     font-style: italic;
 }
 
+.regex-value {
+    color: #405767;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+}
+
+.regex-input {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 /* Diálogo y formulario para alta y edición de tipos documentales. */
 .clinical-dialog.ui-dialog {
     border: 0;

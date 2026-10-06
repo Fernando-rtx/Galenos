@@ -70,8 +70,10 @@
                                  emptyMessage="#{msg['documento.sinRegistros']}"
                                  styleClass="clinical-table documento-table">
                         <p:ajax event="rowSelect"
-                                listener="#{documentoModel.seleccionar(item)}"
+                                listener="#{documentoModel.seleccionar(documentoModel.seleccionado)}"
+                                process="@this"
                                 update="edicionDialog"
+                                resetValues="true"
                                 oncomplete="PF('documentoDialog').show()" />
                         <p:column headerText="#{msg['documento.persona']}"
                                   field="idPersona.nombres">
@@ -90,16 +92,6 @@
                         </p:column>
                         <p:column headerText="#{msg['documento.rutaFisica']}">
                             <h:outputText value="#{empty item.rutaFisica ? msg['comun.sinDato'] : item.rutaFisica}" />
-                        </p:column>
-                        <p:column headerText="#{msg['comun.acciones']}"
-                                  styleClass="action-cell">
-                            <p:commandButton icon="pi pi-pencil"
-                                             title="#{msg['crud.editar']}"
-                                             action="#{documentoModel.seleccionar(item)}"
-                                             process="@this"
-                                             update="edicionDialog"
-                                             oncomplete="PF('documentoDialog').show()"
-                                             styleClass="edit-button" />
                         </p:column>
                     </p:dataTable>
                 </div>
@@ -145,6 +137,7 @@
                                              value="#{documentoModel.tipoDocumentoSeleccionadoId}"
                                              required="true"
                                              requiredMessage="#{msg['documento.tipoRequerido']}"
+                                             disabled="#{documentoModel.estado eq 'EDICION'}"
                                              styleClass="selector-wide">
                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                               itemValue="#{null}"

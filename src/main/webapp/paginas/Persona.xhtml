@@ -27,15 +27,22 @@
                             <p class="page-subtitle">#{msg['persona.subtitulo']}</p>
                         </div>
                         <div>
-                            <crud:botones-top model="#{personaModel}"
-                                              actualizar="messages personaTable edicionDialog"
-                                              resetNuevo="true"
-                                              oncompleteNuevo="PF('personaDialog').show()" />
+                            <div class="crud-actions-top">
+                                <p:commandButton value="#{msg['crud.nuevo']}"
+                                                 icon="pi pi-plus"
+                                                 action="#{personaModel.nuevaPersona(documentoModel, medioContactoModel, personaRolModel)}"
+                                                 process="@this"
+                                                 update=":layoutForm:messages :layoutForm:personaTable :layoutForm:edicionDialog"
+                                                 resetValues="true"
+                                                 oncomplete="PF('personaDialog').show()"
+                                                 styleClass="clinical-primary" />
+                            </div>
                         </div>
                     </div>
                     <div class="section-divider"></div>
                     <p:messages id="messages"
                                 globalOnly="true"
+                                redisplay="false"
                                 showDetail="false"
                                 closable="true" />
 
@@ -57,7 +64,7 @@
                                  styleClass="clinical-table persona-table">
                         <p:ajax event="rowDblselect"
                                 listener="#{personaModel.seleccionarFila}"
-                                update="edicionDialog"
+                                update=":layoutForm:messages :layoutForm:edicionDialog"
                                 resetValues="true"
                                 oncomplete="PF('personaDialog').show()" />
                         <p:column headerText="#{msg['persona.nombres']}"
@@ -96,7 +103,7 @@
                   resizable="false"
                   width="900"
                   styleClass="clinical-dialog">
-            <p:ajax event="close"
+                    <p:ajax event="close"
                     listener="#{personaModel.cerrarEdicion(documentoModel, medioContactoModel, personaRolModel)}"
                     process="@this"
                     update="edicionDialog"
@@ -104,6 +111,9 @@
             <p:outputPanel id="edicionContenido">
                 <h:panelGroup rendered="#{personaModel.seleccionado ne null}">
                     <p:tabView id="personaTabs">
+                        <p:ajax event="tabChange"
+                                process="@this"
+                                update=":layoutForm:messages :layoutForm:personaTabs:documentosMessages :layoutForm:personaTabs:contactosMessages :layoutForm:personaTabs:rolesMessages" />
                         <p:tab title="#{msg['persona.detalle']}">
                             <p:outputPanel id="detallePersona"
                                            layout="block"
@@ -134,7 +144,7 @@
                                                   maxdate="#{personaModel.fechaMaximaNacimiento}"
                                                   monthNavigator="true"
                                                   yearNavigator="select"
-                                                  yearRange="1900:2100"
+                                                  yearRange="#{personaModel.rangoAniosNacimiento}"
                                                   panelStyleClass="persona-birthdate-panel"
                                                   readonlyInput="true"
                                                   showOnFocus="false"
@@ -147,15 +157,15 @@
                                 <p:commandButton value="#{msg['crud.cancelar']}"
                                                  action="#{personaModel.cerrarEdicion(documentoModel, medioContactoModel, personaRolModel)}"
                                                  process="@this"
-                                                 update="messages personaTable edicionDialog"
+                                                 update=":layoutForm:messages :layoutForm:personaTable :layoutForm:edicionDialog"
                                                  immediate="true"
                                                  resetValues="true"
                                                  oncomplete="PF('personaDialog').hide()" />
                                 <p:commandButton value="#{msg['crud.guardar']}"
                                                  action="#{personaModel.guardar()}"
                                                  process="@this detallePersona"
-                                                 update="messages personaTable edicionDialog"
-                                                 oncomplete="if (!args.validationFailed) PF('personaDialog').hide()" />
+                                                 update=":layoutForm:messages :layoutForm:personaTable :layoutForm:edicionContenido"
+                                                 oncomplete="if (args.personaGuardada === true) PF('personaDialog').hide()" />
                             </div>
                         </p:tab>
 
@@ -164,6 +174,7 @@
                             <p:outputPanel id="documentosContenido">
                                 <p:messages id="documentosMessages"
                                             globalOnly="true"
+                                            redisplay="false"
                                             showDetail="false"
                                             closable="true" />
                                 <p:commandButton value="#{msg['documento.nuevo']}"
@@ -200,11 +211,12 @@
                                                    layout="block"
                                                    styleClass="dialog-form">
                                         <div class="form-field">
-                                            <p:outputLabel for="documentoTipo" value="#{msg['documento.tipo']}" />
-                                            <p:selectOneMenu id="documentoTipo"
-                                                             value="#{documentoModel.tipoDocumentoSeleccionadoId}"
-                                                             required="true"
-                                                             requiredMessage="#{msg['documento.tipoRequerido']}">
+                                            <p:outputLabel for="tipo" value="#{msg['documento.tipo']}" />
+                                            <p:selectOneMenu id="tipo"
+                                                 value="#{documentoModel.tipoDocumentoSeleccionadoId}"
+                                                 required="true"
+                                                 disabled="#{documentoModel.estado eq 'EDICION'}"
+                                                 requiredMessage="#{msg['documento.tipoRequerido']}">
                                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                                               itemValue="#{null}"
                                                               noSelectionOption="true" />
@@ -213,15 +225,15 @@
                                                                itemValue="#{tipo.idTipoDocumento}"
                                                                itemLabel="#{tipo.nombre}" />
                                             </p:selectOneMenu>
-                                            <p:message for="documentoTipo" />
+                                            <p:message for="tipo" />
                                         </div>
                                         <div class="form-field">
-                                            <p:outputLabel for="documentoValor" value="#{msg['documento.valor']}" />
-                                            <p:inputText id="documentoValor"
+                                            <p:outputLabel for="valor" value="#{msg['documento.valor']}" />
+                                            <p:inputText id="valor"
                                                          value="#{documentoModel.seleccionado.valor}"
                                                          required="true"
                                                          requiredMessage="#{msg['documento.valorRequerido']}" />
-                                            <p:message for="documentoValor" />
+                                            <p:message for="valor" />
                                         </div>
                                         <div class="form-field">
                                             <p:outputLabel for="documentoRuta" value="#{msg['documento.rutaFisica']}" />
@@ -249,10 +261,10 @@
                                                          update="documentosContenido"
                                                          immediate="true"
                                                          resetValues="true" />
-                                        <p:commandButton value="#{msg['crud.guardar']}"
-                                                         action="#{documentoModel.guardar()}"
-                                                         process="documentoForm"
-                                                         update=":layoutForm:messages documentosContenido" />
+                                <p:commandButton value="#{msg['crud.guardar']}"
+                                                 action="#{documentoModel.guardar()}"
+                                                 process="documentoForm"
+                                                 update="documentosContenido" />
                                     </div>
                                 </h:panelGroup>
                             </p:outputPanel>
@@ -263,6 +275,7 @@
                             <p:outputPanel id="contactosContenido">
                                 <p:messages id="contactosMessages"
                                             globalOnly="true"
+                                            redisplay="false"
                                             showDetail="false"
                                             closable="true" />
                                 <p:commandButton value="#{msg['medioContacto.nuevo']}"
@@ -298,9 +311,9 @@
                                         <div class="form-field">
                                             <p:outputLabel for="contactoTipo" value="#{msg['medioContacto.tipo']}" />
                                             <p:selectOneMenu id="contactoTipo"
-                                                             rendered="#{not medioContactoModel.tipoSeleccionadoInactivo}"
                                                              value="#{medioContactoModel.tipoMedioSeleccionadoId}"
                                                              required="true"
+                                                             disabled="#{medioContactoModel.estado eq 'EDICION'}"
                                                              requiredMessage="#{msg['medioContacto.tipoRequerido']}">
                                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                                               itemValue="#{null}"
@@ -308,10 +321,8 @@
                                                 <f:selectItems value="#{medioContactoModel.tiposMedioContactoAsignables}"
                                                                var="tipo"
                                                                itemValue="#{tipo.idTipoMedioContacto}"
-                                                               itemLabel="#{tipo.nombre}" />
+                                                               itemLabel="#{tipo.activo eq true ? tipo.nombre : tipo.nombre.concat(' (').concat(msg['tipoMedioContacto.inactivo']).concat(')')}" />
                                             </p:selectOneMenu>
-                                            <h:outputText rendered="#{medioContactoModel.tipoSeleccionadoInactivo}"
-                                                          value="#{medioContactoModel.seleccionado.idTipoMedioContacto.nombre} (#{msg['tipoMedioContacto.inactivo']})" />
                                             <p:message for="contactoTipo" />
                                         </div>
                                         <div class="form-field">
@@ -343,10 +354,10 @@
                                                          update="contactosContenido"
                                                          immediate="true"
                                                          resetValues="true" />
-                                        <p:commandButton value="#{msg['crud.guardar']}"
+                                <p:commandButton value="#{msg['crud.guardar']}"
                                                          action="#{medioContactoModel.guardar()}"
                                                          process="contactoForm"
-                                                         update=":layoutForm:messages contactosContenido" />
+                                                         update="contactosContenido" />
                                     </div>
                                 </h:panelGroup>
                             </p:outputPanel>
@@ -357,6 +368,7 @@
                             <p:outputPanel id="rolesContenido">
                                 <p:messages id="rolesMessages"
                                             globalOnly="true"
+                                            redisplay="false"
                                             showDetail="false"
                                             closable="true" />
                                 <p:commandButton value="#{msg['personaRol.nuevo']}"
@@ -399,6 +411,7 @@
                                             <p:selectOneMenu id="rolSeleccionado"
                                                              value="#{personaRolModel.rolSeleccionadoId}"
                                                              required="true"
+                                                             disabled="#{personaRolModel.estado eq 'EDICION'}"
                                                              requiredMessage="#{msg['personaRol.rolRequerido']}">
                                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                                               itemValue="#{null}"
@@ -415,6 +428,7 @@
                                             <p:selectOneMenu id="clinicaSeleccionada"
                                                              value="#{personaRolModel.clinicaSeleccionadaId}"
                                                              required="true"
+                                                             disabled="#{personaRolModel.estado eq 'EDICION'}"
                                                              requiredMessage="#{msg['personaRol.clinicaRequerida']}">
                                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                                               itemValue="#{null}"
@@ -452,7 +466,7 @@
                                         <p:commandButton value="#{msg['crud.guardar']}"
                                                          action="#{personaRolModel.guardar()}"
                                                          process="rolForm"
-                                                         update=":layoutForm:messages rolesContenido" />
+                                                         update="rolesContenido" />
                                     </div>
                                 </h:panelGroup>
                             </p:outputPanel>
