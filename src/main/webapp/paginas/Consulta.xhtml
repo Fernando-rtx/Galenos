@@ -574,16 +574,17 @@
                                             value="#{paso.estado}"
                                             styleClass="estado-badge #{paso.estado eq 'COMPLETADO' ? 'estado-completado' : paso.estado eq 'EN_CURSO' ? 'estado-en-curso' : 'estado-pendiente'}" />
                                     </p:column>
-
-                                    <p:column headerText="#{msg['consultaProcedimientoPaso.ordenes']}"
-                                              styleClass="action-cell">
-                                        <h:link outcome="/paginas/OrdenExamen" value="#{msg['crud.ver']}">
-                                            <f:param name="idPaso" value="#{paso.idConsultaProcedimientoPaso}" />
-                                        </h:link>
-                                    </p:column>
                                 </p:dataTable>
 
                                 <h:panelGroup rendered="#{consultaProcedimientoPasoModel.isFormularioVisibleParaConsulta(consultaModel.seleccionado)}">
+                                    <div class="context-actions">
+                                        <h:link outcome="/paginas/OrdenExamen"
+                                                value="#{msg['consultaProcedimientoPaso.ordenes']}"
+                                                styleClass="context-link"
+                                                rendered="#{consultaProcedimientoPasoModel.seleccionado.idConsultaProcedimientoPaso ne null}">
+                                            <f:param name="idPaso" value="#{consultaProcedimientoPasoModel.seleccionado.idConsultaProcedimientoPaso}" />
+                                        </h:link>
+                                    </div>
                                     <p:outputPanel
                                         id="pasoForm"
                                         layout="block"

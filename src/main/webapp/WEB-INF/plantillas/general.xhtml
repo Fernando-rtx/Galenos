@@ -9,11 +9,16 @@
 
     <f:view locale="#{idiomaBean.locale}">
     <h:head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="dark light" />
+        <!-- Script síncrono en head: aplica la preferencia antes de mostrar el contenido. -->
+        <h:outputScript library="scripts" name="tema.js" target="head" />
         <title>
             <ui:insert name="titulo">#{msg['app.nombre']}</ui:insert>
         </title>
         <h:outputStylesheet library="estilos" name="galenos.css" />
         <ui:insert name="head" />
+        <h:outputStylesheet library="estilos" name="galenos-oscuro.css" />
     </h:head>
 
     <h:body styleClass="clinical-body">
@@ -37,11 +42,8 @@
                                         styleClass="layout-logo-image" />
                     </div>
 
-                    <div class="ui-g-12 ui-md-4 layout-brand">
-                        #{msg['app.nombre']}
-                    </div>
-
-                    <div class="ui-g-12 ui-md-4 layout-tools">
+                    <!-- El selector original conserva su ID y permanece en layoutForm. -->
+                    <div class="layout-clinic">
                         <p:outputLabel for="clinicaActual" value="#{msg['clinicaActual.seleccionar']}" />
                         <p:selectOneMenu id="clinicaActual"
                                          value="#{clinicaActualBean.idClinicaSeleccionada}"
@@ -56,6 +58,9 @@
                         </p:selectOneMenu>
                         <h:outputText rendered="#{not clinicaActualBean.catalogoDisponible}"
                                       value="#{msg['clinicaActual.errorCarga']}" role="status" />
+                    </div>
+
+                    <div class="ui-g-12 ui-md-4 layout-tools">
                         <p:outputLabel
                             for="idioma"
                             value="#{msg['idioma.seleccionar']}" />
@@ -82,6 +87,16 @@
                                 process="@this"
                                 update="@all" />
                         </p:selectOneMenu>
+                        <button type="button" id="themeToggle" class="layout-theme-toggle">
+                            <span class="theme-to-light">
+                                <i class="pi pi-sun" aria-hidden="true"></i>
+                                <span>Modo claro</span>
+                            </span>
+                            <span class="theme-to-dark">
+                                <i class="pi pi-moon" aria-hidden="true"></i>
+                                <span>Modo oscuro</span>
+                            </span>
+                        </button>
                     </div>
                 </header>
 
@@ -94,64 +109,51 @@
                                 #{msg['app.navegacion']}
                             </span>
 
-                            <h:link
-                                outcome="/paginas/Persona"
-                                value="#{msg['nav.persona']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/Clinica"
+                                    value="#{msg['nav.clinica']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Clinica.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/Consulta"
-                                value="#{msg['nav.consulta']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/Rol"
+                                    value="#{msg['nav.rol']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Rol.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/Examen"
-                                value="#{msg['nav.examen']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/TipoMedioContacto"
+                                    value="#{msg['nav.tipoMedioContacto']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/TipoMedioContacto.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/OrdenExamen"
-                                value="#{msg['nav.ordenExamen']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/TipoDocumento"
+                                    value="#{msg['nav.tipoDocumento']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/TipoDocumento.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/ExamenResultado"
-                                value="#{msg['nav.examenResultado']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/TipoExamen"
+                                    value="#{msg['nav.tipoExamen']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/TipoExamen.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/Procedimiento"
-                                value="#{msg['nav.procedimiento']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/Examen"
+                                    value="#{msg['nav.examen']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Examen.xhtml' ? 'is-current' : ''}" />
 
-                            <span class="layout-nav-title">
-                                #{msg['nav.catalogos']}
-                            </span>
+                            <h:link outcome="/paginas/Procedimiento"
+                                    value="#{msg['nav.procedimiento']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Procedimiento.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/Clinica"
-                                value="#{msg['nav.clinica']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/Persona"
+                                    value="#{msg['nav.persona']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Persona.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/Rol"
-                                value="#{msg['nav.rol']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/Consulta"
+                                    value="#{msg['nav.consulta']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Consulta.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/TipoDocumento"
-                                value="#{msg['nav.tipoDocumento']}"
-                                styleClass="layout-nav-link" />
+                            <div class="layout-nav-divider"></div>
 
-                            <h:link
-                                outcome="/paginas/TipoMedioContacto"
-                                value="#{msg['nav.tipoMedioContacto']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/OrdenExamen"
+                                    value="#{msg['nav.ordenExamen']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/OrdenExamen.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/TipoExamen"
-                                value="#{msg['nav.tipoExamen']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/ExamenResultado"
+                                    value="#{msg['nav.examenResultado']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/ExamenResultado.xhtml' ? 'is-current' : ''}" />
                         </nav>
                     </aside>
 

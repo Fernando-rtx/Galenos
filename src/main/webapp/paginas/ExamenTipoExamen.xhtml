@@ -67,6 +67,8 @@
                             </div>
                         </div>
 
+                        <p class="page-subtitle">#{msg['crud.dobleClicEditar']}</p>
+
                         <p:dataTable
                             id="examenTipoExamenTable"
                             value="#{examenTipoExamenModel}"
@@ -130,20 +132,6 @@
                                     styleClass="#{empty item.observaciones
                                                   ? 'empty-note'
                                                   : ''}" />
-                            </p:column>
-
-                            <p:column
-                                headerText="#{msg['examenTipoExamen.acciones']}"
-                                styleClass="action-cell">
-
-                                <p:commandButton
-                                    icon="pi pi-pencil"
-                                    title="#{msg['crud.editar']}"
-                                    styleClass="edit-button"
-                                    action="#{examenTipoExamenModel.seleccionar(item)}"
-                                    process="@this"
-                                    update="edicionDialog"
-                                    oncomplete="PF('examenTipoExamenDialog').show()" />
                             </p:column>
                         </p:dataTable>
                     </div>

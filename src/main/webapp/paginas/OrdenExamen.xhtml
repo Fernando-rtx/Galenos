@@ -128,16 +128,6 @@
                                     value="#{item.indicaciones != null ? item.indicaciones : msg['ordenExamen.sinIndicaciones']}"
                                     styleClass="#{item.indicaciones != null ? 'indicaciones-text' : 'empty-note'}" />
                             </p:column>
-
-                            <p:column
-                                headerText="#{msg['ordenExamen.resultados']}"
-                                styleClass="action-cell">
-
-                                <h:link outcome="/paginas/ExamenResultado" value="#{msg['crud.ver']}">
-                                    <f:param name="idOrden" value="#{item.idOrdenExamen}" />
-                                </h:link>
-                            </p:column>
-
                         </p:dataTable>
                     </div>
                 </div>
@@ -163,6 +153,14 @@
                 <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{ordenExamenModel.seleccionado ne null}">
+                    <div class="context-actions">
+                        <h:link outcome="/paginas/ExamenResultado"
+                                value="#{msg['ordenExamen.resultados']}"
+                                styleClass="context-link"
+                                rendered="#{ordenExamenModel.seleccionado.idOrdenExamen ne null}">
+                            <f:param name="idOrden" value="#{ordenExamenModel.seleccionado.idOrdenExamen}" />
+                        </h:link>
+                    </div>
                     <div class="dialog-intro">
                         <div class="dialog-intro-icon">
                             <i class="pi pi-file-edit"></i>

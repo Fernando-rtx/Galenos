@@ -1,0 +1,706 @@
+/* Tema compartido. Se carga después de los estilos de cada pantalla. */
+:root {
+    color-scheme: var(--gs-scheme);
+    --gs-scheme: dark;
+    --gs-page: #10161f;
+    --gs-nav: #131c27;
+    --gs-surface: #192330;
+    --gs-raised: #202d3d;
+    --gs-input: #111b27;
+    --gs-border: #34465a;
+    --gs-text: #e5edf5;
+    --gs-muted: #acbbcc;
+    --gs-accent: #69b8e9;
+    --gs-blue: #126b9b;
+    --gs-selected: #203e55;
+    --gs-error: #ffb7be;
+    --gs-error-bg: #38232c;
+    --gs-selection-text: #fff;
+    --gs-control-thumb: #e5edf5;
+    --gs-scrollbar: #53677c;
+    --gs-selection: #2b5473;
+    --gs-hover: #2c4055;
+    --gs-header-hover: #26384b;
+    --gs-row-even: #1c2836;
+    --gs-row-selected-hover: #294e68;
+    --gs-soft-border: #2b3b4c;
+    --gs-placeholder: #93a7ba;
+    --gs-border-hover: #617e98;
+    --gs-date-today: #293e50;
+    --gs-error-border: #ed8797;
+    --gs-control-border: #71869d;
+    --gs-switch-off: #4b5c70;
+    --gs-slider: #405268;
+    --gs-chip-text: #c8e5fa;
+    --gs-button-border: #258bbd;
+    --gs-button-hover: #177daf;
+    --gs-danger-bg: #7c3444;
+    --gs-danger-border: #b35d70;
+    --gs-danger-hover: #944154;
+    --gs-button-pressed: #135b82;
+    --gs-error-message-border: #91505f;
+    --gs-warn-bg: #362e20;
+    --gs-warn-border: #8d7545;
+    --gs-warn-text: #f3d493;
+    --gs-info-bg: #1c3346;
+    --gs-info-border: #476c8b;
+    --gs-info-text: #b7dffc;
+    --gs-success-bg: #1d352e;
+    --gs-success-border: #467a62;
+    --gs-success-text: #abe0c0;
+    --gs-status-success-bg: #214b3a;
+    --gs-status-success-text: #b6e4ca;
+    --gs-status-danger-bg: #542b37;
+    --gs-status-danger-text: #ffd0d6;
+    --gs-status-warn-bg: #493b22;
+    --gs-status-warn-text: #f4d89d;
+    --gs-status-info-bg: #25435d;
+    --gs-status-info-text: #c0e3ff;
+    --gs-overlay: #050b13;
+    --gs-shadow-dropdown: #0004;
+    --gs-shadow-dialog: #0005;
+    --gs-on-blue: #fff;
+    /* Variables que usan los componentes del tema PrimeFaces existente. */
+    --surface-a: var(--gs-surface);
+    --surface-b: var(--gs-page);
+    --surface-c: var(--gs-raised);
+    --surface-d: var(--gs-border);
+    --surface-e: var(--gs-raised);
+    --surface-f: var(--gs-surface);
+    --surface-ground: var(--gs-page);
+    --surface-section: var(--gs-surface);
+    --surface-card: var(--gs-surface);
+    --surface-overlay: var(--gs-raised);
+    --surface-border: var(--gs-border);
+    --surface-hover: var(--gs-raised);
+    --text-color: var(--gs-text);
+    --text-color-secondary: var(--gs-muted);
+    --primary-color: var(--gs-accent);
+    --primary-color-text: var(--gs-on-blue);
+}
+
+/* Sin preferencia guardada, :root conserva el modo oscuro. */
+:root[data-theme="light"] {
+    --gs-scheme: light;
+    --gs-page: #f1f5f8;
+    --gs-nav: #e8eff5;
+    --gs-surface: #fff;
+    --gs-raised: #eaf1f6;
+    --gs-input: #f8fbfd;
+    --gs-border: #bccbd8;
+    --gs-text: #243746;
+    --gs-muted: #50677a;
+    --gs-accent: #126b9b;
+    --gs-blue: #126b9b;
+    --gs-selected: #d8eaf5;
+    --gs-error: #a32942;
+    --gs-error-bg: #fbe5e9;
+    --gs-selection-text: #173b55;
+    --gs-control-thumb: #fff;
+    --gs-scrollbar: #7c91a4;
+    --gs-selection: #c8e5f6;
+    --gs-hover: #e1ebf3;
+    --gs-header-hover: #d9e8f3;
+    --gs-row-even: #f3f7fa;
+    --gs-row-selected-hover: #c5deed;
+    --gs-soft-border: #d9e3eb;
+    --gs-placeholder: #556c7e;
+    --gs-border-hover: #718ea3;
+    --gs-date-today: #e1edf5;
+    --gs-error-border: #b84c61;
+    --gs-control-border: #6f879a;
+    --gs-switch-off: #8b9bac;
+    --gs-slider: #b4c6d4;
+    --gs-chip-text: #1a4b69;
+    --gs-button-border: #126b9b;
+    --gs-button-hover: #11628c;
+    --gs-danger-bg: #9d344b;
+    --gs-danger-border: #8c2940;
+    --gs-danger-hover: #842b3d;
+    --gs-button-pressed: #104f72;
+    --gs-error-message-border: #cf7683;
+    --gs-warn-bg: #fff3d6;
+    --gs-warn-border: #b88725;
+    --gs-warn-text: #735010;
+    --gs-info-bg: #e1f0fb;
+    --gs-info-border: #78a4c6;
+    --gs-info-text: #174e76;
+    --gs-success-bg: #e0f2e8;
+    --gs-success-border: #71a78c;
+    --gs-success-text: #20583e;
+    --gs-status-success-bg: #d9efdf;
+    --gs-status-success-text: #22543b;
+    --gs-status-danger-bg: #f9dfe4;
+    --gs-status-danger-text: #8b273e;
+    --gs-status-warn-bg: #fff0cf;
+    --gs-status-warn-text: #735010;
+    --gs-status-info-bg: #ddebfa;
+    --gs-status-info-text: #214f72;
+    --gs-overlay: #1c2b38;
+    --gs-shadow-dropdown: #10203026;
+    --gs-shadow-dialog: #10203033;
+    --gs-on-blue: #fff;
+}
+
+body.clinical-body {
+    color-scheme: var(--gs-scheme);
+    background: var(--gs-page);
+    color: var(--gs-text);
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+    scrollbar-color: var(--gs-scrollbar) var(--gs-page);
+}
+
+body.clinical-body .ui-widget { font-family: inherit; font-size: inherit; }
+body.clinical-body .ui-widget-content,
+body.clinical-body .ui-widget-header { background: var(--gs-surface); color: var(--gs-text); border-color: var(--gs-border); }
+body.clinical-body a { color: var(--gs-accent); }
+body.clinical-body ::selection { background: var(--gs-selection); color: var(--gs-selection-text); }
+body.clinical-body :focus-visible { outline: 2px solid var(--gs-accent); outline-offset: 2px; }
+
+/* Cabecera compacta y navegación en el orden de los observables. */
+body.clinical-body .layout-header {
+    display: grid;
+    grid-template-columns: 232px minmax(260px, 1fr) auto;
+    gap: 20px;
+    padding: 8px 20px;
+    background: var(--gs-nav);
+    border-color: var(--gs-border);
+}
+body.clinical-body .layout-header > div { padding: 0; min-height: 48px; }
+body.clinical-body .layout-logo { gap: 10px; }
+body.clinical-body .layout-menu-toggle {
+    width: 36px;
+    height: 36px;
+    background: var(--gs-raised);
+    color: var(--gs-text);
+    border: 1px solid var(--gs-border);
+    border-radius: 4px;
+}
+body.clinical-body .layout-menu-toggle:hover,
+body.clinical-body .layout-menu-toggle[aria-expanded="true"] { background: var(--gs-selected); border-color: var(--gs-accent); }
+body.clinical-body .layout-menu-toggle:focus-visible { outline: 2px solid var(--gs-accent); outline-offset: 2px; }
+body.clinical-body .layout-logo-image {
+    width: 172px;
+    height: auto;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+}
+body.clinical-body .layout-tools { gap: 8px; flex-wrap: nowrap; font-size: .8rem; justify-self: end; }
+body.clinical-body .layout-tools .layout-language { min-width: 120px; }
+/* Botón nativo: su texto visible también es su nombre accesible. */
+body.clinical-body .layout-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 6px 8px;
+    background: var(--gs-raised);
+    color: var(--gs-text);
+    border: 1px solid var(--gs-border);
+    border-radius: 4px;
+    font: inherit;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+body.clinical-body .layout-theme-toggle:hover { background: var(--gs-selected); border-color: var(--gs-accent); }
+body.clinical-body .layout-theme-toggle:focus-visible { outline: 2px solid var(--gs-accent); outline-offset: 2px; }
+body.clinical-body .layout-theme-toggle .theme-to-light,
+:root[data-theme="light"] body.clinical-body .layout-theme-toggle .theme-to-dark { display: inline-flex; align-items: center; gap: 6px; }
+body.clinical-body .layout-theme-toggle .theme-to-dark,
+:root[data-theme="light"] body.clinical-body .layout-theme-toggle .theme-to-light { display: none; }
+
+body.clinical-body .layout-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    padding: 20px;
+    align-items: start;
+}
+body.clinical-body .layout-body.is-menu-open { grid-template-columns: 224px minmax(0, 1fr); }
+body.clinical-body .layout-nav,
+body.clinical-body .layout-workspace { width: auto; float: none; padding: 0; min-width: 0; }
+body.clinical-body .layout-nav-inner {
+    background: var(--gs-nav);
+    border: 1px solid var(--gs-border);
+    border-radius: 6px;
+    padding: 10px;
+}
+body.clinical-body .layout-nav-title {
+    color: var(--gs-muted);
+    font-size: .7rem;
+    letter-spacing: .07em;
+    padding: 6px 8px;
+    margin: 0 0 6px;
+}
+body.clinical-body .layout-nav-link {
+    color: var(--gs-muted);
+    font-size: .85rem;
+    font-weight: 500;
+    padding: 9px 10px;
+    border-radius: 4px;
+    border-left: 3px solid transparent;
+}
+body.clinical-body .layout-nav-link:hover { color: var(--gs-text); background: var(--gs-raised); }
+body.clinical-body .layout-nav-link.is-current {
+    background: var(--gs-selected);
+    color: var(--gs-text);
+    border-left-color: var(--gs-accent);
+}
+body.clinical-body .layout-clinic {
+    display: grid;
+    gap: 4px;
+    width: min(300px, 100%);
+    min-width: 0;
+    justify-self: start;
+    color: var(--gs-muted);
+    font-size: .75rem;
+}
+body.clinical-body .layout-clinic .layout-language { width: 100%; min-width: 0; }
+body.clinical-body .layout-clinic .ui-selectonemenu-label { font-size: .85rem; }
+body.clinical-body .layout-nav-divider { border-top: 1px solid var(--gs-border); margin: 8px 10px; }
+body.clinical-body .layout-footer { background: var(--gs-nav); border-color: var(--gs-border); color: var(--gs-muted); padding: 10px 20px; font-size: .75rem; }
+
+/* Misma densidad y jerarquía en todos los catálogos. */
+body.clinical-body .page-shell { width: 100%; }
+body.clinical-body .clinical-card { background: var(--gs-surface); border-color: var(--gs-border); border-radius: 6px; box-shadow: none; }
+body.clinical-body .clinical-topbar { height: 2px; background: var(--gs-blue); }
+body.clinical-body .card-content { padding: 20px; }
+body.clinical-body .page-header { gap: 16px; margin-bottom: 18px; }
+body.clinical-body .clinical-brand { display: none; }
+body.clinical-body .page-title { color: var(--gs-text); font-size: 1.5rem; line-height: 1.3; }
+body.clinical-body .page-subtitle { color: var(--gs-muted); font-size: .85rem; margin: 6px 0 12px; }
+body.clinical-body .section-divider { background: var(--gs-border); margin: 0 -20px 18px; }
+body.clinical-body .table-heading { gap: 12px; margin-bottom: 10px; }
+body.clinical-body .table-title { color: var(--gs-text); font-size: .85rem; margin-bottom: 10px; }
+body.clinical-body .table-heading .table-title { margin: 0; }
+body.clinical-body .table-title i { color: var(--gs-accent); }
+body.clinical-body .context-actions { gap: 8px; margin-bottom: 12px; }
+body.clinical-body .context-link {
+    display: inline-block;
+    background: var(--gs-raised);
+    border-color: var(--gs-border);
+    border-radius: 4px;
+    color: var(--gs-accent);
+    padding: 6px 10px;
+    font-size: .85rem;
+}
+body.clinical-body .context-link:hover { background: var(--gs-selected); text-decoration: underline; }
+body.clinical-body .context-person,
+body.clinical-body .procedure-flow { background: var(--gs-raised); color: var(--gs-text); border-color: var(--gs-border); }
+body.clinical-body .procedure-flow a { color: var(--gs-accent); }
+
+/* Tablas, filtros y paginación: no se alteran los eventos de selección. */
+body.clinical-body .ui-datatable { border: 1px solid var(--gs-border); border-radius: 4px; overflow: hidden; }
+body.clinical-body .ui-datatable-tablewrapper { overflow-x: auto; border-radius: 0; }
+/* PrimeFaces renderiza un thead normal; no exige la clase ui-datatable-thead. */
+body.clinical-body .ui-datatable thead > tr > th,
+body.clinical-body .ui-datatable .ui-datatable-header,
+body.clinical-body .ui-datatable .ui-datatable-footer {
+    background: var(--gs-raised);
+    color: var(--gs-text);
+    border: 0;
+    border-bottom: 1px solid var(--gs-border);
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: normal;
+    text-transform: none;
+    padding: 10px 12px;
+    box-sizing: border-box;
+}
+body.clinical-body .ui-datatable thead > tr > th.ui-state-active { background: var(--gs-selected); color: var(--gs-accent); }
+body.clinical-body .ui-datatable thead > tr > th.ui-state-hover,
+body.clinical-body .ui-datatable thead > tr > th.ui-state-active.ui-state-hover { background: var(--gs-header-hover); }
+body.clinical-body .ui-datatable thead > tr > th.ui-sortable-column.ui-state-focus { outline: 2px solid var(--gs-accent); outline-offset: -2px; box-shadow: none; }
+body.clinical-body .ui-datatable .ui-datatable-data > tr { background: var(--gs-surface); color: var(--gs-text); }
+body.clinical-body .ui-datatable .ui-datatable-data > tr:nth-child(even) { background: var(--gs-row-even); }
+body.clinical-body .ui-datatable .ui-datatable-data > tr:hover { background: var(--gs-raised); }
+body.clinical-body .ui-datatable .ui-datatable-data > tr.ui-state-highlight { background: var(--gs-selected); color: var(--gs-text); }
+body.clinical-body .ui-datatable .ui-datatable-data > tr.ui-state-hover { background: var(--gs-header-hover); }
+body.clinical-body .ui-datatable .ui-datatable-data > tr.ui-state-highlight:hover { background: var(--gs-row-selected-hover); }
+body.clinical-body .ui-datatable .ui-datatable-data > tr > td {
+    color: var(--gs-text);
+    border: 0;
+    border-bottom: 1px solid var(--gs-soft-border);
+    padding: 10px 12px;
+    font-size: .85rem;
+}
+body.clinical-body .ui-datatable .ui-sortable-column.ui-state-active { color: var(--gs-accent); }
+body.clinical-body .ui-datatable .ui-sortable-column-icon { color: var(--gs-muted); }
+body.clinical-body .ui-datatable .ui-column-filter { margin-top: 6px; padding: 6px 8px; border-radius: 4px; }
+body.clinical-body .ui-paginator { background: var(--gs-surface); color: var(--gs-muted); border: 0; border-top: 1px solid var(--gs-border); padding: 8px; }
+body.clinical-body .ui-paginator .ui-paginator-page,
+body.clinical-body .ui-paginator .ui-paginator-first,
+body.clinical-body .ui-paginator .ui-paginator-prev,
+body.clinical-body .ui-paginator .ui-paginator-next,
+body.clinical-body .ui-paginator .ui-paginator-last { color: var(--gs-muted); border-radius: 4px; min-width: 32px; height: 32px; line-height: 32px; }
+/* La regla del tema incluye ui-paginator-pages: se conserva esa especificidad. */
+body.clinical-body .ui-paginator .ui-paginator-pages .ui-paginator-page { background: transparent; color: var(--gs-muted); }
+body.clinical-body .ui-paginator .ui-paginator-pages .ui-paginator-page.ui-state-hover,
+body.clinical-body .ui-paginator .ui-paginator-first.ui-state-hover,
+body.clinical-body .ui-paginator .ui-paginator-prev.ui-state-hover,
+body.clinical-body .ui-paginator .ui-paginator-next.ui-state-hover,
+body.clinical-body .ui-paginator .ui-paginator-last.ui-state-hover { background: var(--gs-raised); color: var(--gs-text); }
+body.clinical-body .ui-paginator .ui-paginator-pages .ui-paginator-page.ui-state-active,
+body.clinical-body .ui-paginator .ui-paginator-pages .ui-paginator-page.ui-state-active.ui-state-hover { background: var(--gs-selected); color: var(--gs-text); border-color: var(--gs-accent); }
+body.clinical-body .ui-paginator .ui-paginator-current { color: var(--gs-muted); }
+body.clinical-body .ui-paginator select { background: var(--gs-input); color: var(--gs-text); border-color: var(--gs-border); }
+body.clinical-body .exam-name,
+body.clinical-body .tipo-name,
+body.clinical-body .clinica-name,
+body.clinical-body .procedimiento-name,
+body.clinical-body .persona-table .nombre-persona,
+body.clinical-body .consulta-date,
+body.clinical-body .consulta-ref,
+body.clinical-body .orden-text,
+body.clinical-body .paso-text,
+body.clinical-body .paso-date,
+body.clinical-body .date-text,
+body.clinical-body .persona-rol-text,
+body.clinical-body .personarol-cell,
+body.clinical-body .resultado-text,
+body.clinical-body .interpretacion-text,
+body.clinical-body .ruta-text,
+body.clinical-body .indicaciones-text,
+body.clinical-body .regex-value { color: var(--gs-text); }
+body.clinical-body .observaciones-cell,
+body.clinical-body .empty-note { color: var(--gs-muted); }
+
+/* Campos y paneles flotantes (PrimeFaces los puede anexar directamente a body). */
+body.clinical-body .ui-inputfield,
+body.clinical-body .ui-selectonemenu,
+body.clinical-body .ui-selectcheckboxmenu,
+body.clinical-body .ui-autocomplete-multiple-container {
+    background: var(--gs-input);
+    color: var(--gs-text);
+    border: 1px solid var(--gs-border);
+    border-radius: 4px;
+    box-shadow: none;
+    padding: 8px 10px;
+}
+body.clinical-body .ui-inputfield::placeholder { color: var(--gs-placeholder); opacity: 1; }
+body.clinical-body .ui-inputfield:hover,
+body.clinical-body .ui-selectonemenu:hover { border-color: var(--gs-border-hover); }
+body.clinical-body .ui-inputfield:focus,
+body.clinical-body .ui-selectonemenu.ui-state-focus,
+body.clinical-body .ui-selectcheckboxmenu.ui-state-focus { border-color: var(--gs-accent); box-shadow: none; outline: 2px solid var(--gs-accent); outline-offset: 1px; }
+body.clinical-body .ui-selectonemenu,
+body.clinical-body .ui-selectcheckboxmenu { padding: 0; }
+/* La etiqueta reserva el ancho real de la flecha más 8 px de separación. */
+body.clinical-body .ui-selectonemenu { --gs-select-trigger-width: 2rem; }
+body.clinical-body .ui-selectonemenu .ui-selectonemenu-label {
+    background: transparent;
+    color: var(--gs-text);
+    border: 0;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 8px calc(var(--gs-select-trigger-width) + 8px) 8px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+body.clinical-body .ui-selectonemenu-trigger,
+body.clinical-body .ui-selectcheckboxmenu-trigger { background: transparent; color: var(--gs-muted); border: 0; }
+body.clinical-body .ui-selectonemenu .ui-selectonemenu-trigger { width: var(--gs-select-trigger-width); padding: 0; }
+body.clinical-body .form-field .ui-selectonemenu { width: 100%; min-width: 0; }
+body.clinical-body .ui-selectonemenu-panel,
+body.clinical-body .ui-selectcheckboxmenu-panel,
+body.clinical-body .ui-autocomplete-panel,
+body.clinical-body .ui-menu,
+body.clinical-body .ui-tooltip .ui-tooltip-text {
+    background: var(--gs-raised);
+    color: var(--gs-text);
+    border: 1px solid var(--gs-border);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px var(--gs-shadow-dropdown);
+}
+body.clinical-body .ui-selectonemenu-panel .ui-selectonemenu-list-item,
+body.clinical-body .ui-selectcheckboxmenu-panel .ui-selectcheckboxmenu-list-item,
+body.clinical-body .ui-autocomplete-panel .ui-autocomplete-item,
+body.clinical-body .ui-menu .ui-menuitem-link { color: var(--gs-text); background: transparent; }
+body.clinical-body .ui-selectonemenu-panel .ui-state-hover,
+body.clinical-body .ui-autocomplete-panel .ui-state-hover,
+body.clinical-body .ui-menu .ui-state-hover { background: var(--gs-hover); }
+body.clinical-body .ui-selectonemenu-panel .ui-state-highlight,
+body.clinical-body .ui-selectcheckboxmenu-panel .ui-state-highlight,
+body.clinical-body .ui-autocomplete-panel .ui-state-highlight { background: var(--gs-selected); color: var(--gs-text); }
+body.clinical-body .ui-selectcheckboxmenu-header,
+body.clinical-body .ui-selectonemenu-panel .ui-selectonemenu-filter-container { background: var(--gs-raised); border-color: var(--gs-border); }
+body.clinical-body .ui-menu .ui-menuitem-text,
+body.clinical-body .ui-menu .ui-menuitem-icon { color: inherit; }
+body.clinical-body .ui-selectonemenu-filter { width: 100%; }
+body.clinical-body .ui-selectonemenu-panel .ui-selectonemenu-items .ui-selectonemenu-item { background: transparent; color: var(--gs-text); }
+body.clinical-body .ui-selectonemenu-panel .ui-selectonemenu-items .ui-selectonemenu-item.ui-state-hover { background: var(--gs-hover); color: var(--gs-text); }
+body.clinical-body .ui-selectonemenu-panel .ui-selectonemenu-items .ui-selectonemenu-item.ui-state-highlight { background: var(--gs-selected); color: var(--gs-text); }
+body.clinical-body .ui-selectcheckboxmenu-panel .ui-selectcheckboxmenu-items .ui-selectcheckboxmenu-item { background: transparent; color: var(--gs-text); }
+body.clinical-body .ui-selectcheckboxmenu-panel .ui-selectcheckboxmenu-items .ui-selectcheckboxmenu-item.ui-state-hover { background: var(--gs-hover); }
+body.clinical-body .ui-selectcheckboxmenu-panel .ui-selectcheckboxmenu-items .ui-selectcheckboxmenu-item.ui-state-highlight { background: var(--gs-selected); color: var(--gs-text); }
+body.clinical-body .ui-autocomplete-panel .ui-autocomplete-items .ui-autocomplete-item { background: transparent; color: var(--gs-text); }
+body.clinical-body .ui-autocomplete-panel .ui-autocomplete-items .ui-autocomplete-item.ui-state-highlight { background: var(--gs-selected); color: var(--gs-text); }
+body.clinical-body .ui-autocomplete-panel .ui-autocomplete-table th,
+body.clinical-body .ui-selectcheckboxmenu-panel .ui-selectcheckboxmenu-table th { background: var(--gs-raised); color: var(--gs-text); border-color: var(--gs-border); }
+body.clinical-body .ui-autocomplete-panel .ui-autocomplete-empty-message { color: var(--gs-muted); }
+body.clinical-body .ui-state-disabled { opacity: .65; box-shadow: none; }
+body.clinical-body .ui-inputfield[readonly] { color: var(--gs-muted); }
+body.clinical-body .ui-inputfield.ui-state-error,
+body.clinical-body .ui-selectonemenu.ui-state-error { border-color: var(--gs-error-border); }
+body.clinical-body .ui-chkbox .ui-chkbox-box,
+body.clinical-body .ui-radiobutton .ui-radiobutton-box { background: var(--gs-input); border-color: var(--gs-control-border); color: var(--gs-text); }
+body.clinical-body .ui-chkbox .ui-chkbox-box.ui-state-active,
+body.clinical-body .ui-radiobutton .ui-radiobutton-box.ui-state-active { background: var(--gs-blue); border-color: var(--gs-accent); color: var(--gs-on-blue); }
+body.clinical-body .ui-toggleswitch .ui-toggleswitch-slider,
+body.clinical-body .ui-inputswitch .ui-inputswitch-off { background: var(--gs-switch-off); border-color: var(--gs-border); }
+body.clinical-body .ui-toggleswitch.ui-toggleswitch-checked .ui-toggleswitch-slider,
+body.clinical-body .ui-inputswitch .ui-inputswitch-on { background: var(--gs-blue); }
+body.clinical-body .ui-toggleswitch .ui-toggleswitch-slider:before { background: var(--gs-control-thumb); }
+
+/* Calendarios y hora, incluidos los desplegables de mes y año. */
+body.clinical-body .ui-datepicker,
+body.clinical-body .ui-datepicker .ui-datepicker-header,
+body.clinical-body .ui-datepicker .ui-datepicker-buttonpane,
+body.clinical-body .ui-timepicker-div {
+    background: var(--gs-raised);
+    color: var(--gs-text);
+    border-color: var(--gs-border);
+    box-shadow: none;
+}
+body.clinical-body .ui-datepicker .ui-datepicker-title,
+body.clinical-body .ui-datepicker th,
+body.clinical-body .ui-datepicker .ui-datepicker-prev,
+body.clinical-body .ui-datepicker .ui-datepicker-next { color: var(--gs-text); }
+body.clinical-body .ui-datepicker table td > a,
+body.clinical-body .ui-datepicker table td > span { background: transparent; color: var(--gs-text); border-color: transparent; border-radius: 4px; }
+body.clinical-body .ui-datepicker table td > a:hover { background: var(--gs-hover); }
+body.clinical-body .ui-datepicker table td > a.ui-state-highlight { background: var(--gs-date-today); border-color: var(--gs-accent); }
+body.clinical-body .ui-datepicker table td > a.ui-state-active { background: var(--gs-blue); color: var(--gs-on-blue); }
+body.clinical-body .ui-datepicker select { background: var(--gs-input); color: var(--gs-text); border: 1px solid var(--gs-border); }
+body.clinical-body .ui-datepicker .ui-timepicker,
+body.clinical-body .ui-datepicker .ui-timepicker > div,
+body.clinical-body .ui-datepicker .ui-timepicker span { color: var(--gs-text); }
+body.clinical-body .ui-datepicker .ui-timepicker-timeinput input { background: var(--gs-input); color: var(--gs-text); border-color: var(--gs-border); }
+body.clinical-body .ui-datepicker .ui-timepicker-timeinput input:focus { border-color: var(--gs-accent); box-shadow: none; outline: 2px solid var(--gs-accent); }
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td > a,
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td > span { color: var(--gs-text); }
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td.ui-datepicker-today > a,
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td.ui-datepicker-today > span,
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td.ui-datepicker-current-day > a,
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td.ui-datepicker-current-day > span { color: var(--gs-accent); }
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td > a.ui-state-active,
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td > span.ui-state-active,
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td.ui-datepicker-today > a.ui-state-active,
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td.ui-datepicker-current-day > a.ui-state-active { background: var(--gs-blue); color: var(--gs-on-blue); }
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td > a:hover,
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td > a.ui-state-hover,
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td.ui-datepicker-today > a:hover,
+body.clinical-body .ui-datepicker .ui-datepicker-calendar td.ui-datepicker-current-day > a:hover { background: var(--gs-hover); }
+body.clinical-body .ui-slider { background: var(--gs-slider); border-color: var(--gs-border); }
+body.clinical-body .ui-slider .ui-slider-handle { background: var(--gs-accent); border-color: var(--gs-accent); }
+body.clinical-body .ui-datepicker-trigger { flex-shrink: 0; }
+
+/* Modales, pestañas y formularios anidados. */
+body.clinical-body .ui-dialog {
+    background: var(--gs-surface);
+    border: 1px solid var(--gs-border);
+    border-radius: 6px;
+    box-shadow: 0 8px 28px var(--gs-shadow-dialog);
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+}
+body.clinical-body .ui-dialog .ui-dialog-titlebar { background: var(--gs-surface); color: var(--gs-text); border-bottom: 1px solid var(--gs-border); padding: 14px 18px; }
+body.clinical-body .ui-dialog .ui-dialog-title { color: var(--gs-text); font-size: 1.05rem; }
+body.clinical-body .ui-dialog .ui-dialog-titlebar-close { color: var(--gs-muted); }
+body.clinical-body .ui-dialog .ui-dialog-titlebar-close:hover { background: var(--gs-raised); color: var(--gs-text); }
+body.clinical-body .ui-dialog .ui-dialog-content { background: var(--gs-surface); color: var(--gs-text); padding: 18px; max-height: calc(100dvh - 100px); overflow-y: auto; }
+body.clinical-body .ui-dialog .ui-dialog-footer { background: var(--gs-surface); color: var(--gs-text); border-color: var(--gs-border); }
+body.clinical-body .ui-widget-overlay { background: var(--gs-overlay); opacity: .7; }
+body.clinical-body .dialog-intro { background: var(--gs-raised); border-color: var(--gs-border); border-radius: 4px; margin-bottom: 16px; padding: 10px 12px; }
+body.clinical-body .dialog-intro-icon { display: none; }
+body.clinical-body .dialog-intro strong { color: var(--gs-text); }
+body.clinical-body .dialog-intro span { color: var(--gs-muted); }
+body.clinical-body .dialog-form { gap: 14px; }
+body.clinical-body .form-field { gap: 6px; min-width: 0; }
+body.clinical-body .form-label,
+body.clinical-body .toggle-info strong { color: var(--gs-text); font-size: .85rem; }
+body.clinical-body .form-helper,
+body.clinical-body .toggle-info span { color: var(--gs-muted); font-size: .78rem; line-height: 1.45; }
+body.clinical-body .clinical-dialog .ui-inputfield { padding: 8px 10px; }
+body.clinical-body .clinical-dialog .ui-datepicker { width: 100%; min-width: 0; }
+body.clinical-body .toggle-field,
+body.clinical-body .examen-status-field { background: var(--gs-raised); border-color: var(--gs-border); border-radius: 4px; padding: 10px 12px; }
+body.clinical-body .dialog-actions { background: var(--gs-surface); border-color: var(--gs-border); margin: 18px -18px -18px; padding: 12px 18px; position: sticky; bottom: 0; z-index: 1; }
+body.clinical-body .ui-tabs { background: transparent; color: var(--gs-text); border: 0; padding: 0; }
+body.clinical-body .ui-tabs .ui-tabs-nav { background: transparent; border-color: var(--gs-border); }
+body.clinical-body .ui-tabs .ui-tabs-nav li.ui-tabs-header { background: transparent; border-color: var(--gs-border); padding: 10px 12px; }
+body.clinical-body .ui-tabs .ui-tabs-nav li.ui-tabs-header a { color: var(--gs-muted); font-size: .85rem; padding: 0; }
+body.clinical-body .ui-tabs .ui-tabs-nav li.ui-tabs-header.ui-state-hover,
+body.clinical-body .ui-tabs .ui-tabs-nav li.ui-tabs-header.ui-state-active { background: var(--gs-raised); }
+body.clinical-body .ui-tabs.ui-tabs-top > .ui-tabs-nav::before { border-color: var(--gs-border); }
+body.clinical-body .ui-tabs.ui-tabs-top > .ui-tabs-nav li.ui-tabs-header.ui-state-active { border-color: var(--gs-accent); }
+body.clinical-body .ui-tabs .ui-tabs-nav li.ui-tabs-header.ui-state-active a { color: var(--gs-accent); }
+body.clinical-body .ui-tabs .ui-tabs-nav li.ui-tabs-header.ui-state-hover a { color: var(--gs-text); }
+body.clinical-body .ui-tabs .ui-tabs-panels { background: transparent; color: var(--gs-text); }
+body.clinical-body .ui-tabs .ui-tabs-panel { padding: 16px 0 0; }
+body.clinical-body .related-tab-header span,
+body.clinical-body .flow-step-heading h3,
+body.clinical-body .flow-child-row strong,
+body.clinical-body .flow-step-children > strong,
+body.clinical-body .procedure-flow strong { color: var(--gs-text); }
+body.clinical-body .related-tab-link,
+body.clinical-body .flow-step-kicker,
+body.clinical-body .flow-connector { color: var(--gs-accent); }
+body.clinical-body .empty-flow-state,
+body.clinical-body .flow-step-card { background: var(--gs-raised); border-color: var(--gs-border); border-radius: 4px; box-shadow: none; padding: 12px; }
+body.clinical-body .flow-step-card:hover { border-color: var(--gs-border-hover); box-shadow: none; }
+body.clinical-body .empty-flow-state,
+body.clinical-body .flow-step-role,
+body.clinical-body .flow-child-row,
+body.clinical-body .flow-step-exams > span:first-child { color: var(--gs-muted); }
+body.clinical-body .empty-flow-state strong { color: var(--gs-text); }
+body.clinical-body .flow-exam-chip { background: var(--gs-selected); color: var(--gs-chip-text); }
+body.clinical-body .flow-step-children { border-color: var(--gs-border); }
+body.clinical-body .ui-panelgrid .ui-panelgrid-cell { background: var(--gs-surface); color: var(--gs-text); border-color: var(--gs-border); padding: 10px; }
+
+/* Acciones sobrias. Los botones permanecen fuera de las columnas de datos. */
+body.clinical-body .ui-button,
+body.clinical-body .clinical-dialog .dialog-actions .crud-actions-bottom .ui-button {
+    background: var(--gs-blue);
+    color: var(--gs-on-blue);
+    border: 1px solid var(--gs-button-border);
+    border-radius: 4px;
+    box-shadow: none;
+    padding: 8px 12px;
+    min-height: 36px;
+    font-size: .85rem;
+    font-weight: 600;
+}
+body.clinical-body .ui-button:hover,
+body.clinical-body .clinical-dialog .dialog-actions .crud-actions-bottom .ui-button:hover { background: var(--gs-button-hover); border-color: var(--gs-accent); box-shadow: none; }
+body.clinical-body .ui-button.ui-button-secondary,
+body.clinical-body .ui-button.cancel-button,
+body.clinical-body .ui-button.ui-button-outlined,
+body.clinical-body .clinical-dialog .dialog-actions .crud-actions-bottom .cancel-button {
+    background: var(--gs-raised);
+    border-color: var(--gs-border);
+    color: var(--gs-text);
+}
+body.clinical-body .ui-button.ui-button-secondary:hover,
+body.clinical-body .ui-button.cancel-button:hover,
+body.clinical-body .ui-button.ui-button-outlined:hover,
+body.clinical-body .clinical-dialog .dialog-actions .crud-actions-bottom .cancel-button:hover { background: var(--gs-hover); color: var(--gs-text); border-color: var(--gs-border-hover); }
+body.clinical-body .ui-button.ui-button-danger { background: var(--gs-danger-bg); border-color: var(--gs-danger-border); color: var(--gs-on-blue); }
+body.clinical-body .ui-button.ui-button-danger:hover { background: var(--gs-danger-hover); }
+body.clinical-body .ui-button.ui-state-focus { outline: 2px solid var(--gs-accent); outline-offset: 2px; box-shadow: none; }
+body.clinical-body .ui-button.ui-state-active { background: var(--gs-button-pressed); border-color: var(--gs-accent); color: var(--gs-on-blue); }
+body.clinical-body .ui-button .ui-button-text { padding: 0; }
+/* PrimeFaces posiciona el icono en absoluto; el texto debe reservar su espacio. */
+body.clinical-body .ui-button.ui-button-text-icon-left > .ui-button-icon-left,
+body.clinical-body .ui-button.ui-button-text-icon-right > .ui-button-icon-right {
+    width: 1rem;
+    height: 1rem;
+    top: 50%;
+    margin-top: -.5rem;
+}
+body.clinical-body .ui-button.ui-button-text-icon-left > .ui-button-icon-left { left: 12px; }
+body.clinical-body .ui-button.ui-button-text-icon-right > .ui-button-icon-right { right: 12px; }
+body.clinical-body .ui-button.ui-button-text-icon-left > .ui-button-text { padding: 0 0 0 calc(1rem + 8px); text-align: left; }
+body.clinical-body .ui-button.ui-button-text-icon-right > .ui-button-text { padding: 0 calc(1rem + 8px) 0 0; text-align: right; }
+body.clinical-body .crud-actions-top,
+body.clinical-body .crud-actions-bottom { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+body.clinical-body .clinical-dialog .dialog-actions .crud-actions-bottom { justify-content: flex-end; }
+
+/* Mensajes: texto y campo inválido conservan contraste sin duplicar contenido. */
+body.clinical-body .ui-messages > div,
+body.clinical-body .ui-message { border-radius: 4px; padding: 8px 10px; font-size: .85rem; }
+body.clinical-body .layout-shell > .ui-messages { margin-inline: 20px; }
+/* La X queda dentro del aviso y el texto reserva espacio para ella. */
+body.clinical-body .ui-messages > div { position: relative; min-height: 44px; padding-right: 44px; }
+body.clinical-body .ui-messages > div > ul { margin-right: 0; overflow-wrap: anywhere; }
+body.clinical-body .ui-messages-error,
+body.clinical-body .ui-message-error,
+body.clinical-body .ui-messages-fatal,
+body.clinical-body .ui-message-fatal { background: var(--gs-error-bg); border: 1px solid var(--gs-error-message-border); color: var(--gs-error); }
+body.clinical-body .ui-messages-warn,
+body.clinical-body .ui-message-warn { background: var(--gs-warn-bg); border: 1px solid var(--gs-warn-border); color: var(--gs-warn-text); }
+body.clinical-body .ui-messages-info,
+body.clinical-body .ui-message-info { background: var(--gs-info-bg); border: 1px solid var(--gs-info-border); color: var(--gs-info-text); }
+body.clinical-body .ui-messages-success,
+body.clinical-body .ui-message-success { background: var(--gs-success-bg); border: 1px solid var(--gs-success-border); color: var(--gs-success-text); }
+body.clinical-body .ui-messages .ui-messages-close,
+body.clinical-body .ui-messages .ui-messages-icon,
+body.clinical-body .ui-message .ui-message-icon { color: inherit; }
+body.clinical-body .ui-messages [class*="-icon"],
+body.clinical-body .ui-message [class*="-icon"] { color: inherit; }
+body.clinical-body .ui-messages > div .ui-messages-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    float: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+}
+body.clinical-body .ui-messages > div .ui-messages-close:hover { background: var(--gs-raised); }
+body.clinical-body .ui-messages > div .ui-messages-close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; box-shadow: none; }
+body.clinical-body .ui-tag,
+body.clinical-body .estado-badge { border-radius: 4px; font-size: .75rem; padding: 3px 7px; }
+body.clinical-body .ui-tag.ui-tag-success,
+body.clinical-body .estado-completado { background: var(--gs-status-success-bg); color: var(--gs-status-success-text); }
+body.clinical-body .ui-tag.ui-tag-danger { background: var(--gs-status-danger-bg); color: var(--gs-status-danger-text); }
+body.clinical-body .ui-tag.ui-tag-warning,
+body.clinical-body .estado-pendiente { background: var(--gs-status-warn-bg); color: var(--gs-status-warn-text); }
+body.clinical-body .ui-tag.ui-tag-info,
+body.clinical-body .estado-en-curso { background: var(--gs-status-info-bg); color: var(--gs-status-info-text); }
+
+/* Ventanas estrechas: navegación lineal, tablas con scroll y modales contenidos. */
+@media (max-width: 1000px) {
+    body.clinical-body .layout-shell > .ui-messages { margin-inline: 14px; }
+    body.clinical-body .layout-header { grid-template-columns: 232px minmax(0, 1fr); }
+    body.clinical-body .layout-tools { grid-column: 1 / -1; }
+    body.clinical-body .layout-body { gap: 14px; padding: 14px; }
+    body.clinical-body .layout-body.is-menu-open { grid-template-columns: 200px minmax(0, 1fr); }
+    body.clinical-body .layout-tools > label { max-width: 90px; }
+}
+@media (max-width: 720px) {
+    body.clinical-body .layout-shell > .ui-messages { margin-inline: 12px; }
+    body.clinical-body .layout-header { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 8px 12px; }
+    body.clinical-body .layout-logo-image { width: 148px; }
+    body.clinical-body .layout-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; max-width: 100%; }
+    body.clinical-body .layout-tools > label { display: none; }
+    body.clinical-body .layout-tools .layout-language { width: 112px; min-width: 0; }
+    body.clinical-body .layout-body { grid-template-columns: minmax(0, 1fr); padding: 12px; gap: 12px; }
+    body.clinical-body .layout-body.is-menu-open { grid-template-columns: minmax(0, 1fr); }
+    body.clinical-body .layout-nav-inner { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; padding: 8px; }
+    body.clinical-body .layout-nav-title,
+    body.clinical-body .layout-nav-divider { grid-column: 1 / -1; }
+    body.clinical-body .layout-clinic { width: 100%; }
+    body.clinical-body .card-content { padding: 16px; }
+    body.clinical-body .page-header { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 14px; }
+    body.clinical-body .page-title { font-size: 1.3rem; }
+    body.clinical-body .section-divider { margin: 0 -16px 14px; }
+    body.clinical-body .table-heading { flex-direction: column; align-items: flex-start; }
+    body.clinical-body .crud-actions-top .ui-button,
+    body.clinical-body .crud-actions-bottom .ui-button { width: auto; min-width: 0; }
+    body.clinical-body .ui-dialog .ui-dialog-titlebar { padding: 12px; }
+    body.clinical-body .ui-dialog .ui-dialog-content { padding: 12px; }
+    body.clinical-body .dialog-actions { margin: 14px -12px -12px; padding: 10px 12px; }
+    body.clinical-body .flow-step-heading { flex-wrap: wrap; gap: 8px; }
+    body.clinical-body .flow-step-actions { flex-wrap: wrap; }
+    body.clinical-body .context-actions { justify-content: flex-start; }
+    body.clinical-body .consulta-filtros { gap: 10px; margin-block: 12px; }
+}
+@media (max-width: 380px) {
+    body.clinical-body .layout-nav-inner { grid-template-columns: minmax(0, 1fr); }
+    body.clinical-body .layout-logo-image { width: 124px; }
+}
