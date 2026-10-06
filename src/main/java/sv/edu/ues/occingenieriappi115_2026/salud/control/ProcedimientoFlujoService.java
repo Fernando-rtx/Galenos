@@ -71,9 +71,8 @@ public class ProcedimientoFlujoService {
         if (!Boolean.TRUE.equals(rol.getActivo())) {
             throw new IllegalArgumentException("procedimientoPaso.rolInactivo");
         }
-        if (pasos.stream().anyMatch(paso -> paso.getIdRol() != null
-                && idRol.equals(paso.getIdRol().getIdRol()))) {
-            throw new IllegalArgumentException("procedimientoPaso.rolDuplicado");
+        if (esRolPaciente(rol)) {
+            throw new IllegalArgumentException("procedimientoPaso.rolPaciente");
         }
 
         List<UUID> examenesUnicos = idsExamenes == null ? List.of()
@@ -204,10 +203,8 @@ public class ProcedimientoFlujoService {
         if (rol == null) {
             throw new IllegalArgumentException("procedimientoPaso.rolNoExiste");
         }
-        if (pasos.stream().filter(otro -> !idPaso.equals(otro.getIdProcedimientoPaso()))
-                .anyMatch(otro -> otro.getIdRol() != null
-                && idRol.equals(otro.getIdRol().getIdRol()))) {
-            throw new IllegalArgumentException("procedimientoPaso.rolDuplicado");
+        if (esRolPaciente(rol)) {
+            throw new IllegalArgumentException("procedimientoPaso.rolPaciente");
         }
 
         List<UUID> examenesUnicos = idsExamenes == null ? List.of()
@@ -231,6 +228,11 @@ public class ProcedimientoFlujoService {
         paso.setIndicaFin(indicaFin);
         pasoDAO.actualizar(paso);
 
+    }
+
+    private boolean esRolPaciente(Rol rol) {
+        return rol != null && rol.getNombre() != null
+                && "paciente".equalsIgnoreCase(rol.getNombre().trim());
     }
 
     private ProcedimientoPaso validarOrigen(UUID idPasoOrigen, UUID idProcedimiento,

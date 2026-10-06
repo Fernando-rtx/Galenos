@@ -373,6 +373,12 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         if (getEstado() == ESTADO_CRUD.EDICION) {
             idDocumentoExcluir = seleccionado.getIdDocumento();
         }
+        if (documentoDAO.existeTipoParaPersona(
+                seleccionado.getIdPersona().getIdPersona(),
+                seleccionado.getIdTipoDocumento().getIdTipoDocumento(), idDocumentoExcluir)) {
+            agregarError("tipo", "documento.tipoDuplicadoPersona");
+            return false;
+        }
         if (documentoDAO.existeDocumento(
                 seleccionado.getIdTipoDocumento().getIdTipoDocumento(),
                 seleccionado.getValor(), idDocumentoExcluir)) {

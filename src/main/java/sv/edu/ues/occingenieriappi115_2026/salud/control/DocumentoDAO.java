@@ -53,4 +53,19 @@ public class DocumentoDAO extends DefaultDAO<Documento> {
         }
         return !obtenerPagina(0, 1, filtros, List.of()).isEmpty();
     }
+
+    /** Comprueba que una persona no tenga ya un documento del mismo tipo. */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public boolean existeTipoParaPersona(UUID idPersona, UUID idTipoDocumento, UUID idDocumentoExcluir) {
+        if (idPersona == null || idTipoDocumento == null) {
+            return false;
+        }
+        List<FiltroDAO> filtros = new ArrayList<>(List.of(
+                new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL, idPersona),
+                new FiltroDAO("idTipoDocumento.idTipoDocumento", OperadorFiltro.IGUAL, idTipoDocumento)));
+        if (idDocumentoExcluir != null) {
+            filtros.add(new FiltroDAO("idDocumento", OperadorFiltro.DISTINTO, idDocumentoExcluir));
+        }
+        return !obtenerPagina(0, 1, filtros, List.of()).isEmpty();
+    }
 }

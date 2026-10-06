@@ -155,24 +155,24 @@ public class ProcedimientoFlujoModel implements Serializable {
 
     public List<Rol> getRolesDisponibles() {
         if (isEditando()) {
-            return pasoEditando.getIdRol() == null ? List.of() : List.of(pasoEditando.getIdRol());
+            Rol rolActual = pasoEditando.getIdRol();
+            return rolActual == null || esRolPaciente(rolActual) ? List.of() : List.of(rolActual);
         }
         UUID idProcedimiento = procedimiento == null ? null : procedimiento.getIdProcedimiento();
         if (idProcedimiento == null) {
             return List.of();
         }
-        List<UUID> rolesUsados = pasosDelProcedimiento(idProcedimiento).stream()
-                .filter(paso -> pasoEditando == null
-                || !pasoEditando.getIdProcedimientoPaso().equals(paso.getIdProcedimientoPaso()))
-                .filter(paso -> paso.getIdRol() != null)
-                .map(paso -> paso.getIdRol().getIdRol())
-                .toList();
         return rolDAO.obtenerTodos().stream()
                 .filter(opcion -> opcion != null && Boolean.TRUE.equals(opcion.getActivo()))
-                .filter(opcion -> !rolesUsados.contains(opcion.getIdRol()))
+                .filter(opcion -> !esRolPaciente(opcion))
                 .sorted(java.util.Comparator.comparing(Rol::getNombre,
                         java.util.Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
                 .toList();
+    }
+
+    private boolean esRolPaciente(Rol rol) {
+        return rol != null && rol.getNombre() != null
+                && "paciente".equalsIgnoreCase(rol.getNombre().trim());
     }
 
     public List<Examen> getExamenesDisponibles() {

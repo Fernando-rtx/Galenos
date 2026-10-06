@@ -101,6 +101,31 @@ body.clinical-body {
     min-width: 170px;
 }
 
+.layout-user-profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    max-width: 240px;
+    padding: 7px 10px;
+    border: 1px solid var(--gs-border, #d8e5ec);
+    border-radius: 8px;
+    color: var(--gs-text, #263746);
+    text-decoration: none;
+}
+
+.layout-user-profile:hover,
+.layout-user-profile:focus-visible {
+    border-color: var(--gs-accent, #1683b6);
+    outline: none;
+}
+
+.layout-user-profile > .pi-user { color: var(--gs-accent, #1683b6); font-size: 1.2rem; }
+.layout-user-profile-copy { display: grid; min-width: 0; }
+.layout-user-profile-copy strong,
+.layout-user-profile-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layout-user-profile-copy small { color: var(--gs-muted, #62788a); }
+
 .brand-mark {
     align-items: center;
     background: #eaf6fb;
@@ -702,6 +727,8 @@ body.clinical-body .p-datepicker-panel .ui-datepicker-title select {
     .layout-language {
         width: 100%;
     }
+
+    .layout-user-profile { max-width: 100%; }
 
     .crud-actions-top,
     .crud-actions-bottom {

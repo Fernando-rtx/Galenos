@@ -1,0 +1,98 @@
+.cambiar-rol-page {
+    width: min(100%, 920px);
+    margin: 20px auto;
+    padding: 0 12px;
+}
+
+.cambiar-rol-card {
+    overflow: hidden;
+    border: 1px solid var(--gs-border, #d8e5ec);
+    border-radius: 10px;
+    background: var(--gs-surface, #fff);
+    color: var(--gs-text, #263746);
+    box-shadow: 0 12px 36px rgba(18, 52, 74, .1);
+}
+
+.cambiar-rol-topbar {
+    height: 6px;
+    background: var(--gs-blue, #087eae);
+}
+
+.cambiar-rol-content {
+    padding: clamp(22px, 5vw, 48px);
+}
+
+.cambiar-rol-heading {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 0 auto 32px;
+    max-width: 650px;
+}
+
+.cambiar-rol-icon {
+    display: inline-flex;
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--gs-selected, #e6f4fb);
+    color: var(--gs-accent, #087eae);
+    font-size: 1.4rem;
+}
+
+.cambiar-rol-heading h1 {
+    margin: 0 0 6px;
+    color: var(--gs-text, #153b55);
+    font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.cambiar-rol-heading p {
+    margin: 0;
+    color: var(--gs-muted, #62788a);
+    line-height: 1.5;
+}
+
+.cambiar-rol-form {
+    display: grid;
+    gap: 20px;
+    max-width: 650px;
+    margin: 0 auto;
+}
+
+.cambiar-rol-field {
+    display: grid;
+    grid-template-columns: minmax(110px, 150px) minmax(0, 1fr);
+    align-items: center;
+    gap: 8px 20px;
+}
+
+.cambiar-rol-field > label {
+    color: var(--gs-text, #34566c);
+    font-weight: 650;
+}
+
+.cambiar-rol-field .ui-selectonemenu {
+    width: 100%;
+    min-width: 0;
+}
+
+.cambiar-rol-field .ui-message {
+    grid-column: 2;
+}
+
+.cambiar-rol-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+    .cambiar-rol-page { margin: 10px auto; padding: 0; }
+    .cambiar-rol-heading { align-items: flex-start; margin-bottom: 22px; }
+    .cambiar-rol-field { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    .cambiar-rol-field .ui-message { grid-column: 1; }
+    .cambiar-rol-actions .ui-button { width: 100%; }
+}

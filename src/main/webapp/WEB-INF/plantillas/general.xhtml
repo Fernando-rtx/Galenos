@@ -43,7 +43,8 @@
                     </div>
 
                     <!-- El selector original conserva su ID y permanece en layoutForm. -->
-                    <div class="layout-clinic">
+                    <h:panelGroup layout="block" styleClass="layout-clinic"
+                                  rendered="#{view.viewId ne '/paginas/CambiarRol.xhtml'}">
                         <p:outputLabel for="clinicaActual" value="#{msg['clinicaActual.seleccionar']}" />
                         <p:selectOneMenu id="clinicaActual"
                                          value="#{clinicaActualBean.idClinicaSeleccionada}"
@@ -58,7 +59,9 @@
                         </p:selectOneMenu>
                         <h:outputText rendered="#{not clinicaActualBean.catalogoDisponible}"
                                       value="#{msg['clinicaActual.errorCarga']}" role="status" />
-                    </div>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" styleClass="layout-clinic layout-clinic-spacer"
+                                  rendered="#{view.viewId eq '/paginas/CambiarRol.xhtml'}" />
 
                     <div class="ui-g-12 ui-md-4 layout-tools">
                         <p:outputLabel
@@ -97,6 +100,15 @@
                                 <span>Modo oscuro</span>
                             </span>
                         </button>
+                        <h:link outcome="/paginas/CambiarRol" styleClass="layout-user-profile"
+                                title="#{msg['cambiarRol.cambiar']}">
+                            <i class="pi pi-user" aria-hidden="true"></i>
+                            <span class="layout-user-profile-copy">
+                                <strong>#{rolActualBean.seleccionado ? rolActualBean.nombrePersona : msg['cambiarRol.seleccionar']}</strong>
+                                <small>#{rolActualBean.seleccionado ? rolActualBean.nombreRol.concat(' · ').concat(rolActualBean.nombreClinica) : msg['cambiarRol.sinUsuario']}</small>
+                            </span>
+                            <i class="pi pi-chevron-down" aria-hidden="true"></i>
+                        </h:link>
                     </div>
                 </header>
 
@@ -108,6 +120,10 @@
                             <span class="layout-nav-title">
                                 #{msg['app.navegacion']}
                             </span>
+
+                            <h:link outcome="/paginas/CambiarRol"
+                                    value="#{msg['nav.cambiarRol']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/CambiarRol.xhtml' ? 'is-current' : ''}" />
 
                             <h:link outcome="/paginas/Clinica"
                                     value="#{msg['nav.clinica']}"
