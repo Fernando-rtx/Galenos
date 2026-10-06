@@ -7,7 +7,12 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ProcedimientoFlujoService;
@@ -42,6 +47,7 @@ public class ProcedimientoFlujoModel implements Serializable {
 
     private Procedimiento procedimiento;
     private ProcedimientoPaso pasoOrigen;
+    private ProcedimientoPaso pasoEditando;
     private String nombre;
     private Rol rol;
     private boolean indicaFin;
@@ -61,6 +67,7 @@ public class ProcedimientoFlujoModel implements Serializable {
     private void preparar(Procedimiento procedimiento, ProcedimientoPaso origen) {
         this.procedimiento = procedimiento;
         this.pasoOrigen = origen;
+        this.pasoEditando = null;
         this.nombre = "";
         this.rol = null;
         this.indicaFin = false;
@@ -74,6 +81,25 @@ public class ProcedimientoFlujoModel implements Serializable {
 
     public ProcedimientoPaso getPasoOrigen() {
         return pasoOrigen;
+    }
+
+    public boolean isEditando() {
+        return pasoEditando != null;
+    }
+
+    public void editar(ProcedimientoPaso paso) {
+        if (paso == null || paso.getIdProcedimiento() == null) {
+            return;
+        }
+        preparar(paso.getIdProcedimiento(), null);
+        pasoEditando = paso;
+        nombre = paso.getNombre();
+        rol = paso.getIdRol();
+        indicaFin = Boolean.TRUE.equals(paso.getIndicaFin());
+        examenesSeleccionados = procedimientoPasoExamenModel.getExamenesPorPaso(paso).stream()
+                .map(relacion -> relacion.getIdExamen())
+                .filter(java.util.Objects::nonNull)
+                .toList();
     }
 
     public String getNombre() {
@@ -123,6 +149,8 @@ public class ProcedimientoFlujoModel implements Serializable {
             return List.of();
         }
         List<UUID> rolesUsados = pasosDelProcedimiento(idProcedimiento).stream()
+                .filter(paso -> pasoEditando == null
+                || !pasoEditando.getIdProcedimientoPaso().equals(paso.getIdProcedimientoPaso()))
                 .filter(paso -> paso.getIdRol() != null)
                 .map(paso -> paso.getIdRol().getIdRol())
                 .toList();
@@ -146,7 +174,79 @@ public class ProcedimientoFlujoModel implements Serializable {
         if (procedimiento == null || procedimiento.getIdProcedimiento() == null) {
             return List.of();
         }
-        return pasosDelProcedimiento(procedimiento.getIdProcedimiento());
+        List<ProcedimientoPaso> pasos = pasosDelProcedimiento(procedimiento.getIdProcedimiento());
+        if (pasos.isEmpty()) {
+            return pasos;
+        }
+
+        Comparator<ProcedimientoPaso> porNombre = Comparator.comparing(
+                ProcedimientoPaso::getNombre,
+                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+        ProcedimientoPaso inicial = pasos.stream()
+                .filter(secuenciaModel::isPasoInicial)
+                .min(porNombre)
+                .orElse(null);
+        if (inicial == null) {
+            return pasos;
+        }
+
+        List<ProcedimientoPaso> ordenados = new ArrayList<>();
+        Set<UUID> visitados = new HashSet<>();
+        ArrayDeque<ProcedimientoPaso> pendientes = new ArrayDeque<>();
+        pendientes.add(inicial);
+        while (!pendientes.isEmpty()) {
+            ProcedimientoPaso actual = pendientes.removeFirst();
+            UUID id = actual.getIdProcedimientoPaso();
+            if (id == null || !visitados.add(id)) {
+                continue;
+            }
+            ordenados.add(actual);
+            secuenciaModel.getSecuenciasPorPaso(actual).stream()
+                    .sorted(Comparator.comparingInt(enlace -> "SIGUIENTE".equalsIgnoreCase(
+                            enlace.getTipoSecuencia()) ? 0 : 1))
+                    .map(enlace -> pasos.stream()
+                            .filter(paso -> paso.getIdProcedimientoPaso() != null
+                            && paso.getIdProcedimientoPaso().equals(
+                                    enlace.getIdProcedimientoPasoReferencia()))
+                            .findFirst().orElse(null))
+                    .filter(java.util.Objects::nonNull)
+                    .forEach(pendientes::addLast);
+        }
+        pasos.stream().filter(paso -> paso.getIdProcedimientoPaso() == null
+                || !visitados.contains(paso.getIdProcedimientoPaso()))
+                .sorted(porNombre).forEach(ordenados::add);
+        return List.copyOf(ordenados);
+    }
+
+    public boolean puedeEliminar(ProcedimientoPaso paso) {
+        if (paso == null || paso.getIdProcedimientoPaso() == null
+                || paso.getIdProcedimiento() == null
+                || paso.getIdProcedimiento().getIdProcedimiento() == null
+                || !secuenciaModel.getSecuenciasPorPaso(paso).isEmpty()) {
+            return false;
+        }
+        boolean inicial = secuenciaModel.isPasoInicial(paso);
+        return !inicial || pasosDelProcedimiento(paso.getIdProcedimiento()
+                .getIdProcedimiento()).size() == 1;
+    }
+
+    public void eliminarPaso(ProcedimientoPaso paso) {
+        if (!puedeEliminar(paso)) {
+            agregarError("flujo.pasoNoEliminable");
+            return;
+        }
+        try {
+            flujoService.eliminarPaso(paso.getIdProcedimientoPaso());
+            pasosCacheProcedimiento = null;
+            pasosCache = null;
+            secuenciaModel.invalidarCache();
+            procedimientoPasoExamenModel.invalidarCache();
+            agregarMensaje("flujo.pasoEliminado", FacesMessage.SEVERITY_INFO);
+        } catch (IllegalArgumentException ex) {
+            agregarError(ex.getMessage());
+        } catch (RuntimeException ex) {
+            agregarError("flujo.errorEliminarPaso");
+        }
     }
 
     public boolean isInicialDisponible(Procedimiento procedimiento) {
@@ -164,7 +264,9 @@ public class ProcedimientoFlujoModel implements Serializable {
     }
 
     public boolean isInicial() {
-        return pasoOrigen == null;
+        return pasoEditando != null
+                ? secuenciaModel.isPasoInicial(pasoEditando)
+                : pasoOrigen == null;
     }
 
     public void guardar() {
@@ -181,14 +283,20 @@ public class ProcedimientoFlujoModel implements Serializable {
                     .filter(examen -> examen != null && examen.getIdExamen() != null)
                     .map(Examen::getIdExamen)
                     .toList();
-            flujoService.crearPaso(procedimiento.getIdProcedimiento(),
-                    pasoOrigen == null ? null : pasoOrigen.getIdProcedimientoPaso(),
-                    nombre, rol.getIdRol(), indicaFin, tipoSecuencia, idsExamenes);
+            if (pasoEditando == null) {
+                flujoService.crearPaso(procedimiento.getIdProcedimiento(),
+                        pasoOrigen == null ? null : pasoOrigen.getIdProcedimientoPaso(),
+                        nombre, rol.getIdRol(), indicaFin, tipoSecuencia, idsExamenes);
+                agregarMensaje("flujo.pasoCreado", FacesMessage.SEVERITY_INFO);
+            } else {
+                flujoService.actualizarPaso(pasoEditando.getIdProcedimientoPaso(),
+                        nombre, rol.getIdRol(), indicaFin, idsExamenes);
+                agregarMensaje("flujo.pasoActualizado", FacesMessage.SEVERITY_INFO);
+            }
             pasosCacheProcedimiento = null;
             pasosCache = null;
             secuenciaModel.invalidarCache();
             procedimientoPasoExamenModel.invalidarCache();
-            agregarMensaje("flujo.pasoCreado", FacesMessage.SEVERITY_INFO);
         } catch (IllegalArgumentException ex) {
             agregarError(ex.getMessage());
         } catch (RuntimeException ex) {

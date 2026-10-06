@@ -409,8 +409,14 @@
     border: 1px solid #dce7ed;
     border-left: 4px solid #1683b6;
     border-radius: 10px;
-    margin: 16px 0;
-    padding: 18px 20px;
+    margin: 12px 0;
+    padding: 15px 18px;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.flow-step-card:hover {
+    border-color: #bfd9e6;
+    box-shadow: 0 5px 16px rgba(26, 77, 110, 0.07);
 }
 
 .flow-step-heading {
@@ -418,6 +424,13 @@
     display: flex;
     gap: 16px;
     justify-content: space-between;
+}
+
+.flow-step-actions {
+    align-items: center;
+    display: flex;
+    flex-shrink: 0;
+    gap: 8px;
 }
 
 .flow-step-kicker {

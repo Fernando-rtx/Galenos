@@ -46,6 +46,7 @@
 
                         <crud:botones-top
                             model="#{procedimientoModel}"
+                            resetNuevo="true"
                             actualizar="messages procedimientosTable edicionDialog"
                             oncompleteNuevo="PF('procedimientoDialog').show()" />
                     </div>
@@ -234,12 +235,13 @@
 
                                 <ui:repeat
                                     value="#{procedimientoFlujoModel.getPasos(procedimientoModel.seleccionado)}"
-                                    var="paso">
+                                    var="paso"
+                                    varStatus="pasoIndex">
                                     <section class="flow-step-card">
                                         <div class="flow-step-heading">
                                             <div>
                                                 <span class="flow-step-kicker">
-                                                    #{procedimientoPasoSecuenciaModel.isPasoInicial(paso)
+                                                    #{pasoIndex.index + 1}. #{procedimientoPasoSecuenciaModel.isPasoInicial(paso)
                                                       ? msg['flujo.pasoInicial']
                                                       : msg['flujo.paso']}
                                                 </span>
@@ -254,9 +256,34 @@
                                                     </ui:repeat>
                                                 </h:panelGroup>
                                             </div>
-                                            <p:tag
-                                                value="#{paso.indicaFin eq true ? msg['procedimientoPaso.finSi'] : msg['procedimientoPaso.finNo']}"
-                                                severity="#{paso.indicaFin eq true ? 'success' : 'secondary'}" />
+                                            <div class="flow-step-actions">
+                                                <p:commandButton
+                                                    icon="pi pi-pencil"
+                                                    title="#{msg['flujo.editarPaso']}"
+                                                    ariaLabel="#{msg['flujo.editarPaso']}"
+                                                    styleClass="ui-button-rounded ui-button-text ui-button-secondary ui-button-sm"
+                                                    actionListener="#{procedimientoFlujoModel.editar(paso)}"
+                                                    process="@this"
+                                                    update="pasoDialog"
+                                                    oncomplete="PF('flujoPasoDialog').show()" />
+                                                <p:tag
+                                                    value="#{paso.indicaFin eq true ? msg['procedimientoPaso.finSi'] : msg['procedimientoPaso.finNo']}"
+                                                    severity="#{paso.indicaFin eq true ? 'success' : 'secondary'}" />
+                                                <p:commandButton
+                                                    icon="pi pi-trash"
+                                                    title="#{msg['flujo.eliminarPaso']}"
+                                                    ariaLabel="#{msg['flujo.eliminarPaso']}"
+                                                    styleClass="ui-button-rounded ui-button-text ui-button-danger ui-button-sm"
+                                                    rendered="#{procedimientoFlujoModel.puedeEliminar(paso)}"
+                                                    actionListener="#{procedimientoFlujoModel.eliminarPaso(paso)}"
+                                                    process="@this"
+                                                    update="messages flujoProcedimiento edicionDialog">
+                                                    <p:confirm
+                                                        header="#{msg['crud.confirmar']}"
+                                                        message="#{msg['flujo.confirmarEliminarPaso']}"
+                                                        icon="pi pi-exclamation-triangle" />
+                                                </p:commandButton>
+                                            </div>
                                         </div>
 
                                         <div class="flow-step-children">
@@ -303,10 +330,21 @@
             </p:outputPanel>
         </p:dialog>
 
+        <p:confirmDialog global="true" responsive="true">
+            <p:commandButton value="#{msg['crud.no']}" type="button"
+                             styleClass="ui-confirmdialog-no ui-button-secondary" />
+            <p:commandButton value="#{msg['crud.si']}" type="button"
+                             styleClass="ui-confirmdialog-yes ui-button-danger" />
+        </p:confirmDialog>
+
         <p:dialog
             id="pasoDialog"
             widgetVar="flujoPasoDialog"
-            header="#{procedimientoFlujoModel.inicial ? msg['flujo.nuevoInicial'] : msg['flujo.nuevoSiguiente']}"
+            header="#{procedimientoFlujoModel.editando
+                     ? msg['flujo.editarPaso']
+                     : procedimientoFlujoModel.inicial
+                       ? msg['flujo.nuevoInicial']
+                       : msg['flujo.nuevoSiguiente']}"
             modal="true"
             responsive="true"
             resizable="false"
@@ -317,9 +355,11 @@
                     <div class="dialog-intro-icon"><i class="pi pi-share-alt"></i></div>
                     <div>
                         <strong>#{procedimientoFlujoModel.procedimiento.nombre}</strong>
-                        <span>#{procedimientoFlujoModel.inicial
-                              ? msg['flujo.inicialAyuda']
-                              : msg['flujo.siguienteAyuda']}</span>
+                        <span>#{procedimientoFlujoModel.editando
+                              ? msg['flujo.editarAyuda']
+                              : procedimientoFlujoModel.inicial
+                                ? msg['flujo.inicialAyuda']
+                                : msg['flujo.siguienteAyuda']}</span>
                     </div>
                 </div>
                 <div class="dialog-form">
@@ -355,7 +395,7 @@
 
                     <h:panelGroup layout="block"
                                   styleClass="form-field"
-                                  rendered="#{not procedimientoFlujoModel.inicial}">
+                                  rendered="#{not procedimientoFlujoModel.inicial and not procedimientoFlujoModel.editando}">
                         <p:outputLabel for="tipoFlujo" value="#{msg['secuencia.tipo']}" styleClass="form-label" />
                         <p:selectOneMenu id="tipoFlujo" value="#{procedimientoFlujoModel.tipoSecuencia}" styleClass="full-width">
                             <f:selectItem itemLabel="#{msg['secuencia.tipoSiguiente']}" itemValue="SIGUIENTE" />
@@ -394,7 +434,7 @@
                                      icon="pi pi-times"
                                      styleClass="ui-button-secondary"
                                      onclick="PF('flujoPasoDialog').hide()" />
-                    <p:commandButton value="#{msg['crud.guardar']}"
+                    <p:commandButton value="#{procedimientoFlujoModel.editando ? msg['flujo.actualizarPaso'] : msg['crud.guardar']}"
                                      icon="pi pi-check"
                                      actionListener="#{procedimientoFlujoModel.guardar()}"
                                      process="@this pasoContenido"

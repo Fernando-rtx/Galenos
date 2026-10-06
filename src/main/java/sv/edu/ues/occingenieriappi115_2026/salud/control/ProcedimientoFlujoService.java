@@ -128,6 +128,132 @@ public class ProcedimientoFlujoService {
         return nuevo;
     }
 
+    /** Elimina un paso terminal, sus enlaces entrantes y sus exámenes asociados. */
+    public void eliminarPaso(UUID idPaso) {
+        ProcedimientoPaso paso = idPaso == null ? null : pasoDAO.buscarPorId(idPaso);
+        if (paso == null) {
+            throw new IllegalArgumentException("flujo.pasoNoExiste");
+        }
+
+        List<ProcedimientoPasoSecuencia> secuencias = secuenciaDAO.obtenerTodos();
+        if (secuencias.stream().anyMatch(enlace -> enlace != null
+                && enlace.getIdProcedimientoPaso() != null
+                && idPaso.equals(enlace.getIdProcedimientoPaso().getIdProcedimientoPaso()))) {
+            throw new IllegalArgumentException("flujo.pasoNoEliminable");
+        }
+
+        secuencias.stream()
+                .filter(enlace -> enlace != null
+                && idPaso.equals(enlace.getIdProcedimientoPasoReferencia()))
+                .map(ProcedimientoPasoSecuencia::getIdProcedimientoPasoSecuencia)
+                .filter(java.util.Objects::nonNull)
+                .toList()
+                .forEach(secuenciaDAO::eliminar);
+        pasoExamenDAO.obtenerTodos().stream()
+                .filter(relacion -> relacion != null && relacion.getIdProcedimientoPaso() != null
+                && idPaso.equals(relacion.getIdProcedimientoPaso().getIdProcedimientoPaso()))
+                .map(ProcedimientoPasoExamen::getIdProcedimientoPasoExamen)
+                .filter(java.util.Objects::nonNull)
+                .toList()
+                .forEach(pasoExamenDAO::eliminar);
+        if (!pasoDAO.eliminar(idPaso)) {
+            throw new IllegalStateException("No se pudo eliminar el paso del procedimiento.");
+        }
+    }
+
+    /** Actualiza los datos de un paso sin alterar sus enlaces con otros pasos. */
+    public void actualizarPaso(UUID idPaso, String nombre, UUID idRol,
+            boolean indicaFin, List<UUID> idsExamenes) {
+        String nombreNormalizado = nombre == null ? "" : nombre.trim();
+        if (nombreNormalizado.length() < 2) {
+            throw new IllegalArgumentException("procedimientoPaso.nombreMinimo");
+        }
+        if (nombreNormalizado.length() > 155) {
+            throw new IllegalArgumentException("procedimientoPaso.nombreMaximo");
+        }
+
+        ProcedimientoPaso paso = idPaso == null ? null : pasoDAO.buscarPorId(idPaso);
+        if (paso == null || paso.getIdProcedimiento() == null) {
+            throw new IllegalArgumentException("flujo.pasoNoExiste");
+        }
+        UUID idProcedimiento = paso.getIdProcedimiento().getIdProcedimiento();
+        List<ProcedimientoPaso> pasos = pasoDAO.obtenerTodos().stream()
+                .filter(otro -> otro != null && otro.getIdProcedimiento() != null
+                && idProcedimiento.equals(otro.getIdProcedimiento().getIdProcedimiento()))
+                .toList();
+        if (pasos.stream().filter(otro -> !idPaso.equals(otro.getIdProcedimientoPaso()))
+                .anyMatch(otro -> otro.getNombre() != null
+                && nombreNormalizado.equalsIgnoreCase(otro.getNombre().trim()))) {
+            throw new IllegalArgumentException("procedimientoPaso.nombreDuplicado");
+        }
+
+        Rol rol = idRol == null ? null : rolDAO.buscarPorId(idRol);
+        if (rol == null) {
+            throw new IllegalArgumentException("procedimientoPaso.rolNoExiste");
+        }
+        if (Boolean.FALSE.equals(rol.getActivo())) {
+            throw new IllegalArgumentException("procedimientoPaso.rolInactivo");
+        }
+        if (pasos.stream().filter(otro -> !idPaso.equals(otro.getIdProcedimientoPaso()))
+                .anyMatch(otro -> otro.getIdRol() != null
+                && idRol.equals(otro.getIdRol().getIdRol()))) {
+            throw new IllegalArgumentException("procedimientoPaso.rolDuplicado");
+        }
+
+        List<UUID> examenesUnicos = idsExamenes == null ? List.of()
+                : idsExamenes.stream().filter(id -> id != null).distinct().toList();
+        if (idsExamenes != null && examenesUnicos.size() != idsExamenes.size()) {
+            throw new IllegalArgumentException("ppe.examenDuplicado");
+        }
+        List<Examen> examenes = examenesUnicos.stream().map(examenDAO::buscarPorId).toList();
+        if (examenes.stream().anyMatch(examen -> examen == null)) {
+            throw new IllegalArgumentException("ppe.examenNoExiste");
+        }
+        if (examenes.stream().anyMatch(examen -> Boolean.FALSE.equals(examen.getActivo()))) {
+            throw new IllegalArgumentException("ppe.examenInactivo");
+        }
+
+        List<ProcedimientoPasoSecuencia> secuencias = secuenciaDAO.obtenerTodos();
+        if (indicaFin && secuencias.stream().anyMatch(enlace -> enlace != null
+                && enlace.getIdProcedimientoPaso() != null
+                && idPaso.equals(enlace.getIdProcedimientoPaso().getIdProcedimientoPaso()))) {
+            throw new IllegalArgumentException("flujo.pasoFinalConContinuaciones");
+        }
+
+        paso.setNombre(nombreNormalizado);
+        paso.setIdRol(rol);
+        paso.setIndicaFin(indicaFin);
+        pasoDAO.actualizar(paso);
+
+        Set<UUID> examenesDeseados = Set.copyOf(examenesUnicos);
+        List<ProcedimientoPasoExamen> relaciones = pasoExamenDAO.obtenerTodos().stream()
+                .filter(relacion -> relacion != null && relacion.getIdProcedimientoPaso() != null
+                && idPaso.equals(relacion.getIdProcedimientoPaso().getIdProcedimientoPaso()))
+                .toList();
+        Set<UUID> examenesExistentes = relaciones.stream()
+                .filter(relacion -> relacion.getIdExamen() != null)
+                .map(relacion -> relacion.getIdExamen().getIdExamen())
+                .collect(java.util.stream.Collectors.toSet());
+        relaciones.stream()
+                .filter(relacion -> relacion.getIdExamen() == null
+                || !examenesDeseados.contains(relacion.getIdExamen().getIdExamen()))
+                .map(ProcedimientoPasoExamen::getIdProcedimientoPasoExamen)
+                .filter(java.util.Objects::nonNull)
+                .toList()
+                .forEach(pasoExamenDAO::eliminar);
+        for (Examen examen : examenes) {
+            if (examenesExistentes.contains(examen.getIdExamen())) {
+                continue;
+            }
+            ProcedimientoPasoExamen relacion = new ProcedimientoPasoExamen();
+            relacion.setIdProcedimientoPaso(paso);
+            relacion.setIdExamen(examen);
+            relacion.setFechaCreacion(new Date());
+            relacion.setActivo(Boolean.TRUE);
+            pasoExamenDAO.guardar(relacion);
+        }
+    }
+
     private ProcedimientoPaso validarOrigen(UUID idPasoOrigen, UUID idProcedimiento,
             List<ProcedimientoPaso> pasos) {
         if (idPasoOrigen == null) {
