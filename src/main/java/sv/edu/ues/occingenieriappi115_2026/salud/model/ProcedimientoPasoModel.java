@@ -41,6 +41,8 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
     @Inject
     transient FacesContext facesContext;
     private ProcedimientoPaso seleccionado;
+    private UUID procedimientoOriginalId;
+    private UUID rolOriginalId;
 
     private List<Procedimiento> procedimientos;
     private List<Rol> roles;
@@ -71,10 +73,10 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
         List<Rol> rolesCatalogo = rolDAO.obtenerTodos();
         this.procedimientos = (procedimientosCatalogo == null ? List.<Procedimiento>of() : procedimientosCatalogo).stream()
                 .filter(procedimiento -> procedimiento != null
-                && !Boolean.FALSE.equals(procedimiento.getActivo()))
+                && Boolean.TRUE.equals(procedimiento.getActivo()))
                 .toList();
         this.roles = (rolesCatalogo == null ? List.<Rol>of() : rolesCatalogo).stream()
-                .filter(rol -> rol != null && !Boolean.FALSE.equals(rol.getActivo()))
+                .filter(rol -> rol != null && Boolean.TRUE.equals(rol.getActivo()))
                 .toList();
     }
 
@@ -116,6 +118,7 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
     }
 
     public void nuevo() {
+        inicializar();
         seleccionado = new ProcedimientoPaso();
         setEstado(ESTADO_CRUD.CREACION);
     }
@@ -134,6 +137,10 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
     }
 
     private void agregarOpcionesActuales() {
+        procedimientoOriginalId = seleccionado == null || seleccionado.getIdProcedimiento() == null
+                ? null : seleccionado.getIdProcedimiento().getIdProcedimiento();
+        rolOriginalId = seleccionado == null || seleccionado.getIdRol() == null
+                ? null : seleccionado.getIdRol().getIdRol();
         if (seleccionado == null) {
             return;
         }
@@ -292,7 +299,7 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
             agregarError("procedimientoPaso.rolNoExiste");
             return false;
         }
-        if (Boolean.FALSE.equals(existente.getActivo())) {
+        if (!Boolean.TRUE.equals(existente.getActivo())) {
             ProcedimientoPaso original = seleccionado.getIdProcedimientoPaso() == null
                     ? null : getDao().buscarPorId(seleccionado.getIdProcedimientoPaso());
             boolean conservaRol = original != null && original.getIdRol() != null
@@ -311,7 +318,10 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
                 || original.getIdRol() == null) {
             return false;
         }
-        return original.getIdProcedimiento().getIdProcedimiento().equals(
+        return java.util.Objects.equals(procedimientoOriginalId,
+                seleccionado.getIdProcedimiento().getIdProcedimiento())
+                && java.util.Objects.equals(rolOriginalId, seleccionado.getIdRol().getIdRol())
+                && original.getIdProcedimiento().getIdProcedimiento().equals(
                 seleccionado.getIdProcedimiento().getIdProcedimiento())
                 && original.getIdRol().getIdRol().equals(seleccionado.getIdRol().getIdRol());
     }
@@ -342,7 +352,7 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
             agregarError("procedimientoPaso.procedimientoNoExiste");
             return false;
         }
-        if (Boolean.FALSE.equals(existente.getActivo())) {
+        if (getEstado() == ESTADO_CRUD.CREACION && !Boolean.TRUE.equals(existente.getActivo())) {
             agregarError("procedimientoPaso.procedimientoInactivo");
             return false;
         }

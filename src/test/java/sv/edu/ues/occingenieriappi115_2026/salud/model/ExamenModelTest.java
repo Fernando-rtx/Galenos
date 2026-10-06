@@ -89,6 +89,36 @@ class ExamenModelTest {
                 () -> modelo.validarNombre(contexto(), null, "Hemograma"));
     }
 
+    @Test void editarConElMismoNombreNoEsDuplicado() {
+        ExamenDAO dao = mock(ExamenDAO.class);
+        Examen examen = new Examen(UUID.randomUUID());
+        examen.setNombre("Hemograma");
+
+        when(dao.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
+                .thenReturn(java.util.List.of(examen));
+        ExamenModel modelo = new ExamenModel(dao);
+        modelo.seleccionar(examen);
+
+        assertDoesNotThrow(() -> modelo.validarNombre(contexto(), null, "Hemograma"));
+    }
+
+    @Test void editarConElNombreDeOtroExamenEsRechazado() {
+        ExamenDAO dao = mock(ExamenDAO.class);
+        Examen examen = new Examen(UUID.randomUUID());
+        examen.setNombre("Hemograma");
+        Examen otroExamen = new Examen(UUID.randomUUID());
+        otroExamen.setNombre("Glucosa");
+
+        when(dao.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
+                .thenReturn(java.util.List.of(otroExamen));
+        ExamenModel modelo = new ExamenModel(dao);
+        modelo.seleccionar(examen);
+
+        ValidatorException error = assertThrows(ValidatorException.class,
+                () -> modelo.validarNombre(contexto(), null, "Glucosa"));
+        assertEquals("Nombre duplicado", error.getFacesMessage().getSummary());
+    }
+
     private FacesContext contexto() {
         FacesContext contexto = mock(FacesContext.class);
         Application aplicacion = mock(Application.class);

@@ -162,8 +162,10 @@ class ProcedimientoPasoSecuenciaModelTest {
     void filtraPasosPorProcedimientoSeleccionado() {
         ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
         Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
+        procedimiento.setActivo(true);
         procedimiento.setNombre("Valoración clínica");
         Procedimiento otro = new Procedimiento(UUID.randomUUID());
+        otro.setActivo(true);
         otro.setNombre("Radiografía");
         ProcedimientoPaso pasoUno = new ProcedimientoPaso(UUID.randomUUID());
         pasoUno.setIdProcedimiento(procedimiento);

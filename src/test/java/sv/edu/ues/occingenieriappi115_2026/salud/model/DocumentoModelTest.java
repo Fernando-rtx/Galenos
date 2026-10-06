@@ -57,7 +57,7 @@ class DocumentoModelTest {
         DocumentoDAO dao = mock(DocumentoDAO.class);
         DocumentoModel modelo = model(dao, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
         modelo.nuevo();
-        modelo.getSeleccionado().setIdPersona(new Persona());
+        modelo.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
         modelo.getSeleccionado().setValor("1234");
 
         modelo.guardar();
@@ -69,12 +69,15 @@ class DocumentoModelTest {
     @Test
     void valorQueCumpleExpresionRegularSeGuardaRecortado() {
         DocumentoDAO dao = mock(DocumentoDAO.class);
-        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
-        TipoDocumento tipo = new TipoDocumento();
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
+        TipoDocumento tipo = new TipoDocumento(UUID.randomUUID());
+        tipo.setActivo(true);
         tipo.setExpresionRegular("[0-9]{4}");
+        when(tipos.buscarPorId(tipo.getIdTipoDocumento())).thenReturn(tipo);
         modelo.nuevo();
         Documento documento = modelo.getSeleccionado();
-        documento.setIdPersona(new Persona());
+        documento.setIdPersona(new Persona(UUID.randomUUID()));
         documento.setIdTipoDocumento(tipo);
         documento.setValor(" 1234 ");
         documento.setRutaFisica(" /documentos/1234.pdf ");
@@ -103,11 +106,15 @@ class DocumentoModelTest {
     @Test
     void errorDelDaoAlGuardarConservaDocumentoYEstado() {
         DocumentoDAO dao = mock(DocumentoDAO.class);
-        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        TipoDocumento tipo = new TipoDocumento(UUID.randomUUID());
+        tipo.setActivo(true);
+        when(tipos.buscarPorId(tipo.getIdTipoDocumento())).thenReturn(tipo);
+        DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
         modelo.nuevo();
         Documento documento = modelo.getSeleccionado();
-        documento.setIdPersona(new Persona());
-        documento.setIdTipoDocumento(new TipoDocumento());
+        documento.setIdPersona(new Persona(UUID.randomUUID()));
+        documento.setIdTipoDocumento(tipo);
         documento.setValor("ABC");
         doThrow(new IllegalStateException("Error de persistencia")).when(dao).guardar(documento);
 
@@ -142,11 +149,15 @@ class DocumentoModelTest {
     @Test
     void guardarCreacionYEdicion() {
         DocumentoDAO d = mock(DocumentoDAO.class);
-        DocumentoModel m = model(d, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
+        TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);
+        TipoDocumento tipo = new TipoDocumento(UUID.randomUUID());
+        tipo.setActivo(true);
+        when(tipos.buscarPorId(tipo.getIdTipoDocumento())).thenReturn(tipo);
+        DocumentoModel m = model(d, mock(PersonaDAO.class), tipos);
         m.nuevo();
         Documento nuevo = m.getSeleccionado();
-        nuevo.setIdPersona(new Persona());
-        nuevo.setIdTipoDocumento(new TipoDocumento());
+        nuevo.setIdPersona(new Persona(UUID.randomUUID()));
+        nuevo.setIdTipoDocumento(tipo);
         nuevo.setValor("ABC");
         m.guardar();
         verify(d).guardar(nuevo);
@@ -202,7 +213,7 @@ class DocumentoModelTest {
         DocumentoDAO d = mock(DocumentoDAO.class);
         DocumentoModel m = model(d, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
         m.nuevo();
-        m.getSeleccionado().setIdPersona(new Persona());
+        m.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
         m.getSeleccionado().setIdTipoDocumento(new TipoDocumento());
         m.getSeleccionado().setValor("   ");
         m.guardar();
@@ -216,7 +227,7 @@ class DocumentoModelTest {
         TipoDocumento tipo = new TipoDocumento();
         tipo.setExpresionRegular("[0-9]{4}");
         m.nuevo();
-        m.getSeleccionado().setIdPersona(new Persona());
+        m.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
         m.getSeleccionado().setIdTipoDocumento(tipo);
         m.getSeleccionado().setValor("ABC");
         m.guardar();
@@ -234,7 +245,7 @@ class DocumentoModelTest {
         DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
         modelo.nuevo();
         Documento documento = modelo.getSeleccionado();
-        documento.setIdPersona(new Persona());
+        documento.setIdPersona(new Persona(UUID.randomUUID()));
         documento.setIdTipoDocumento(new TipoDocumento(tipo.getIdTipoDocumento()));
         documento.setValor("1234");
 
@@ -327,7 +338,7 @@ class DocumentoModelTest {
         when(tipos.buscarPorId(inactivo.getIdTipoDocumento())).thenReturn(inactivo);
         DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
         modelo.nuevo();
-        modelo.getSeleccionado().setIdPersona(new Persona());
+        modelo.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
         modelo.getSeleccionado().setIdTipoDocumento(inactivo);
         modelo.getSeleccionado().setValor("1234");
 
@@ -350,7 +361,7 @@ class DocumentoModelTest {
         when(tipos.buscarPorId(alternativo.getIdTipoDocumento())).thenReturn(alternativo);
         DocumentoModel modelo = model(dao, mock(PersonaDAO.class), tipos);
         Documento documento = new Documento(UUID.randomUUID());
-        documento.setIdPersona(new Persona());
+        documento.setIdPersona(new Persona(UUID.randomUUID()));
         documento.setIdTipoDocumento(original);
         documento.setValor("1234");
         modelo.seleccionar(documento);

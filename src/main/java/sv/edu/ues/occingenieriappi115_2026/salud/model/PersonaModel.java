@@ -12,13 +12,18 @@ import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.PrimeFaces;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.DocumentoDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
+import sv.edu.ues.occingenieriappi115_2026.salud.entity.Documento;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.Persona;
 
 @Named
@@ -32,6 +37,8 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
 
     @EJB
     private PersonaDAO personaDAO;
+    @EJB
+    private DocumentoDAO documentoDAO;
     private Persona seleccionado;
 
     public PersonaModel() {
@@ -39,6 +46,11 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
 
     public PersonaModel(PersonaDAO personaDAO) {
         this.personaDAO = personaDAO;
+    }
+
+    public PersonaModel(PersonaDAO personaDAO, DocumentoDAO documentoDAO) {
+        this(personaDAO);
+        this.documentoDAO = documentoDAO;
     }
 
     @Inject
@@ -254,10 +266,10 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
             );
         }
 
-        LocalDate fechaNacimiento = fecha.toInstant()
-                .atZone(ZoneId.systemDefault())
+        LocalDate fechaNacimiento = Instant.ofEpochMilli(fecha.getTime())
+                .atZone(DocumentoModel.ZONA_CLINICA)
                 .toLocalDate();
-        if (fechaNacimiento.isAfter(LocalDate.now())) {
+        if (fechaNacimiento.isAfter(LocalDate.now(DocumentoModel.ZONA_CLINICA))) {
 
             lanzarValidacion(
                     contexto,
@@ -312,7 +324,7 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
             if (facesContext == null) {
                 throw ex;
             }
-            agregarMensaje("persona.errorGuardar");
+            agregarMensaje("persona.errorGuardar", FacesMessage.SEVERITY_ERROR);
             facesContext.validationFailed();
             return;
         }
@@ -374,7 +386,25 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
         if (!validarCampo("apellidos", seleccionado.getApellidos(), true)) {
             return false;
         }
-        return validarCampo("fechaNacimiento", seleccionado.getFechaNacimiento(), false);
+        if (!validarCampo("fechaNacimiento", seleccionado.getFechaNacimiento(), false)) {
+            return false;
+        }
+        if (getEstado() == ESTADO_CRUD.EDICION && seleccionado.getIdPersona() != null
+                && DocumentoModel.errorFechaParaDui(seleccionado.getFechaNacimiento(),
+                        LocalDate.now(DocumentoModel.ZONA_CLINICA)) != null) {
+            // Consultar los documentos guardados: la colección de la entidad puede estar desactualizada.
+            for (Documento documento : documentoDAO.obtenerPagina(0, Integer.MAX_VALUE,
+                    List.of(new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL,
+                            seleccionado.getIdPersona())), List.of())) {
+                if (DocumentoModel.esDui(documento.getIdTipoDocumento())) {
+                    agregarErrorCampo("fechaNacimiento", new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                            facesContext.getApplication().getResourceBundle(facesContext, "msg")
+                                    .getString("persona.fechaNacimientoIncompatibleDui"), null));
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private boolean validarCampo(String idComponente, Object valor, boolean nombre) {
@@ -436,6 +466,10 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
     }
 
     private void agregarMensaje(String clave) {
+        agregarMensaje(clave, FacesMessage.SEVERITY_INFO);
+    }
+
+    private void agregarMensaje(String clave, FacesMessage.Severity severidad) {
         if (facesContext == null) {
             return;
         }
@@ -444,6 +478,6 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
                 .getResourceBundle(facesContext, "msg")
                 .getString(clave);
         facesContext.addMessage(null,
-                new FacesMessage(FacesMessage.SEVERITY_INFO, mensaje, null));
+                new FacesMessage(severidad, mensaje, null));
     }
 }

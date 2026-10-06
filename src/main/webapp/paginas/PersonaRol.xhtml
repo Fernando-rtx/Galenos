@@ -41,7 +41,7 @@
                                     rendered="#{not personaRolModel.conPersonaContexto}" />
                             <crud:botones-top model="#{personaRolModel}"
                                               actualizar="messages rolTable edicionDialog"
-                                              oncompleteNuevo="PF('personaRolDialog').show()" />
+                                              oncompleteNuevo="PF('personaRolDialog').show()"  resetNuevo="true" />
                         </div>
                     </div>
                     <h:panelGroup layout="block"
@@ -51,10 +51,11 @@
                                   #{personaRolModel.personaContexto.nombres}
                                   #{personaRolModel.personaContexto.apellidos}</h:panelGroup>
                     <div class="section-divider"></div>
-                    <p:messages id="messages"
-                                globalOnly="true"
+                    <p:outputPanel id="messages">
+                        <p:messages id="listaMessages"
                                 showDetail="false"
-                                closable="true" />
+                                closable="true"  globalOnly="true" redisplay="false" rendered="#{personaRolModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <!-- Tabla principal -->
                     <div class="table-title">#{msg['personaRol.lista']}</div>
@@ -73,7 +74,7 @@
                         <p:ajax event="rowDblselect"
                                 listener="#{personaRolModel.seleccionar(personaRolModel.seleccionado)}"
                                 process="@this"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('personaRolDialog').show()" />
                         <p:column headerText="#{msg['personaRol.persona']}"
@@ -110,6 +111,7 @@
                   width="580"
                   styleClass="clinical-dialog">
             <p:outputPanel id="edicionContenido">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
                 <h:panelGroup rendered="#{personaRolModel.seleccionado ne null}">
                     <div class="dialog-form">
                         <div class="form-field">
@@ -119,7 +121,7 @@
                                              value="#{personaRolModel.personaSeleccionadaId}"
                                              required="true"
                                              requiredMessage="#{msg['personaRol.personaRequerida']}"
-                                             disabled="#{personaRolModel.conPersonaContexto}"
+                                             disabled="#{personaRolModel.conPersonaContexto or personaRolModel.estado eq 'EDICION'}"
                                              styleClass="selector-wide">
                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                               itemValue="#{null}"
@@ -130,7 +132,7 @@
                                                itemLabel="#{persona.nombres} #{persona.apellidos}" />
                             </p:selectOneMenu>
 
-                            <p:message for="persona" />
+<p:message for="persona" showSummary="true" showDetail="false" />
                         </div>
                         <div class="form-field">
                             <p:outputLabel for="rol"
@@ -150,7 +152,7 @@
                                                itemLabel="#{rol.nombre}" />
                             </p:selectOneMenu>
 
-                            <p:message for="rol" />
+<p:message for="rol" showSummary="true" showDetail="false" />
                         </div>
                         <div class="form-field">
                             <p:outputLabel for="clinica"
@@ -170,13 +172,13 @@
                                                itemLabel="#{clinica.nombre}" />
                             </p:selectOneMenu>
 
-                            <p:message for="clinica" />
+<p:message for="clinica" showSummary="true" showDetail="false" />
                         </div>
                     </div>
                     <div class="dialog-actions">
                         <crud:botones-bottom model="#{personaRolModel}"
                                              procesar="@this edicionContenido"
-                                             actualizar="messages rolTable edicionDialog"
+                                             actualizar="messages rolTable edicionContenido"
                                              oncompleteCancelar="PF('personaRolDialog').hide()"
                                              oncompleteGuardar="if (!args.validationFailed) PF('personaRolDialog').hide()" />
                     </div>

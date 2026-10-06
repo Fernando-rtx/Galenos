@@ -9,12 +9,17 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Iterator;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.DocumentoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
@@ -28,6 +33,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoDocumento;
 @ViewScoped
 public class DocumentoModel extends AbstractModel<Documento> implements Serializable {
     private static final long serialVersionUID = 1L;
+    static final ZoneId ZONA_CLINICA = ZoneId.of("America/El_Salvador");
     @EJB
     private DocumentoDAO documentoDAO;
     @EJB
@@ -38,6 +44,8 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     private transient FacesContext facesContext;
     private Documento seleccionado;
     private UUID tipoDocumentoOriginalId;
+    private Persona personaOriginal;
+    private UUID personaOriginalId;
     private Persona personaContexto;
     private List<Persona> personas;
     private UUID personaDocumentosCargadosId;
@@ -74,7 +82,10 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     }
 
     public String getIdPersonaContexto() {
-        return personaContexto == null ? null : personaContexto.getIdPersona().toString();
+        if (personaContexto == null) {
+            return null;
+        }
+        return personaContexto.getIdPersona().toString();
     }
 
     public void setIdPersonaContexto(String id) {
@@ -89,46 +100,73 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     }
 
     public List<TipoDocumento> getTiposDocumento() {
-        List<TipoDocumento> activos = tipoDocumentoDAO.obtenerTodos().stream()
-                .filter(tipo -> Boolean.TRUE.equals(tipo.getActivo()))
-                .collect(Collectors.toCollection(ArrayList::new));
+        List<TipoDocumento> activos = new ArrayList<>();
+        for (TipoDocumento tipo : tipoDocumentoDAO.obtenerTodos()) {
+            if (Boolean.TRUE.equals(tipo.getActivo())) {
+                activos.add(tipo);
+            }
+        }
+
         // Un documento antiguo puede conservar un tipo desactivado; al editarlo,
         // JSF necesita que la opción actual siga presente para validarla.
         if (getEstado() == ESTADO_CRUD.EDICION && seleccionado != null
-                && seleccionado.getIdTipoDocumento() != null
-                && activos.stream().noneMatch(tipo -> tipo.getIdTipoDocumento()
-                        .equals(seleccionado.getIdTipoDocumento().getIdTipoDocumento()))) {
-            activos.add(seleccionado.getIdTipoDocumento());
+                && seleccionado.getIdTipoDocumento() != null) {
+            boolean estaEnLaLista = false;
+            for (TipoDocumento tipo : activos) {
+                if (tipo.getIdTipoDocumento().equals(
+                        seleccionado.getIdTipoDocumento().getIdTipoDocumento())) {
+                    estaEnLaLista = true;
+                    break;
+                }
+            }
+            if (!estaEnLaLista) {
+                activos.add(seleccionado.getIdTipoDocumento());
+            }
         }
         return activos;
     }
 
     public String getPersonaSeleccionadaId() {
-        return seleccionado == null || seleccionado.getIdPersona() == null
-                ? null : seleccionado.getIdPersona().getIdPersona().toString();
+        if (seleccionado == null || seleccionado.getIdPersona() == null) {
+            return null;
+        }
+        return seleccionado.getIdPersona().getIdPersona().toString();
     }
 
     public void setPersonaSeleccionadaId(String id) {
-        if (seleccionado != null) {
+        if (seleccionado != null && getEstado() != ESTADO_CRUD.EDICION) {
             seleccionado.setIdPersona(buscarPersona(id));
         }
     }
 
     public String getTipoDocumentoSeleccionadoId() {
-        return seleccionado == null || seleccionado.getIdTipoDocumento() == null
-                ? null : seleccionado.getIdTipoDocumento().getIdTipoDocumento().toString();
+        if (seleccionado == null || seleccionado.getIdTipoDocumento() == null) {
+            return null;
+        }
+        return seleccionado.getIdTipoDocumento().getIdTipoDocumento().toString();
     }
 
     public void setTipoDocumentoSeleccionadoId(String id) {
         if (seleccionado != null) {
             TipoDocumento tipo = buscarTipoDocumento(id);
             if (getEstado() == ESTADO_CRUD.EDICION) {
-                UUID idRecibido = tipo == null ? null : tipo.getIdTipoDocumento();
+                UUID idRecibido = null;
+                if (tipo != null) {
+                    idRecibido = tipo.getIdTipoDocumento();
+                }
                 if (!java.util.Objects.equals(tipoDocumentoOriginalId, idRecibido)) {
                     return;
                 }
             }
             seleccionado.setIdTipoDocumento(tipo);
+        }
+    }
+
+    /** Aviso inmediato del combo; Guardar vuelve a validar con la persona registrada. */
+    public void validarEdadDuiSeleccionado() {
+        if (getEstado() == ESTADO_CRUD.CREACION && seleccionado != null
+                && esDui(seleccionado.getIdTipoDocumento())) {
+            validarEdadDui(seleccionado.getIdPersona());
         }
     }
 
@@ -210,8 +248,13 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
 
     public void seleccionar(Documento seleccionado) {
         this.seleccionado = seleccionado;
-        this.tipoDocumentoOriginalId = seleccionado == null || seleccionado.getIdTipoDocumento() == null
-                ? null : seleccionado.getIdTipoDocumento().getIdTipoDocumento();
+        personaOriginal = seleccionado == null ? null : seleccionado.getIdPersona();
+        personaOriginalId = personaOriginal == null ? null : personaOriginal.getIdPersona();
+        if (seleccionado == null || seleccionado.getIdTipoDocumento() == null) {
+            this.tipoDocumentoOriginalId = null;
+        } else {
+            this.tipoDocumentoOriginalId = seleccionado.getIdTipoDocumento().getIdTipoDocumento();
+        }
         setEstado(ESTADO_CRUD.EDICION);
     }
 
@@ -219,20 +262,38 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         if (seleccionado == null) {
             return;
         }
+        if (getEstado() == ESTADO_CRUD.EDICION && (personaOriginalId == null
+                || seleccionado.getIdPersona() == null
+                || !personaOriginalId.equals(seleccionado.getIdPersona().getIdPersona()))) {
+            seleccionado.setIdPersona(personaOriginal);
+            agregarError("persona", "relaciones.noEditables");
+            return;
+        }
         Persona personaDocumento = seleccionado.getIdPersona();
-        seleccionado.setValor(normalizar(seleccionado.getValor()));
-        seleccionado.setRutaFisica(normalizar(seleccionado.getRutaFisica()));
         if (!resolverYValidarTipoDocumento()) {
             return;
         }
+        if (esDui(seleccionado.getIdTipoDocumento())) {
+            // No confiar en una fecha modificada en el borrador o en una petición manipulada.
+            Persona personaRegistrada = personaDocumento == null || personaDocumento.getIdPersona() == null
+                    ? null : personaDAO.buscarPorId(personaDocumento.getIdPersona());
+            if (!validarEdadDui(personaRegistrada)) {
+                return;
+            }
+        }
+        seleccionado.setValor(normalizar(seleccionado.getValor()));
+        seleccionado.setRutaFisica(normalizar(seleccionado.getRutaFisica()));
         if (!validarAntesDeGuardar()) {
             return;
         }
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> { }
+        // Igual que el switch original, un estado nulo no es válido.
+        ESTADO_CRUD estadoActual = java.util.Objects.requireNonNull(getEstado());
+        if (estadoActual == ESTADO_CRUD.CREACION) {
+            getDao().guardar(seleccionado);
+        } else if (estadoActual == ESTADO_CRUD.EDICION) {
+            seleccionado = getDao().actualizar(seleccionado);
         }
+        // En LISTADO se continúa sin guardar ni actualizar, igual que antes.
         recargarDocumentosPorPersona(personaDocumento);
         seleccionado = null;
         tipoDocumentoOriginalId = null;
@@ -253,8 +314,7 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     }
 
     public void eliminarSeleccionadoParaPersona(Persona persona) {
-        if (!perteneceAPersona(seleccionado, persona)
-                || seleccionado.getIdDocumento() == null) {
+        if (!perteneceAPersona(seleccionado, persona)|| seleccionado.getIdDocumento() == null) {
             return;
         }
         try {
@@ -272,8 +332,10 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
 
     private Persona buscarPersona(String id) {
         try {
-            return id == null || id.isBlank()
-                    ? null : personaDAO.buscarPorId(UUID.fromString(id));
+            if (id == null || id.isBlank()) {
+                return null;
+            }
+            return personaDAO.buscarPorId(UUID.fromString(id));
         } catch (IllegalArgumentException ex) {
             return null;
         }
@@ -281,8 +343,10 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
 
     private TipoDocumento buscarTipoDocumento(String id) {
         try {
-            return id == null || id.isBlank()
-                    ? null : tipoDocumentoDAO.buscarPorId(UUID.fromString(id));
+            if (id == null || id.isBlank()) {
+                return null;
+            }
+            return tipoDocumentoDAO.buscarPorId(UUID.fromString(id));
         } catch (IllegalArgumentException ex) {
             return null;
         }
@@ -305,8 +369,10 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
             agregarError("valor", "documento.valorFormato");
             return false;
         }
-        UUID idDocumentoExcluir = getEstado() == ESTADO_CRUD.EDICION
-                ? seleccionado.getIdDocumento() : null;
+        UUID idDocumentoExcluir = null;
+        if (getEstado() == ESTADO_CRUD.EDICION) {
+            idDocumentoExcluir = seleccionado.getIdDocumento();
+        }
         if (documentoDAO.existeDocumento(
                 seleccionado.getIdTipoDocumento().getIdTipoDocumento(),
                 seleccionado.getValor(), idDocumentoExcluir)) {
@@ -318,15 +384,25 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
 
     private boolean resolverYValidarTipoDocumento() {
         TipoDocumento tipoRecibido = seleccionado.getIdTipoDocumento();
-        UUID idTipoRecibido = tipoRecibido == null ? null : tipoRecibido.getIdTipoDocumento();
+        UUID idTipoRecibido = null;
+        if (tipoRecibido != null) {
+            idTipoRecibido = tipoRecibido.getIdTipoDocumento();
+        }
         if (getEstado() == ESTADO_CRUD.EDICION
                 && !java.util.Objects.equals(tipoDocumentoOriginalId, idTipoRecibido)) {
-            seleccionado.setIdTipoDocumento(tipoDocumentoOriginalId == null
-                    ? null : tipoDocumentoDAO.buscarPorId(tipoDocumentoOriginalId));
+            if (tipoDocumentoOriginalId == null) {
+                seleccionado.setIdTipoDocumento(null);
+            } else {
+                seleccionado.setIdTipoDocumento(tipoDocumentoDAO.buscarPorId(tipoDocumentoOriginalId));
+            }
             agregarError("tipo", "documento.tipoNoEditable");
             return false;
         }
         if (idTipoRecibido == null) {
+            if (tipoRecibido != null) {
+                agregarError("tipo", "documento.tipoRequerido");
+                return false;
+            }
             return true;
         }
         TipoDocumento tipoPersistido = tipoDocumentoDAO.buscarPorId(idTipoRecibido);
@@ -339,6 +415,34 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
             return false;
         }
         seleccionado.setIdTipoDocumento(tipoPersistido);
+        return true;
+    }
+
+    static boolean esDui(TipoDocumento tipo) {
+        return tipo != null && tipo.getNombre() != null
+                && "DUI".equalsIgnoreCase(tipo.getNombre().strip());
+    }
+
+    /** Reutilizada al asignar DUI y al editar una persona que ya lo posee. */
+    static String errorFechaParaDui(Date fechaNacimiento, LocalDate hoy) {
+        if (fechaNacimiento == null) {
+            return "documento.duiFechaNacimientoInvalida";
+        }
+        LocalDate nacimiento = Instant.ofEpochMilli(fechaNacimiento.getTime())
+                .atZone(ZONA_CLINICA).toLocalDate();
+        if (nacimiento.isBefore(LocalDate.of(1900, 1, 1)) || nacimiento.isAfter(hoy)) {
+            return "documento.duiFechaNacimientoInvalida";
+        }
+        return Period.between(nacimiento, hoy).getYears() < 18 ? "documento.duiMenorEdad" : null;
+    }
+
+    private boolean validarEdadDui(Persona persona) {
+        String error = errorFechaParaDui(persona == null ? null : persona.getFechaNacimiento(),
+                LocalDate.now(ZONA_CLINICA));
+        if (error != null) {
+            agregarError("tipo", error);
+            return false;
+        }
         return true;
     }
 
@@ -358,16 +462,19 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     }
 
     private String normalizar(String valor) {
-        return valor == null ? null : valor.trim();
+        if (valor == null) {
+            return null;
+        }
+        return valor.trim();
     }
 
     private boolean perteneceAPersona(Documento documento, Persona persona) {
-        return documento != null
-                && documento.getIdPersona() != null
-                && documento.getIdPersona().getIdPersona() != null
-                && persona != null
-                && persona.getIdPersona() != null
-                && documento.getIdPersona().getIdPersona().equals(persona.getIdPersona());
+        if (documento == null || documento.getIdPersona() == null
+                || documento.getIdPersona().getIdPersona() == null
+                || persona == null || persona.getIdPersona() == null) {
+            return false;
+        }
+        return documento.getIdPersona().getIdPersona().equals(persona.getIdPersona());
     }
 
     private void agregarError(String idComponente, String clave) {
@@ -387,10 +494,17 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
             return;
         }
         String mensaje = contexto.getApplication().getResourceBundle(contexto, "msg").getString(clave);
-        UIComponent componente = idComponente == null
-                ? null : buscarComponente(contexto.getViewRoot(), idComponente);
-        String clientId = componente == null ? null : componente.getClientId(contexto);
-        if (componente instanceof UIInput entrada) {
+        UIComponent componente = null;
+        if (idComponente != null) {
+            componente = buscarComponente(contexto.getViewRoot(), idComponente);
+        }
+
+        String clientId = null;
+        if (componente != null) {
+            clientId = componente.getClientId(contexto);
+        }
+        if (componente instanceof UIInput) {
+            UIInput entrada = (UIInput) componente;
             entrada.setValid(false);
         }
         contexto.addMessage(clientId,
@@ -404,7 +518,7 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         if (id.equals(componente.getId())) {
             return componente;
         }
-        var hijos = componente.getFacetsAndChildren();
+        Iterator<UIComponent> hijos = componente.getFacetsAndChildren();
         while (hijos.hasNext()) {
             UIComponent encontrado = buscarComponente(hijos.next(), id);
             if (encontrado != null) {

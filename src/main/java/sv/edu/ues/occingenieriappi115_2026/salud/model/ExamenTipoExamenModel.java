@@ -36,6 +36,7 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
     private Examen examenPadre;
     private String idTipoExamenSeleccionado;
     private UUID tipoExamenOriginalId;
+    private UUID examenOriginalId;
     private List<ExamenTipoExamen> asociaciones = List.of();
     @EJB
     private ExamenTipoExamenDAO examenTipoExamenDAO;
@@ -296,12 +297,16 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
     public void nuevo() {
         recargarTiposExamen();
         seleccionado = new ExamenTipoExamen();
+        idTipoExamenSeleccionado = null;
+        examenOriginalId = null;
         tipoExamenOriginalId = null;
         setEstado(ESTADO_CRUD.CREACION);
     }
 
     public void seleccionar(ExamenTipoExamen seleccionado) {
         this.seleccionado = seleccionado;
+        examenOriginalId = seleccionado == null || seleccionado.getIdExamen() == null
+                ? null : seleccionado.getIdExamen().getIdExamen();
         this.tipoExamenOriginalId = seleccionado == null || seleccionado.getIdTipoExamen() == null
                 ? null : seleccionado.getIdTipoExamen().getIdTipoExamen();
         this.idTipoExamenSeleccionado = tipoExamenOriginalId == null
@@ -311,7 +316,7 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
     }
 
     public void guardar() {
-        if (seleccionado == null) {
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
             return;
         }
         if (!resolverTipoParaCrudGenerico()) {
@@ -365,19 +370,28 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
     }
 
     private boolean resolverTipoParaCrudGenerico() {
+        UUID idExamen = seleccionado.getIdExamen() == null
+                ? null : seleccionado.getIdExamen().getIdExamen();
+        if (idExamen == null) {
+            agregarError("idExamen", "examen.seleccioneExamen");
+            return false;
+        }
         UUID idTipoElegido = seleccionado.getIdTipoExamen() == null
                 ? null : seleccionado.getIdTipoExamen().getIdTipoExamen();
-        if (idTipoElegido == null
-                && (getEstado() == ESTADO_CRUD.CREACION || tipoExamenOriginalId == null)) {
-            return true;
-        }
         ExamenTipoExamen persistida = null;
         if (getEstado() == ESTADO_CRUD.EDICION) {
             persistida = seleccionado.getIdExamenTipoExamen() == null
                     ? null : getDao().buscarPorId(seleccionado.getIdExamenTipoExamen());
+            if (persistida == null || persistida.getIdExamen() == null
+                    || !Objects.equals(examenOriginalId, idExamen)
+                    || !Objects.equals(examenOriginalId, persistida.getIdExamen().getIdExamen())) {
+                agregarError("idExamen", "relaciones.noEditables");
+                return false;
+            }
             UUID idOriginal = persistida == null || persistida.getIdTipoExamen() == null
                     ? null : persistida.getIdTipoExamen().getIdTipoExamen();
-            if (persistida == null || !Objects.equals(idOriginal, idTipoElegido)) {
+            if (persistida == null || !Objects.equals(idOriginal, idTipoElegido)
+                    || !Objects.equals(tipoExamenOriginalId, idTipoElegido)) {
                 if (persistida != null) {
                     seleccionado.setIdTipoExamen(persistida.getIdTipoExamen());
                 }
@@ -401,6 +415,11 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
             return false;
         }
         seleccionado.setIdTipoExamen(tipoPersistido);
+        long propias = getEstado() == ESTADO_CRUD.EDICION ? 1 : 0;
+        if (getDao().countByIdExamenAndIdTipoExamen(idExamen, idTipoElegido) > propias) {
+            agregarError("idTipoExamen", "examen.tipoDuplicado");
+            return false;
+        }
         return true;
     }
 

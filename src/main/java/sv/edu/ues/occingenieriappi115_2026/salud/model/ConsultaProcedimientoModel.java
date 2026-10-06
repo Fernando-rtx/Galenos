@@ -206,6 +206,7 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
                     ? flujoService.crearProcedimiento(seleccionado, clinicaActual())
                     : flujoService.actualizarProcedimiento(seleccionado, clinicaActual());
             setEstado(ESTADO_CRUD.LISTADO);
+            agregarMensaje(jakarta.faces.application.FacesMessage.SEVERITY_INFO, "mensajes.guardado");
         } catch (FlujoConsultaException ex) {
             registrarError(ex.getMessage());
         } catch (RuntimeException ex) {

@@ -41,7 +41,7 @@
                                     rendered="#{not medioContactoModel.conPersonaContexto}" />
                             <crud:botones-top model="#{medioContactoModel}"
                                               actualizar="messages contactoTable edicionDialog"
-                                              oncompleteNuevo="PF('contactoDialog').show()" />
+                                              oncompleteNuevo="PF('contactoDialog').show()"  resetNuevo="true" />
                         </div>
                     </div>
                     <h:panelGroup layout="block"
@@ -51,10 +51,11 @@
                                   #{medioContactoModel.personaContexto.nombres}
                                   #{medioContactoModel.personaContexto.apellidos}</h:panelGroup>
                     <div class="section-divider"></div>
-                    <p:messages id="messages"
-                                globalOnly="true"
+                    <p:outputPanel id="messages">
+                        <p:messages id="listaMessages"
                                 showDetail="false"
-                                closable="true" />
+                                closable="true"  globalOnly="true" redisplay="false" rendered="#{medioContactoModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <!-- Tabla principal -->
                     <div class="table-title">#{msg['medioContacto.lista']}</div>
@@ -73,7 +74,7 @@
                         <p:ajax event="rowDblselect"
                                 listener="#{medioContactoModel.seleccionar(medioContactoModel.seleccionado)}"
                                 process="@this"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('contactoDialog').show()" />
                         <p:column headerText="#{msg['medioContacto.persona']}"
@@ -106,6 +107,7 @@
                   width="580"
                   styleClass="clinical-dialog">
             <p:outputPanel id="edicionContenido">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
                 <h:panelGroup rendered="#{medioContactoModel.seleccionado ne null}">
                     <div class="dialog-form">
                         <div class="form-field">
@@ -115,7 +117,7 @@
                                              value="#{medioContactoModel.personaSeleccionadaId}"
                                              required="true"
                                              requiredMessage="#{msg['medioContacto.personaRequerida']}"
-                                             disabled="#{medioContactoModel.conPersonaContexto}"
+                                             disabled="#{medioContactoModel.conPersonaContexto or medioContactoModel.estado eq 'EDICION'}"
                                              styleClass="selector-wide">
                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                               itemValue="#{null}"
@@ -126,7 +128,7 @@
                                                itemLabel="#{persona.nombres} #{persona.apellidos}" />
                             </p:selectOneMenu>
 
-                            <p:message for="persona" />
+<p:message for="persona" showSummary="true" showDetail="false" />
                         </div>
                         <div class="form-field">
                             <p:outputLabel for="tipo"
@@ -149,7 +151,7 @@
                                     process="@this" />
                             </p:selectOneMenu>
 
-                            <p:message for="tipo" />
+<p:message for="tipo" showSummary="true" showDetail="false" />
                         </div>
                         <div class="form-field">
                             <p:outputLabel for="valor"
@@ -159,13 +161,13 @@
                                          required="true"
                                          requiredMessage="#{msg['medioContacto.valorRequerido']}" />
 
-                            <p:message for="valor" />
+<p:message for="valor" showSummary="true" showDetail="false" />
                         </div>
                     </div>
                     <div class="dialog-actions">
                         <crud:botones-bottom model="#{medioContactoModel}"
                                              procesar="@this edicionContenido"
-                                             actualizar="messages contactoTable edicionDialog"
+                                             actualizar="messages contactoTable edicionContenido"
                                              oncompleteCancelar="PF('contactoDialog').hide()"
                                              oncompleteGuardar="if (!args.validationFailed) PF('contactoDialog').hide()" />
                     </div>

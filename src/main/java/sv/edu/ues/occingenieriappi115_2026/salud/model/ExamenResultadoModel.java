@@ -2,6 +2,7 @@ package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
+import jakarta.faces.application.FacesMessage;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import java.io.Serializable;
@@ -92,7 +93,7 @@ public class ExamenResultadoModel extends AbstractModel<ExamenResultado> impleme
     }
 
     public void guardar() {
-        if (seleccionado == null) {
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
             return;
         }
         switch (getEstado()) {
@@ -102,6 +103,7 @@ public class ExamenResultadoModel extends AbstractModel<ExamenResultado> impleme
             }
         }
         setEstado(ESTADO_CRUD.LISTADO);
+        agregarMensaje(FacesMessage.SEVERITY_INFO, "mensajes.guardado");
     }
 
     public void cancelar() {

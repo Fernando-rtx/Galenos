@@ -60,11 +60,12 @@
 
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
-                        globalOnly="true"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{tipoMedioContactoModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -100,7 +101,7 @@
                                 event="rowDblselect"
                                 listener="#{tipoMedioContactoModel.seleccionar(tipoMedioContactoModel.seleccionado)}"
                                 process="@this"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('tipoMedioContactoDialog').show()" />
 
@@ -173,6 +174,7 @@
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{tipoMedioContactoModel.seleccionado ne null}">
                     <div class="dialog-intro">

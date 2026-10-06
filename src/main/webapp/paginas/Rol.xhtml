@@ -46,16 +46,17 @@
                         <crud:botones-top
                             model="#{rolModel}"
                             actualizar="messages rolesTable edicionDialog"
-                            oncompleteNuevo="PF('rolDialog').show()" />
+                            oncompleteNuevo="PF('rolDialog').show()"  resetNuevo="true" />
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
-                        globalOnly="true"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{rolModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -86,7 +87,7 @@
                                 event="rowDblselect"
                                 listener="#{rolModel.seleccionar(rolModel.seleccionado)}"
                                 process="@this"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('rolDialog').show()" />
 
@@ -148,6 +149,7 @@
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{rolModel.seleccionado ne null}">
                     <div class="dialog-intro">
@@ -223,7 +225,7 @@
                         <crud:botones-bottom
                             model="#{rolModel}"
                             procesar="@this edicionContenido"
-                            actualizar="messages rolesTable edicionDialog"
+                            actualizar="messages rolesTable edicionContenido"
                             oncompleteCancelar="PF('rolDialog').hide()"
                             oncompleteGuardar="if (!args.validationFailed) PF('rolDialog').hide()" />
                     </div>

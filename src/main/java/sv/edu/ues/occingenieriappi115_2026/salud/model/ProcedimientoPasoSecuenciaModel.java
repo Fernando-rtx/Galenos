@@ -47,6 +47,8 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
     @Inject
     transient FacesContext facesContext;
     private ProcedimientoPasoSecuencia seleccionado;
+    private UUID origenOriginalId;
+    private UUID destinoOriginalId;
 
     private List<ProcedimientoPaso> procedimientosPaso;
     private Procedimiento procedimientoSeleccionado;
@@ -94,7 +96,9 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
                 .filter(paso -> paso != null && paso.getIdProcedimiento() != null
                 && paso.getIdProcedimiento().getIdProcedimiento() != null)
                 .map(ProcedimientoPaso::getIdProcedimiento)
-                .filter(procedimiento -> !Boolean.FALSE.equals(procedimiento.getActivo()))
+                .filter(procedimiento -> Boolean.TRUE.equals(procedimiento.getActivo())
+                || (getEstado() == ESTADO_CRUD.EDICION && procedimientoSeleccionado != null
+                && procedimiento.getIdProcedimiento().equals(procedimientoSeleccionado.getIdProcedimiento())))
                 .collect(java.util.stream.Collectors.toMap(
                         Procedimiento::getIdProcedimiento,
                         procedimiento -> procedimiento,
@@ -156,8 +160,7 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
     }
 
     public boolean isPasoSiguienteEditable() {
-        return isEstructuraEditable() || seleccionado == null
-                || seleccionado.getIdProcedimientoPasoReferencia() == null;
+        return isEstructuraEditable();
     }
 
     public String getNombrePasoSiguiente(ProcedimientoPasoSecuencia secuencia) {
@@ -276,6 +279,8 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
 
     private void prepararEdicion() {
         ProcedimientoPaso origen = seleccionado == null ? null : seleccionado.getIdProcedimientoPaso();
+        origenOriginalId = origen == null ? null : origen.getIdProcedimientoPaso();
+        destinoOriginalId = seleccionado == null ? null : seleccionado.getIdProcedimientoPasoReferencia();
         procedimientoSeleccionado = origen == null ? null : origen.getIdProcedimiento();
         UUID idSiguiente = seleccionado == null
                 ? null : seleccionado.getIdProcedimientoPasoReferencia();
@@ -376,6 +381,18 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
      * faces y devuelve {@code false}
      */
     private boolean validarAntesDeGuardar() {
+        UUID origenActual = seleccionado.getIdProcedimientoPaso() == null
+                ? null : seleccionado.getIdProcedimientoPaso().getIdProcedimientoPaso();
+        UUID destinoActual = pasoSiguienteSeleccionado == null
+                ? seleccionado.getIdProcedimientoPasoReferencia()
+                : pasoSiguienteSeleccionado.getIdProcedimientoPaso();
+        if (getEstado() == ESTADO_CRUD.EDICION
+                && (!Objects.equals(origenOriginalId, origenActual)
+                || !Objects.equals(destinoOriginalId, destinoActual)
+                || !Objects.equals(destinoOriginalId, seleccionado.getIdProcedimientoPasoReferencia()))) {
+            agregarError("relaciones.noEditables");
+            return false;
+        }
         ProcedimientoPaso origen = seleccionado.getIdProcedimientoPaso();
         if (origen == null || origen.getIdProcedimientoPaso() == null) {
             agregarError("secuencia.pasoOrigenRequerido");

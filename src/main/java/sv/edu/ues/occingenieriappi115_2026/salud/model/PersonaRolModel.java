@@ -32,6 +32,8 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     private transient FacesContext facesContext;
     private PersonaRol seleccionado;
     private Persona personaContexto;
+    private Persona personaOriginal;
+    private UUID personaOriginalId;
     private UUID clinicaOriginalId;
     private UUID rolOriginalId;
     private Clinica clinicaOriginal;
@@ -132,7 +134,7 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     }
 
     public void setPersonaSeleccionadaId(String id) {
-        if (seleccionado != null) {
+        if (seleccionado != null && getEstado() != ESTADO_CRUD.EDICION) {
             seleccionado.setIdPersona(buscarPersona(id));
         }
     }
@@ -257,6 +259,8 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     public void seleccionar(PersonaRol seleccionado) {
         roles = null;
         this.seleccionado = seleccionado;
+        personaOriginal = seleccionado == null ? null : seleccionado.getIdPersona();
+        personaOriginalId = personaOriginal == null ? null : personaOriginal.getIdPersona();
         clinicaOriginalId = seleccionado == null || seleccionado.getIdClinica() == null
                 ? null : seleccionado.getIdClinica().getIdClinica();
         rolOriginalId = seleccionado == null || seleccionado.getIdRol() == null
@@ -349,6 +353,13 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     }
 
     private boolean validarAntesDeGuardar() {
+        if (getEstado() == ESTADO_CRUD.EDICION && (personaOriginalId == null
+                || seleccionado.getIdPersona() == null
+                || !personaOriginalId.equals(seleccionado.getIdPersona().getIdPersona()))) {
+            seleccionado.setIdPersona(personaOriginal);
+            agregarError("persona", "relaciones.noEditables");
+            return false;
+        }
         if (seleccionado.getIdPersona() == null
                 || seleccionado.getIdPersona().getIdPersona() == null) {
             agregarError("persona", "personaRol.personaRequerida");

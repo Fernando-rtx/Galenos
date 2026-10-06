@@ -508,10 +508,16 @@ class ExamenTipoExamenModelTest {
     @Test
     void guardarEnCreacionDelegaAGuardarYVuelveAListado() {
         ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        TipoExamenDAO tipos = mock(TipoExamenDAO.class);
         ExamenTipoExamenModel model = new ExamenTipoExamenModel(
-                dao, mock(ExamenDAO.class), mock(TipoExamenDAO.class));
+                dao, mock(ExamenDAO.class), tipos);
         model.nuevo();
         ExamenTipoExamen seleccionado = model.getSeleccionado();
+        seleccionado.setIdExamen(examenPersistido());
+        TipoExamen tipo = new TipoExamen(UUID.randomUUID());
+        tipo.setActivo(true);
+        seleccionado.setIdTipoExamen(tipo);
+        when(tipos.buscarPorId(tipo.getIdTipoExamen())).thenReturn(tipo);
 
         model.guardar();
 
@@ -522,9 +528,12 @@ class ExamenTipoExamenModelTest {
     @Test
     void guardarEnEdicionDelegaAActualizarYVuelveAListado() {
         ExamenTipoExamenDAO dao = mock(ExamenTipoExamenDAO.class);
+        TipoExamenDAO tipos = mock(TipoExamenDAO.class);
         ExamenTipoExamenModel model = new ExamenTipoExamenModel(
-                dao, mock(ExamenDAO.class), mock(TipoExamenDAO.class));
-        ExamenTipoExamen entidad = new ExamenTipoExamen();
+                dao, mock(ExamenDAO.class), tipos);
+        ExamenTipoExamen entidad = asociacionPersistida(examenPersistido());
+        when(dao.buscarPorId(entidad.getIdExamenTipoExamen())).thenReturn(entidad);
+        when(tipos.buscarPorId(entidad.getIdTipoExamen().getIdTipoExamen())).thenReturn(entidad.getIdTipoExamen());
         ExamenTipoExamen actualizado = new ExamenTipoExamen();
         model.seleccionar(entidad);
         when(dao.actualizar(entidad)).thenReturn(actualizado);

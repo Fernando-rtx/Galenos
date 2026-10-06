@@ -47,15 +47,17 @@
                         <crud:botones-top
                             model="#{examenTipoExamenModel}"
                             actualizar="messages examenTipoExamenTable edicionDialog"
-                            oncompleteNuevo="PF('examenTipoExamenDialog').show()" />
+                            oncompleteNuevo="PF('examenTipoExamenDialog').show()"  resetNuevo="true" />
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{examenTipoExamenModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -80,10 +82,10 @@
                             styleClass="examen-tipo-table">
 
                             <p:ajax
-                                event="rowSelect"
+                                event="rowDblselect"
                                 listener="#{examenTipoExamenModel.seleccionar(examenTipoExamenModel.seleccionado)}"
                                 process="@this"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('examenTipoExamenDialog').show()" />
 
@@ -164,6 +166,7 @@
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{examenTipoExamenModel.seleccionado ne null}">
                     <div class="dialog-intro">
@@ -193,6 +196,7 @@
                                 id="idExamen"
                                 value="#{examenTipoExamenModel.seleccionado.idExamen}"
                                 converter="#{examenConverter}"
+                                disabled="#{examenTipoExamenModel.estado eq 'EDICION'}"
                                 required="true"
                                 requiredMessage="#{msg['examen.seleccioneExamen']}">
 
@@ -206,7 +210,7 @@
                                     itemLabel="#{ex.nombre}"
                                     itemValue="#{ex}" />
                             </p:selectOneMenu>
-                            <p:message for="idExamen" />
+<p:message for="idExamen" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="form-field">
@@ -233,7 +237,7 @@
                                     itemLabel="#{te.nombre}"
                                     itemValue="#{te}" />
                             </p:selectOneMenu>
-                            <p:message for="idTipoExamen" />
+<p:message for="idTipoExamen" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="form-field">
@@ -271,7 +275,7 @@
                         <crud:botones-bottom
                             model="#{examenTipoExamenModel}"
                             procesar="@this edicionContenido"
-                            actualizar="messages examenTipoExamenTable edicionDialog"
+                            actualizar="messages examenTipoExamenTable edicionContenido"
                             oncompleteCancelar="PF('examenTipoExamenDialog').hide()"
                             oncompleteGuardar="if (!args.validationFailed) PF('examenTipoExamenDialog').hide()" />
                     </div>

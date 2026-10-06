@@ -41,6 +41,8 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
     private UUID tipoMedioContactoOriginalId;
     private TipoMedioContacto tipoMedioContactoOriginal;
     private Persona personaContexto;
+    private Persona personaOriginal;
+    private UUID personaOriginalId;
     private List<Persona> personas;
     private List<TipoMedioContacto> tiposMedioContacto;
 
@@ -130,7 +132,7 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
     }
 
     public void setPersonaSeleccionadaId(String id) {
-        if (seleccionado != null) {
+        if (seleccionado != null && getEstado() != ESTADO_CRUD.EDICION) {
             seleccionado.setIdPersona(buscarPersona(id));
         }
     }
@@ -224,6 +226,8 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
 
     public void seleccionar(MedioContacto seleccionado) {
         this.seleccionado = seleccionado;
+        personaOriginal = seleccionado == null ? null : seleccionado.getIdPersona();
+        personaOriginalId = personaOriginal == null ? null : personaOriginal.getIdPersona();
         tipoMedioContactoOriginalId = seleccionado == null || seleccionado.getIdTipoMedioContacto() == null
                 ? null : seleccionado.getIdTipoMedioContacto().getIdTipoMedioContacto();
         tipoMedioContactoOriginal = seleccionado == null ? null : seleccionado.getIdTipoMedioContacto();
@@ -295,6 +299,13 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
     }
 
     private boolean validarAntesDeGuardar() {
+        if (getEstado() == ESTADO_CRUD.EDICION && (personaOriginalId == null
+                || seleccionado.getIdPersona() == null
+                || !personaOriginalId.equals(seleccionado.getIdPersona().getIdPersona()))) {
+            seleccionado.setIdPersona(personaOriginal);
+            agregarError("persona", "relaciones.noEditables");
+            return false;
+        }
         if (seleccionado.getIdPersona() == null) {
             agregarError(null, "medioContacto.personaRequerida");
             return false;

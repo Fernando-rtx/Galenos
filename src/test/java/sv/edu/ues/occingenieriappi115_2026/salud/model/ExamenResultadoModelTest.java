@@ -1,6 +1,11 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
+import jakarta.faces.application.Application;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ExamenResultadoDAO;
@@ -14,9 +19,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.isNull;
 
 class ExamenResultadoModelTest {
 
@@ -87,6 +95,47 @@ class ExamenResultadoModelTest {
         model.guardar();
 
         verifyNoInteractions(dao);
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+    }
+
+    @Test
+    void guardarCorrectamenteMuestraUnSoloExito() {
+        ExamenResultadoDAO dao = mock(ExamenResultadoDAO.class);
+        ExamenResultadoModel model = new ExamenResultadoModel(dao, mock(OrdenExamenDAO.class));
+        model.nuevo();
+        model.getSeleccionado().setIdOrdenExamen(new OrdenExamen(UUID.randomUUID()));
+        FacesContext contexto = mock(FacesContext.class);
+        Application aplicacion = mock(Application.class);
+        when(contexto.getApplication()).thenReturn(aplicacion);
+        when(aplicacion.getResourceBundle(contexto, "msg"))
+                .thenReturn(ResourceBundle.getBundle("i18n.messages", Locale.forLanguageTag("es")));
+
+        try (var faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(contexto);
+            model.guardar();
+        }
+
+        verify(dao).guardar(model.getSeleccionado());
+        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
+        verify(contexto).addMessage(isNull(), argThat(m ->
+                FacesMessage.SEVERITY_INFO.equals(m.getSeverity())
+                && "Registro guardado correctamente".equals(m.getSummary())));
+    }
+
+    @Test
+    void guardarEnListadoNoMuestraExitoSiNoHuboPersistencia() {
+        ExamenResultadoDAO dao = mock(ExamenResultadoDAO.class);
+        ExamenResultadoModel model = new ExamenResultadoModel(dao, mock(OrdenExamenDAO.class));
+        model.nuevo();
+        model.setEstado(ESTADO_CRUD.LISTADO);
+        FacesContext contexto = mock(FacesContext.class);
+
+        try (var faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(contexto);
+            model.guardar();
+        }
+
+        verifyNoInteractions(dao, contexto);
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
 

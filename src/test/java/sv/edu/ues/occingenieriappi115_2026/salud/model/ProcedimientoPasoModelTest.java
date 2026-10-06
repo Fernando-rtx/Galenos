@@ -131,8 +131,12 @@ class ProcedimientoPasoModelTest {
     void constructorCargaProcedimientosYRoles() {
         ProcedimientoDAO procDao = mock(ProcedimientoDAO.class);
         RolDAO rolDao = mock(RolDAO.class);
-        when(procDao.obtenerTodos()).thenReturn(List.of(new Procedimiento()));
-        when(rolDao.obtenerTodos()).thenReturn(List.of(new Rol()));
+        Procedimiento procedimiento = new Procedimiento();
+        procedimiento.setActivo(true);
+        Rol rol = new Rol();
+        rol.setActivo(true);
+        when(procDao.obtenerTodos()).thenReturn(List.of(procedimiento));
+        when(rolDao.obtenerTodos()).thenReturn(List.of(rol));
 
         ProcedimientoPasoModel model = new ProcedimientoPasoModel(
                 mock(ProcedimientoPasoDAO.class), procDao, rolDao);
@@ -420,6 +424,7 @@ class ProcedimientoPasoModelTest {
             ProcedimientoPasoDAO pasoDao, ProcedimientoPasoModel model) {
         UUID id = UUID.randomUUID();
         Procedimiento procedimiento = new Procedimiento(id);
+        procedimiento.setActivo(true);
         when(procDao.buscarPorId(id)).thenReturn(procedimiento);
         model.getSeleccionado().setIdProcedimiento(procedimiento);
         UUID idRol = UUID.randomUUID();
@@ -431,6 +436,7 @@ class ProcedimientoPasoModelTest {
             UUID idPaso = UUID.randomUUID();
             model.getSeleccionado().setIdProcedimientoPaso(idPaso);
             when(pasoDao.buscarPorId(idPaso)).thenReturn(model.getSeleccionado());
+            model.seleccionar(model.getSeleccionado());
         }
     }
 

@@ -45,15 +45,15 @@ class PersonaXhtmlTest {
     }
 
     @Test
-    void guardadosDeRelacionesActualizanSoloMensajesDentroDeSuPestana() throws IOException {
+    void guardadosDeRelacionesActualizanMensajesDentroDelDialogo() throws IOException {
         String xhtml = pagina();
 
         assertTrue(botonGuardarRelacional(xhtml, "documentoModel.guardar()")
-                .contains("update=\"documentosContenido\""));
+                .contains("update=\"documentosContenido :layoutForm:dialogMessages\""));
         assertTrue(botonGuardarRelacional(xhtml, "medioContactoModel.guardar()")
-                .contains("update=\"contactosContenido\""));
+                .contains("update=\"contactosContenido :layoutForm:dialogMessages\""));
         assertTrue(botonGuardarRelacional(xhtml, "personaRolModel.guardar()")
-                .contains("update=\"rolesContenido\""));
+                .contains("update=\"rolesContenido :layoutForm:dialogMessages\""));
         assertFalse(botonGuardarRelacional(xhtml, "documentoModel.guardar()")
                 .contains(":layoutForm:messages"));
         assertFalse(botonGuardarRelacional(xhtml, "medioContactoModel.guardar()")
@@ -78,10 +78,10 @@ class PersonaXhtmlTest {
     @Test
     void mensajesNoSeRedisplayanEnMasDeUnComponenteYSeLimpianAlCambiarAccion() throws IOException {
         String xhtml = pagina();
-        assertEquals(4, contar(xhtml, "<p:messages id="));
-        assertEquals(4, contar(xhtml, "redisplay=\"false\""));
-        assertTrue(xhtml.contains("update=\":layoutForm:messages :layoutForm:personaTabs:documentosMessages"
-                + " :layoutForm:personaTabs:contactosMessages :layoutForm:personaTabs:rolesMessages\""));
+        assertEquals(5, xhtml.split("<p:messages\\b", -1).length - 1);
+        assertEquals(5, contar(xhtml, "redisplay=\"false\""));
+        assertTrue(xhtml.contains("update=\":layoutForm:dialogMessages :layoutForm:messages :layoutForm:personaTabs:detallePersona"
+                + " :layoutForm:personaTabs:documentosContenido :layoutForm:personaTabs:contactosContenido :layoutForm:personaTabs:rolesContenido\""));
 
         int rowDblclick = xhtml.indexOf("<p:ajax event=\"rowDblselect\"");
         int rowFin = xhtml.indexOf("/>", rowDblclick);

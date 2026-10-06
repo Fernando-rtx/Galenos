@@ -50,16 +50,17 @@
                         <crud:botones-top
                             model="#{procedimientoPasoModel}"
                             actualizar="messages procedimientosPasoTable edicionDialog"
-                            oncompleteNuevo="PF('procedimientoPasoDialog').show()" />
+                            oncompleteNuevo="PF('procedimientoPasoDialog').show()"  resetNuevo="true" />
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
-                        globalOnly="true"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{procedimientoPasoModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -86,7 +87,7 @@
                             <p:ajax
                                 event="rowDblselect"
                                 listener="#{procedimientoPasoModel.seleccionarFila()}"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('procedimientoPasoDialog').show()" />
 
@@ -157,6 +158,7 @@
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{procedimientoPasoModel.seleccionado ne null}">
                     <div class="dialog-intro">
@@ -276,7 +278,7 @@
                         <crud:botones-bottom
                             model="#{procedimientoPasoModel}"
                             procesar="@this edicionContenido"
-                            actualizar="messages procedimientosPasoTable edicionDialog"
+                            actualizar="messages procedimientosPasoTable edicionContenido"
                             oncompleteCancelar="PF('procedimientoPasoDialog').hide()"
                             oncompleteGuardar="if (!args.validationFailed) PF('procedimientoPasoDialog').hide()" />
                     </div>

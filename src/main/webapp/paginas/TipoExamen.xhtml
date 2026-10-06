@@ -52,7 +52,7 @@
                         <!-- Componente reutilizable que llama nuevo() y abre el diálogo al completar AJAX. -->
                         <crud:botones-top
                             model="#{tipoExamenModel}"
-                            actualizar=":layoutForm:edicionDialog"
+                            actualizar=":layoutForm:messages :layoutForm:edicionDialog"
                             resetNuevo="true"
                             oncompleteNuevo="PF('tipoExamenDialog').show()" />
                     </div>
@@ -60,11 +60,12 @@
                     <div class="section-divider"></div>
 
                     <!-- Área preparada para mensajes de validación y FacesMessage. -->
-                    <p:messages
-                        id="messages"
-                        globalOnly="true"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{tipoExamenModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -101,7 +102,7 @@
                                 event="rowDblselect"
                                 listener="#{tipoExamenModel.seleccionar}"
                                 process="@this"
-                                update=":layoutForm:edicionContenido"
+                                update=":layoutForm:edicionContenido :layoutForm:messages"
                                 resetValues="true"
                                 oncomplete="PF('tipoExamenDialog').show()" />
 
@@ -174,6 +175,7 @@
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{tipoExamenModel.seleccionado ne null}">
                     <div class="dialog-intro">
@@ -208,7 +210,7 @@
                                 requiredMessage="#{msg['tipoExamen.nombreRequerido']}"
                                 validator="#{tipoExamenModel.validarNombre}" />
 
-                            <p:message id="nombreMessage" for="nombre" />
+<p:message id="nombreMessage" for="nombre" showSummary="true" showDetail="false" />
 
                             <span class="form-helper">
                                 #{msg['tipoExamen.nombreAyuda']}

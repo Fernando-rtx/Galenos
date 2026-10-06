@@ -49,7 +49,7 @@ public class ProcedimientoFlujoService {
         if (procedimiento == null) {
             throw new IllegalArgumentException("procedimientoPaso.procedimientoNoExiste");
         }
-        if (Boolean.FALSE.equals(procedimiento.getActivo())) {
+        if (!Boolean.TRUE.equals(procedimiento.getActivo())) {
             throw new IllegalArgumentException("procedimientoPaso.procedimientoInactivo");
         }
 
@@ -68,7 +68,7 @@ public class ProcedimientoFlujoService {
         if (rol == null) {
             throw new IllegalArgumentException("procedimientoPaso.rolNoExiste");
         }
-        if (Boolean.FALSE.equals(rol.getActivo())) {
+        if (!Boolean.TRUE.equals(rol.getActivo())) {
             throw new IllegalArgumentException("procedimientoPaso.rolInactivo");
         }
         if (pasos.stream().anyMatch(paso -> paso.getIdRol() != null
@@ -86,7 +86,7 @@ public class ProcedimientoFlujoService {
         if (examenes.stream().anyMatch(examen -> examen == null)) {
             throw new IllegalArgumentException("ppe.examenNoExiste");
         }
-        if (examenes.stream().anyMatch(examen -> Boolean.FALSE.equals(examen.getActivo()))) {
+        if (examenes.stream().anyMatch(examen -> !Boolean.TRUE.equals(examen.getActivo()))) {
             throw new IllegalArgumentException("ppe.examenInactivo");
         }
 
@@ -176,6 +176,19 @@ public class ProcedimientoFlujoService {
         if (paso == null || paso.getIdProcedimiento() == null) {
             throw new IllegalArgumentException("flujo.pasoNoExiste");
         }
+        if (paso.getIdRol() == null || !java.util.Objects.equals(idRol, paso.getIdRol().getIdRol())) {
+            throw new IllegalArgumentException("relaciones.noEditables");
+        }
+        Set<UUID> examenesGuardados = pasoExamenDAO.obtenerTodos().stream()
+                .filter(relacion -> relacion != null && relacion.getIdProcedimientoPaso() != null
+                && idPaso.equals(relacion.getIdProcedimientoPaso().getIdProcedimientoPaso()))
+                .filter(relacion -> relacion.getIdExamen() != null)
+                .map(relacion -> relacion.getIdExamen().getIdExamen())
+                .collect(java.util.stream.Collectors.toSet());
+        Set<UUID> examenesRecibidos = idsExamenes == null ? Set.of() : new java.util.HashSet<>(idsExamenes);
+        if (!examenesGuardados.equals(examenesRecibidos)) {
+            throw new IllegalArgumentException("relaciones.noEditables");
+        }
         UUID idProcedimiento = paso.getIdProcedimiento().getIdProcedimiento();
         List<ProcedimientoPaso> pasos = pasoDAO.obtenerTodos().stream()
                 .filter(otro -> otro != null && otro.getIdProcedimiento() != null
@@ -190,9 +203,6 @@ public class ProcedimientoFlujoService {
         Rol rol = idRol == null ? null : rolDAO.buscarPorId(idRol);
         if (rol == null) {
             throw new IllegalArgumentException("procedimientoPaso.rolNoExiste");
-        }
-        if (Boolean.FALSE.equals(rol.getActivo())) {
-            throw new IllegalArgumentException("procedimientoPaso.rolInactivo");
         }
         if (pasos.stream().filter(otro -> !idPaso.equals(otro.getIdProcedimientoPaso()))
                 .anyMatch(otro -> otro.getIdRol() != null
@@ -209,9 +219,6 @@ public class ProcedimientoFlujoService {
         if (examenes.stream().anyMatch(examen -> examen == null)) {
             throw new IllegalArgumentException("ppe.examenNoExiste");
         }
-        if (examenes.stream().anyMatch(examen -> Boolean.FALSE.equals(examen.getActivo()))) {
-            throw new IllegalArgumentException("ppe.examenInactivo");
-        }
 
         List<ProcedimientoPasoSecuencia> secuencias = secuenciaDAO.obtenerTodos();
         if (indicaFin && secuencias.stream().anyMatch(enlace -> enlace != null
@@ -221,37 +228,9 @@ public class ProcedimientoFlujoService {
         }
 
         paso.setNombre(nombreNormalizado);
-        paso.setIdRol(rol);
         paso.setIndicaFin(indicaFin);
         pasoDAO.actualizar(paso);
 
-        Set<UUID> examenesDeseados = Set.copyOf(examenesUnicos);
-        List<ProcedimientoPasoExamen> relaciones = pasoExamenDAO.obtenerTodos().stream()
-                .filter(relacion -> relacion != null && relacion.getIdProcedimientoPaso() != null
-                && idPaso.equals(relacion.getIdProcedimientoPaso().getIdProcedimientoPaso()))
-                .toList();
-        Set<UUID> examenesExistentes = relaciones.stream()
-                .filter(relacion -> relacion.getIdExamen() != null)
-                .map(relacion -> relacion.getIdExamen().getIdExamen())
-                .collect(java.util.stream.Collectors.toSet());
-        relaciones.stream()
-                .filter(relacion -> relacion.getIdExamen() == null
-                || !examenesDeseados.contains(relacion.getIdExamen().getIdExamen()))
-                .map(ProcedimientoPasoExamen::getIdProcedimientoPasoExamen)
-                .filter(java.util.Objects::nonNull)
-                .toList()
-                .forEach(pasoExamenDAO::eliminar);
-        for (Examen examen : examenes) {
-            if (examenesExistentes.contains(examen.getIdExamen())) {
-                continue;
-            }
-            ProcedimientoPasoExamen relacion = new ProcedimientoPasoExamen();
-            relacion.setIdProcedimientoPaso(paso);
-            relacion.setIdExamen(examen);
-            relacion.setFechaCreacion(new Date());
-            relacion.setActivo(Boolean.TRUE);
-            pasoExamenDAO.guardar(relacion);
-        }
     }
 
     private ProcedimientoPaso validarOrigen(UUID idPasoOrigen, UUID idProcedimiento,

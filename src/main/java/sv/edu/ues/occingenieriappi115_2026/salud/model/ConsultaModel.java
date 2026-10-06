@@ -263,6 +263,7 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
         try {
             seleccionado = flujoService.guardarConsulta(seleccionado, clinicaActual(), getEstado() == ESTADO_CRUD.EDICION);
             setEstado(ESTADO_CRUD.LISTADO);
+            agregarMensaje(jakarta.faces.application.FacesMessage.SEVERITY_INFO, "mensajes.guardado");
         } catch (FlujoConsultaException ex) {
             registrarError(ex.getMessage());
         } catch (RuntimeException ex) {

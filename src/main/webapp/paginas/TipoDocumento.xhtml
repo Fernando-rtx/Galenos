@@ -54,15 +54,17 @@
                         <crud:botones-top
                             model="#{tipoDocumentoModel}"
                             actualizar="messages documentosTable edicionDialog"
-                            oncompleteNuevo="PF('tipoDocumentoDialog').show()" />
+                            oncompleteNuevo="PF('tipoDocumentoDialog').show()"  resetNuevo="true" />
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{tipoDocumentoModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -97,7 +99,7 @@
                                 event="rowDblselect"
                                 listener="#{tipoDocumentoModel.seleccionar(tipoDocumentoModel.seleccionado)}"
                                 process="@this"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('tipoDocumentoDialog').show()" />
 
@@ -166,6 +168,7 @@
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{tipoDocumentoModel.seleccionado ne null}">
                     <div class="dialog-intro">
@@ -199,7 +202,7 @@
                                 required="true"
                                 requiredMessage="#{msg['tipoDocumento.nombreRequerido']}" />
 
-                            <p:message for="nombre" />
+<p:message for="nombre" showSummary="true" showDetail="false" />
 
                             <span class="form-helper">
                                 #{msg['tipoDocumento.nombreAyuda']}
@@ -233,7 +236,7 @@
                                 placeholder="#{msg['tipoDocumento.expresionRegularPlaceholder']}" />
 
                             <span class="form-helper">#{msg['tipoDocumento.expresionRegularAyuda']}</span>
-                            <p:message for="expresionRegular" />
+<p:message for="expresionRegular" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="form-field">
@@ -271,7 +274,7 @@
                         <crud:botones-bottom
                             model="#{tipoDocumentoModel}"
                             procesar="@this edicionContenido"
-                            actualizar="messages documentosTable edicionDialog"
+                            actualizar="messages documentosTable edicionContenido"
                             oncompleteCancelar="PF('tipoDocumentoDialog').hide()"
                             oncompleteGuardar="if (!args.validationFailed) PF('tipoDocumentoDialog').hide()" />
                     </div>

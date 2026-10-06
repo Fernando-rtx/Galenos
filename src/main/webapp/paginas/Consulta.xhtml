@@ -61,10 +61,12 @@
                     </h:panelGroup>
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{consultaModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -83,13 +85,13 @@
                                 <p:outputLabel for="fechaDesde" value="#{msg['consulta.desde']}" />
                                 <p:datePicker id="fechaDesde" value="#{consultaModel.fechaDesde}"
                                               pattern="dd/MM/yyyy" showIcon="true" />
-                                <p:message for="fechaDesde" />
+<p:message for="fechaDesde" showSummary="true" showDetail="false" />
                             </div>
                             <div class="form-field">
                                 <p:outputLabel for="fechaHasta" value="#{msg['consulta.hasta']}" />
                                 <p:datePicker id="fechaHasta" value="#{consultaModel.fechaHasta}"
                                               pattern="dd/MM/yyyy" showIcon="true" />
-                                <p:message for="fechaHasta" />
+<p:message for="fechaHasta" showSummary="true" showDetail="false" />
                             </div>
                             <p:commandButton value="#{msg['consulta.buscarFechas']}" icon="pi pi-search"
                                 action="#{consultaModel.aplicarFiltroFechas}" process="filtroFechas"
@@ -120,7 +122,7 @@
                                 event="rowDblselect"
                                 listener="#{consultaModel.seleccionarFila}"
                                 process="@this"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('consultaDialog').show()" />
 
@@ -209,11 +211,13 @@
                 id="edicionContenido"
                 layout="block">
 
-                <p:messages id="consultaMessages" globalOnly="true"
+                <p:messages id="consultaMessages" globalOnly="true" redisplay="false"
                             showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{consultaModel.seleccionado ne null}">
                     <p:tabView id="consultaTabs">
+                        <p:ajax event="tabChange" process="@this"
+                                update=":layoutForm:consultaMessages :layoutForm:consultaTabs:detalleConsulta :layoutForm:consultaTabs:procedimientosContenido :layoutForm:consultaTabs:pasosContenido" />
 
                         <p:tab title="#{msg['consulta.tab.detalle']}">
                             <div class="dialog-intro">
@@ -249,9 +253,9 @@
                                         pattern="dd/MM/yyyy HH:mm"
                                         showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                         required="true"
-                                        requiredMessage="#{msg['mensajes.error']}" />
+                                        requiredMessage="#{msg['consultaFlujo.fechasInvalidas']}" />
 
-                                    <p:message for="consultaFechaInicio" />
+<p:message for="consultaFechaInicio" showSummary="true" showDetail="false" />
                                 </div>
 
                                 <div class="form-field">
@@ -268,7 +272,7 @@
                                         showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                         validator="#{consultaModel.validarFechaFin}" />
 
-                                    <p:message for="consultaFechaFin" />
+<p:message for="consultaFechaFin" showSummary="true" showDetail="false" />
                                 </div>
 
                                 <div class="form-field">
@@ -320,7 +324,7 @@
                                         scrollHeight="240"
                                         emptyMessage="#{msg['consulta.sinPacientes']}"
                                         required="true"
-                                        requiredMessage="#{msg['mensajes.error']}">
+                                        requiredMessage="#{msg['consultaFlujo.pacienteInvalido']}">
 
                                         <p:column headerText="#{msg['consulta.paciente']}">
                                             <h:outputText
@@ -340,7 +344,7 @@
                                         </p:column>
                                     </p:autoComplete>
 
-                                    <p:message for="consultaPersonaRol" />
+<p:message for="consultaPersonaRol" showSummary="true" showDetail="false" />
                                 </div>
                             </p:outputPanel>
 
@@ -348,7 +352,7 @@
                                 <crud:botones-bottom
                                     model="#{consultaModel}"
                                     procesar="detalleConsulta"
-                                    actualizar=":layoutForm:messages consultasTable edicionDialog"
+                                    actualizar=":layoutForm:messages consultasTable edicionContenido"
                                     oncompleteCancelar="PF('consultaDialog').hide()"
                                     oncompleteGuardar="if (args.validationFailed) PF('consultaDialog').show(); else PF('consultaDialog').hide()" />
                             </div>
@@ -362,7 +366,7 @@
                                     icon="pi pi-plus"
                                     action="#{consultaProcedimientoModel.nuevoParaConsulta(consultaModel.seleccionado)}"
                                     process="@this"
-                                    update="procedimientosContenido" />
+                                    update="procedimientosContenido :layoutForm:consultaMessages"  resetValues="true" />
 
                                 <p:dataTable
                                     id="consultaProcedimientoTable"
@@ -377,7 +381,7 @@
                                         event="rowDblselect"
                                         listener="#{consultaProcedimientoModel.seleccionarParaConsulta(consultaProcedimientoModel.seleccionado, consultaModel.seleccionado)}"
                                         process="@this"
-                                        update="procedimientosContenido"
+                                        update="procedimientosContenido :layoutForm:consultaMessages"
                                         resetValues="true" />
 
                                     <p:column
@@ -425,7 +429,7 @@
                                                 disabled="#{consultaProcedimientoModel.estado eq 'EDICION'}"
                                                 value="#{consultaProcedimientoModel.seleccionado.idProcedimiento}"
                                                 required="true"
-                                                requiredMessage="#{msg['mensajes.error']}">
+                                                requiredMessage="#{msg['consultaFlujo.procedimientoInactivo']}">
 
                                                 <f:selectItem
                                                     itemLabel="#{msg['crud.seleccionar']}"
@@ -439,7 +443,7 @@
                                                     itemValue="#{p.idProcedimiento}" />
                                             </p:selectOneMenu>
 
-                                            <p:message for="procedimientoIdProcedimiento" />
+<p:message for="procedimientoIdProcedimiento" showSummary="true" showDetail="false" />
                                         </div>
 
                                         <div class="form-field">
@@ -455,9 +459,9 @@
                                                 pattern="dd/MM/yyyy HH:mm"
                                                 showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 required="true"
-                                                requiredMessage="#{msg['mensajes.error']}" />
+                                                requiredMessage="#{msg['consultaFlujo.fechasInvalidas']}" />
 
-                                            <p:message for="procedimientoFechaInicio" />
+<p:message for="procedimientoFechaInicio" showSummary="true" showDetail="false" />
                                         </div>
 
                                         <div class="form-field">
@@ -474,7 +478,7 @@
                                                 showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 validator="#{consultaProcedimientoModel.validarFechaFin}" />
 
-                                            <p:message for="procedimientoFechaFin" />
+<p:message for="procedimientoFechaFin" showSummary="true" showDetail="false" />
                                         </div>
 
                                         <div class="form-field">
@@ -497,7 +501,7 @@
                                             value="#{msg['crud.cancelar']}"
                                             action="#{consultaProcedimientoModel.cancelar()}"
                                             process="@this"
-                                            update="procedimientosContenido"
+                                            update="procedimientosContenido :layoutForm:consultaMessages"
                                             immediate="true"
                                             resetValues="true" />
                                         <p:commandButton
@@ -528,7 +532,7 @@
                                         event="rowDblselect"
                                         listener="#{consultaProcedimientoPasoModel.seleccionarParaConsulta(consultaProcedimientoPasoModel.seleccionado, consultaModel.seleccionado)}"
                                         process="@this"
-                                        update="pasosContenido"
+                                        update="pasosContenido :layoutForm:consultaMessages"
                                         resetValues="true" />
 
                                     <p:column
@@ -605,7 +609,7 @@
                                                     itemValue="#{cp}" />
                                             </p:selectOneMenu>
 
-                                            <p:message for="pasoConsultaProcedimiento" />
+<p:message for="pasoConsultaProcedimiento" showSummary="true" showDetail="false" />
                                         </div>
 
                                         <div class="form-field">
@@ -617,7 +621,7 @@
                                             <h:outputText id="pasoPersonaRol"
                                                 value="#{consultaProcedimientoPasoModel.getEtiquetaMedico(consultaProcedimientoPasoModel.seleccionado.idPersonaRol)}" />
 
-                                            <p:message for="pasoPersonaRol" />
+<p:message for="pasoPersonaRol" showSummary="true" showDetail="false" />
                                         </div>
 
                                         <div class="form-field">
@@ -633,9 +637,9 @@
                                                 pattern="dd/MM/yyyy HH:mm"
                                                 showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 required="true"
-                                                requiredMessage="#{msg['mensajes.error']}" />
+                                                requiredMessage="#{msg['consultaFlujo.fechasInvalidas']}" />
 
-                                            <p:message for="pasoFechaInicio" />
+<p:message for="pasoFechaInicio" showSummary="true" showDetail="false" />
                                         </div>
 
                                         <div class="form-field">
@@ -652,7 +656,7 @@
                                                 showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 validator="#{consultaProcedimientoPasoModel.validarFechaFin}" />
 
-                                            <p:message for="pasoFechaFin" />
+<p:message for="pasoFechaFin" showSummary="true" showDetail="false" />
                                         </div>
 
                                         <div class="form-field">
@@ -665,7 +669,7 @@
                                                 id="pasoEstado"
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.estado}"
                                                 required="true"
-                                                requiredMessage="#{msg['mensajes.error']}">
+                                                requiredMessage="#{msg['consultaFlujo.estadoInvalido']}">
 
                                                 <f:selectItem
                                                     itemLabel="#{msg['crud.seleccionar']}"
@@ -684,7 +688,7 @@
                                                     itemValue="COMPLETADO" />
                                             </p:selectOneMenu>
 
-                                            <p:message for="pasoEstado" />
+<p:message for="pasoEstado" showSummary="true" showDetail="false" />
                                         </div>
                                     </p:outputPanel>
 
@@ -693,7 +697,7 @@
                                             value="#{msg['crud.cancelar']}"
                                             action="#{consultaProcedimientoPasoModel.cancelar()}"
                                             process="@this"
-                                            update="pasosContenido"
+                                            update="pasosContenido :layoutForm:consultaMessages"
                                             immediate="true"
                                             resetValues="true" />
                                         <p:commandButton

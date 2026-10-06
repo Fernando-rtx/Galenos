@@ -32,7 +32,10 @@ class TipoExamenXhtmlTest {
     void mensajesDeCampoSonLocalesYDialogoSoloCierraConConfirmacionDeGuardado() throws IOException {
         String xhtml = pagina();
 
-        assertTrue(xhtml.contains("<p:messages\n                        id=\"messages\"\n                        globalOnly=\"true\""));
+        assertTrue(xhtml.contains("<p:outputPanel id=\"messages\">"));
+        assertTrue(xhtml.contains("id=\"listaMessages\""));
+        assertTrue(xhtml.contains("globalOnly=\"true\""));
+        assertTrue(xhtml.contains("id=\"dialogMessages\""));
         assertTrue(xhtml.contains("<p:message id=\"nombreMessage\" for=\"nombre\""));
         assertTrue(xhtml.contains("oncompleteGuardar=\"if (args &amp;&amp; args.guardado === true)"
                 + " PF('tipoExamenDialog').hide()\""));
@@ -46,7 +49,7 @@ class TipoExamenXhtmlTest {
         int fin = xhtml.indexOf("/>", inicio);
         String botonNuevo = xhtml.substring(inicio, fin);
 
-        assertTrue(botonNuevo.contains("actualizar=\":layoutForm:edicionDialog\""));
+        assertTrue(botonNuevo.contains("actualizar=\":layoutForm:messages :layoutForm:edicionDialog\""));
         assertTrue(botonNuevo.contains("oncompleteNuevo=\"PF('tipoExamenDialog').show()\""));
         assertFalse(botonNuevo.contains("actualizar=\"messages tiposExamenTable edicionDialog\""));
     }
@@ -62,7 +65,7 @@ class TipoExamenXhtmlTest {
         assertTrue(xhtml.contains("selection=\"#{tipoExamenModel.seleccionado}\""));
         assertTrue(dobleClic.contains("listener=\"#{tipoExamenModel.seleccionar}\""));
         assertTrue(dobleClic.contains("process=\"@this\""));
-        assertTrue(dobleClic.contains("update=\":layoutForm:edicionContenido\""));
+        assertTrue(dobleClic.contains("update=\":layoutForm:edicionContenido :layoutForm:messages\""));
         assertTrue(dobleClic.contains("resetValues=\"true\""));
         assertTrue(dobleClic.contains("oncomplete=\"PF('tipoExamenDialog').show()\""));
         assertTrue(xhtml.contains("<p:outputPanel\n                id=\"edicionContenido\""));

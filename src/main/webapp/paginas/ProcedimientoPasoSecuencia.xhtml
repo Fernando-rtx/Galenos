@@ -52,15 +52,17 @@
                         <crud:botones-top
                             model="#{procedimientoPasoSecuenciaModel}"
                             actualizar="messages secuenciasTable edicionDialog"
-                            oncompleteNuevo="PF('secuenciaDialog').show()" />
+                            oncompleteNuevo="PF('secuenciaDialog').show()"  resetNuevo="true" />
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{procedimientoPasoSecuenciaModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -87,7 +89,7 @@
                             <p:ajax
                                 event="rowDblselect"
                                 listener="#{procedimientoPasoSecuenciaModel.seleccionarFila()}"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('secuenciaDialog').show()" />
 
@@ -153,6 +155,7 @@
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{procedimientoPasoSecuenciaModel.seleccionado ne null}">
                     <div class="dialog-intro">
@@ -299,7 +302,7 @@
                         <crud:botones-bottom
                             model="#{procedimientoPasoSecuenciaModel}"
                             procesar="@this edicionContenido"
-                            actualizar="messages secuenciasTable edicionDialog"
+                            actualizar="messages secuenciasTable edicionContenido"
                             oncompleteCancelar="PF('secuenciaDialog').hide()"
                             oncompleteGuardar="if (args.validationFailed) PF('secuenciaDialog').show(); else PF('secuenciaDialog').hide()" />
                     </div>

@@ -48,6 +48,7 @@ public class ProcedimientoFlujoModel implements Serializable {
     private Procedimiento procedimiento;
     private ProcedimientoPaso pasoOrigen;
     private ProcedimientoPaso pasoEditando;
+    private boolean formularioAbierto;
     private String nombre;
     private Rol rol;
     private boolean indicaFin;
@@ -65,6 +66,7 @@ public class ProcedimientoFlujoModel implements Serializable {
     }
 
     private void preparar(Procedimiento procedimiento, ProcedimientoPaso origen) {
+        formularioAbierto = true;
         this.procedimiento = procedimiento;
         this.pasoOrigen = origen;
         this.pasoEditando = null;
@@ -85,6 +87,14 @@ public class ProcedimientoFlujoModel implements Serializable {
 
     public boolean isEditando() {
         return pasoEditando != null;
+    }
+
+    public boolean isFormularioAbierto() {
+        return formularioAbierto;
+    }
+
+    public void cancelar() {
+        formularioAbierto = false;
     }
 
     public void editar(ProcedimientoPaso paso) {
@@ -144,6 +154,9 @@ public class ProcedimientoFlujoModel implements Serializable {
     }
 
     public List<Rol> getRolesDisponibles() {
+        if (isEditando()) {
+            return pasoEditando.getIdRol() == null ? List.of() : List.of(pasoEditando.getIdRol());
+        }
         UUID idProcedimiento = procedimiento == null ? null : procedimiento.getIdProcedimiento();
         if (idProcedimiento == null) {
             return List.of();
@@ -155,7 +168,7 @@ public class ProcedimientoFlujoModel implements Serializable {
                 .map(paso -> paso.getIdRol().getIdRol())
                 .toList();
         return rolDAO.obtenerTodos().stream()
-                .filter(opcion -> opcion != null && !Boolean.FALSE.equals(opcion.getActivo()))
+                .filter(opcion -> opcion != null && Boolean.TRUE.equals(opcion.getActivo()))
                 .filter(opcion -> !rolesUsados.contains(opcion.getIdRol()))
                 .sorted(java.util.Comparator.comparing(Rol::getNombre,
                         java.util.Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
@@ -163,8 +176,12 @@ public class ProcedimientoFlujoModel implements Serializable {
     }
 
     public List<Examen> getExamenesDisponibles() {
+        if (isEditando()) {
+            return procedimientoPasoExamenModel.getExamenesPorPaso(pasoEditando).stream()
+                    .map(relacion -> relacion.getIdExamen()).filter(java.util.Objects::nonNull).toList();
+        }
         return examenDAO.obtenerTodos().stream()
-                .filter(examen -> examen != null && !Boolean.FALSE.equals(examen.getActivo()))
+                .filter(examen -> examen != null && Boolean.TRUE.equals(examen.getActivo()))
                 .sorted(java.util.Comparator.comparing(Examen::getNombre,
                         java.util.Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
                 .toList();
@@ -254,12 +271,12 @@ public class ProcedimientoFlujoModel implements Serializable {
     }
 
     public boolean puedeCrearInicial(Procedimiento procedimiento) {
-        return procedimiento != null && !Boolean.FALSE.equals(procedimiento.getActivo())
+        return procedimiento != null && Boolean.TRUE.equals(procedimiento.getActivo())
                 && isInicialDisponible(procedimiento);
     }
 
     public boolean puedeAgregarSiguiente(ProcedimientoPaso paso, Procedimiento procedimiento) {
-        return procedimiento != null && !Boolean.FALSE.equals(procedimiento.getActivo())
+        return procedimiento != null && Boolean.TRUE.equals(procedimiento.getActivo())
                 && paso != null && !Boolean.TRUE.equals(paso.getIndicaFin());
     }
 
@@ -297,6 +314,7 @@ public class ProcedimientoFlujoModel implements Serializable {
             pasosCache = null;
             secuenciaModel.invalidarCache();
             procedimientoPasoExamenModel.invalidarCache();
+            formularioAbierto = false;
         } catch (IllegalArgumentException ex) {
             agregarError(ex.getMessage());
         } catch (RuntimeException ex) {

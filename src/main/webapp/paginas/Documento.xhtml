@@ -41,7 +41,7 @@
                                     rendered="#{not documentoModel.conPersonaContexto}" />
                             <crud:botones-top model="#{documentoModel}"
                                               actualizar="messages documentoTable edicionDialog"
-                                              oncompleteNuevo="PF('documentoDialog').show()" />
+                                              oncompleteNuevo="PF('documentoDialog').show()"  resetNuevo="true" />
                         </div>
                     </div>
                     <h:panelGroup layout="block"
@@ -51,9 +51,11 @@
                                   #{documentoModel.personaContexto.nombres}
                                   #{documentoModel.personaContexto.apellidos}</h:panelGroup>
                     <div class="section-divider"></div>
-                    <p:messages id="messages"
+                    <p:outputPanel id="messages">
+                        <p:messages id="listaMessages"
                                 showDetail="false"
-                                closable="true" />
+                                closable="true"  globalOnly="true" redisplay="false" rendered="#{documentoModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <!-- Tabla principal -->
                     <div class="table-title">#{msg['documento.lista']}</div>
@@ -69,10 +71,10 @@
                                  rowKey="#{documentoModel.getRowKey(item)}"
                                  emptyMessage="#{msg['documento.sinRegistros']}"
                                  styleClass="clinical-table documento-table">
-                        <p:ajax event="rowSelect"
+                        <p:ajax event="rowDblselect"
                                 listener="#{documentoModel.seleccionar(documentoModel.seleccionado)}"
                                 process="@this"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('documentoDialog').show()" />
                         <p:column headerText="#{msg['documento.persona']}"
@@ -108,6 +110,7 @@
                   width="580"
                   styleClass="clinical-dialog">
             <p:outputPanel id="edicionContenido">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
                 <h:panelGroup rendered="#{documentoModel.seleccionado ne null}">
                     <div class="dialog-form">
                         <div class="form-field">
@@ -117,7 +120,7 @@
                                              value="#{documentoModel.personaSeleccionadaId}"
                                              required="true"
                                              requiredMessage="#{msg['documento.personaRequerida']}"
-                                             disabled="#{documentoModel.conPersonaContexto}"
+                                             disabled="#{documentoModel.conPersonaContexto or documentoModel.estado eq 'EDICION'}"
                                              styleClass="selector-wide">
                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                               itemValue="#{null}"
@@ -126,9 +129,12 @@
                                                var="persona"
                                                itemValue="#{persona.idPersona}"
                                                itemLabel="#{persona.nombres} #{persona.apellidos}" />
+                                <p:ajax process="@this"
+                                        listener="#{documentoModel.validarEdadDuiSeleccionado}"
+                                        update="tipo tipoMessage" />
                             </p:selectOneMenu>
 
-                            <p:message for="persona" />
+<p:message for="persona" showSummary="true" showDetail="false" />
                         </div>
                         <div class="form-field">
                             <p:outputLabel for="tipo"
@@ -148,10 +154,12 @@
                                                itemLabel="#{tipo.nombre}" />
 
                                 <p:ajax
-                                    process="@this" />
+                                    process="@this"
+                                    listener="#{documentoModel.validarEdadDuiSeleccionado}"
+                                    update="@this tipoMessage" />
                             </p:selectOneMenu>
 
-                            <p:message for="tipo" />
+<p:message id="tipoMessage" for="tipo" showSummary="true" showDetail="false" />
                         </div>
                         <div class="form-field">
                             <p:outputLabel for="valor"
@@ -161,7 +169,7 @@
                                          required="true"
                                          requiredMessage="#{msg['documento.valorRequerido']}" />
 
-                            <p:message for="valor" />
+<p:message for="valor" showSummary="true" showDetail="false" />
                         </div>
                         <div class="form-field">
                             <p:outputLabel for="ruta"
@@ -173,7 +181,7 @@
                     <div class="dialog-actions">
                         <crud:botones-bottom model="#{documentoModel}"
                                              procesar="@this edicionContenido"
-                                             actualizar="messages documentoTable edicionDialog"
+                                             actualizar="messages documentoTable edicionContenido"
                                              oncompleteCancelar="PF('documentoDialog').hide()"
                                              oncompleteGuardar="if (!args.validationFailed) PF('documentoDialog').hide()" />
                     </div>

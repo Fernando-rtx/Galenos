@@ -128,6 +128,7 @@ public class TipoMedioContactoModel extends AbstractModel<TipoMedioContacto> imp
             }
         }
         setEstado(ESTADO_CRUD.LISTADO);
+        agregarMensaje(FacesMessage.SEVERITY_INFO, "mensajes.guardado");
     }
 
     private void errorCampo(String id, String clave) {

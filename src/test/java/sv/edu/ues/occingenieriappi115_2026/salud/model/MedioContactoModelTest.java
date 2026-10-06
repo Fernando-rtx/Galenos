@@ -46,7 +46,7 @@ class MedioContactoModelTest {
         tipo.setExpresionRegular("[0-9]{8}");
         modelo.nuevo();
         MedioContacto contacto = modelo.getSeleccionado();
-        contacto.setIdPersona(new Persona());
+        contacto.setIdPersona(new Persona(UUID.randomUUID()));
         contacto.setIdTipoMedioContacto(tipo);
         contacto.setValor(" 12345678 ");
 
@@ -67,7 +67,7 @@ class MedioContactoModelTest {
         MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
         modelo.nuevo();
         MedioContacto contacto = modelo.getSeleccionado();
-        contacto.setIdPersona(new Persona());
+        contacto.setIdPersona(new Persona(UUID.randomUUID()));
         contacto.setIdTipoMedioContacto(tipo);
         contacto.setValor("rubenvenabidez@gmail.com");
 
@@ -85,7 +85,7 @@ class MedioContactoModelTest {
         MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
         modelo.nuevo();
         MedioContacto contacto = modelo.getSeleccionado();
-        contacto.setIdPersona(new Persona());
+        contacto.setIdPersona(new Persona(UUID.randomUUID()));
         contacto.setIdTipoMedioContacto(tipo);
         contacto.setValor("rubengmail.com");
 
@@ -115,7 +115,7 @@ class MedioContactoModelTest {
         MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
         modelo.nuevo();
         MedioContacto contacto = modelo.getSeleccionado();
-        contacto.setIdPersona(new Persona());
+        contacto.setIdPersona(new Persona(UUID.randomUUID()));
         contacto.setIdTipoMedioContacto(tipoActivo(tipoDAO));
         contacto.setValor("contacto");
         doThrow(new IllegalStateException("Error de persistencia")).when(dao).guardar(contacto);
@@ -274,7 +274,7 @@ class MedioContactoModelTest {
         MedioContactoModel m = model(d, mock(PersonaDAO.class), tipoDAO);
         m.nuevo();
         MedioContacto n = m.getSeleccionado();
-        n.setIdPersona(new Persona());
+        n.setIdPersona(new Persona(UUID.randomUUID()));
         n.setIdTipoMedioContacto(tipoActivo(tipoDAO));
         n.setValor("contacto");
         m.guardar();
@@ -305,7 +305,7 @@ class MedioContactoModelTest {
         when(tipoDAO.buscarPorId(tipo.getIdTipoMedioContacto())).thenReturn(tipo);
         MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
         modelo.nuevo();
-        modelo.getSeleccionado().setIdPersona(new Persona());
+        modelo.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
         modelo.getSeleccionado().setIdTipoMedioContacto(tipo);
         modelo.getSeleccionado().setValor("12345678");
 
@@ -323,7 +323,7 @@ class MedioContactoModelTest {
         tipo.setExpresionRegular("[0-9");
         MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
         modelo.nuevo();
-        modelo.getSeleccionado().setIdPersona(new Persona());
+        modelo.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
         modelo.getSeleccionado().setIdTipoMedioContacto(tipo);
         modelo.getSeleccionado().setValor("12345678");
 
@@ -340,7 +340,7 @@ class MedioContactoModelTest {
         TipoMedioContacto original = tipoActivo(tipoDAO);
         TipoMedioContacto nuevoTipo = tipoActivo(tipoDAO);
         MedioContacto contacto = new MedioContacto(UUID.randomUUID());
-        contacto.setIdPersona(new Persona());
+        contacto.setIdPersona(new Persona(UUID.randomUUID()));
         contacto.setIdTipoMedioContacto(original);
         contacto.setValor("actualizado");
         when(dao.buscarPorId(contacto.getIdMedioContacto())).thenReturn(contacto);
@@ -399,7 +399,7 @@ class MedioContactoModelTest {
         MedioContactoDAO d = mock(MedioContactoDAO.class);
         MedioContactoModel m = model(d, mock(PersonaDAO.class), mock(TipoMedioContactoDAO.class));
         m.nuevo();
-        m.getSeleccionado().setIdPersona(new Persona());
+        m.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
         m.getSeleccionado().setIdTipoMedioContacto(new TipoMedioContacto());
         m.getSeleccionado().setValor("   ");
         m.guardar();
@@ -413,7 +413,7 @@ class MedioContactoModelTest {
         TipoMedioContacto tipo = new TipoMedioContacto();
         tipo.setExpresionRegular("[0-9]{8}");
         m.nuevo();
-        m.getSeleccionado().setIdPersona(new Persona());
+        m.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
         m.getSeleccionado().setIdTipoMedioContacto(tipo);
         m.getSeleccionado().setValor("correo@example.com");
         m.guardar();

@@ -14,6 +14,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
+import sv.edu.ues.occingenieriappi115_2026.salud.entity.Persona;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.times;
+
 class AbstractModelTest {
 
     private static class TestEntity {
@@ -156,5 +162,55 @@ class AbstractModelTest {
         List<TestEntity> resultado = model.load(0, 10, new java.util.HashMap<>(), null);
 
         assertNotNull(resultado);
+    }
+
+    private static class TestModel extends AbstractModel<Persona> {
+        private final DAOInterface<Persona> dao;
+
+        TestModel(DAOInterface<Persona> dao) {
+            this.dao = dao;
+        }
+
+        @Override
+        protected DAOInterface<Persona> getDao() {
+            return dao;
+        }
+    }
+
+    @Test
+    void abstractModelDelegaCountYLoad() {
+        DAOInterface<Persona> dao = mock(DAOInterface.class);
+        when(dao.contar(List.of())).thenReturn(4L);
+        when(dao.obtenerPagina(5, 2, List.of(), List.of())).thenReturn(List.of());
+        TestModel model = new TestModel(dao);
+
+        assertEquals(4, model.count(Map.of()));
+        assertTrue(model.load(5, 2, Map.of(), Map.of()).isEmpty());
+
+        verify(dao, times(2)).contar(List.of());
+        verify(dao).obtenerPagina(5, 2, List.of(), List.of());
+    }
+
+    @Test
+    void rowKeyYRowDataUsanUuid() {
+        DAOInterface<Persona> dao = mock(DAOInterface.class);
+        UUID id = UUID.randomUUID();
+        Persona persona = new Persona(id);
+        when(dao.obtenerId(persona)).thenReturn(id);
+        when(dao.buscarPorId(id)).thenReturn(persona);
+        TestModel model = new TestModel(dao);
+
+        assertEquals(id.toString(), model.getRowKey(persona));
+        assertSame(persona, model.getRowData(id.toString()));
+        verify(dao).buscarPorId(id);
+    }
+
+    @Test
+    void rowDataInvalidoNuloYBlancoDevuelveNull() {
+        TestModel model = new TestModel(mock(DAOInterface.class));
+
+        assertNull(model.getRowData("no-es-uuid"));
+        assertNull(model.getRowData(null));
+        assertNull(model.getRowData("  "));
     }
 }
