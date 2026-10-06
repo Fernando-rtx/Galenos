@@ -382,6 +382,115 @@
     padding: 18px 24px;
 }
 
+.empty-flow-state {
+    align-items: center;
+    background: #f7fafc;
+    border: 1px dashed #cbd9e2;
+    border-radius: 12px;
+    color: #718594;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 32px 20px;
+    text-align: center;
+}
+
+.empty-flow-state > i {
+    color: #1683b6;
+    font-size: 1.5rem;
+}
+
+.empty-flow-state strong {
+    color: #36576b;
+}
+
+.flow-step-card {
+    background: #ffffff;
+    border: 1px solid #dce7ed;
+    border-left: 4px solid #1683b6;
+    border-radius: 10px;
+    margin: 16px 0;
+    padding: 18px 20px;
+}
+
+.flow-step-heading {
+    align-items: flex-start;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+}
+
+.flow-step-kicker {
+    color: #1683b6;
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.flow-step-heading h3 {
+    color: #29475a;
+    font-size: 1.05rem;
+    margin: 5px 0;
+}
+
+.flow-step-role {
+    color: #718594;
+    font-size: 0.85rem;
+}
+
+.flow-step-exams {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.flow-step-exams > span:first-child {
+    color: #718594;
+    font-size: 0.78rem;
+}
+
+.flow-exam-chip {
+    background: #e9f5fa;
+    border-radius: 999px;
+    color: #25627e;
+    font-size: 0.75rem;
+    padding: 4px 9px;
+}
+
+.flow-step-children {
+    border-top: 1px solid #edf2f5;
+    margin-top: 15px;
+    padding-top: 14px;
+}
+
+.flow-step-children > strong {
+    color: #506b7b;
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 8px;
+}
+
+.flow-child-row {
+    align-items: center;
+    color: #6d8290;
+    display: flex;
+    gap: 9px;
+    padding: 6px 0;
+}
+
+.flow-child-row strong {
+    color: #29475a;
+}
+
+.flow-connector {
+    color: #1683b6;
+    font-size: 1.2rem;
+}
+
 .clinical-dialog .dialog-actions .crud-actions-bottom {
     flex-direction: row;
     gap: 8px;

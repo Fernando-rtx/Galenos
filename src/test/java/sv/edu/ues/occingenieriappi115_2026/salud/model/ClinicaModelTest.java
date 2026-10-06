@@ -61,6 +61,7 @@ class ClinicaModelTest {
         ClinicaModel model = new ClinicaModel(dao, mock(PersonaRolDAO.class));
         model.nuevo();
         model.getSeleccionado().setNombre("Clínica Central");
+        model.getSeleccionado().setTipo("General");
         Clinica seleccionado = model.getSeleccionado();
 
         model.guardar();
@@ -75,6 +76,7 @@ class ClinicaModelTest {
         ClinicaModel model = new ClinicaModel(dao, mock(PersonaRolDAO.class));
         Clinica clinica = new Clinica();
         clinica.setNombre("Clínica Central");
+        clinica.setTipo("General");
         Clinica actualizado = new Clinica();
         model.seleccionar(clinica);
         when(dao.actualizar(clinica)).thenReturn(actualizado);
@@ -114,6 +116,7 @@ class ClinicaModelTest {
         ClinicaModel model = new ClinicaModel(dao, mock(PersonaRolDAO.class));
         model.nuevo();
         model.getSeleccionado().setNombre("  Clínica Norte  ");
+        model.getSeleccionado().setTipo("General");
 
         model.guardar();
 
@@ -315,6 +318,7 @@ class ClinicaModelTest {
         when(dao.obtenerTodos()).thenReturn(List.of(existente));
         model.nuevo();
         model.getSeleccionado().setNombre("Clinica Central");
+        model.getSeleccionado().setTipo("General");
 
         model.guardar();
 
@@ -331,6 +335,7 @@ class ClinicaModelTest {
         model.facesContext = contexto;
         model.nuevo();
         model.getSeleccionado().setNombre("Clinica Central");
+        model.getSeleccionado().setTipo("General");
         Clinica seleccionado = model.getSeleccionado();
         doThrow(new IllegalStateException("fallo")).when(dao).guardar(seleccionado);
 
@@ -349,6 +354,7 @@ class ClinicaModelTest {
         model.facesContext = contexto;
         model.nuevo();
         model.getSeleccionado().setNombre("Clinica Central");
+        model.getSeleccionado().setTipo("General");
 
         model.guardar();
 

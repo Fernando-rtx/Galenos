@@ -161,6 +161,15 @@ public class ClinicaModel extends AbstractModel<Clinica> implements Serializable
             agregarError("clinica.nombreMaximo");
             return false;
         }
+        String tipo = seleccionado.getTipo();
+        if (tipo == null || tipo.isEmpty()) {
+            agregarError("clinica.tipoRequerido");
+            return false;
+        }
+        if (tipo.length() > 20) {
+            agregarError("clinica.tipoMaximo");
+            return false;
+        }
         if (tieneNombreDuplicado()) {
             agregarError("clinica.nombreDuplicado");
             return false;
