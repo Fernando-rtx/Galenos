@@ -6,8 +6,17 @@ import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
+import jakarta.inject.Inject;
+import sv.edu.ues.occingenieriappi115_2026.salud.boundary.ClinicaActualBean;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaFlujoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.FlujoConsultaException;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
 import java.io.Serializable;
 import java.text.Normalizer;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Date;
 import java.util.List;
@@ -34,6 +43,15 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
     private PersonaRolDAO personaRolDAO;
     @EJB
     private DocumentoDAO documentoDAO;
+    @Inject private ClinicaActualBean clinicaActualBean;
+    @EJB private ConsultaFlujoService flujoService;
+    private UUID clinicaFormulario;
+    private long revisionFormulario;
+    private static final ZoneId ZONA_CLINICA = ZoneId.of("America/El_Salvador");
+    private LocalDate fechaDesde;
+    private LocalDate fechaHasta;
+    private LocalDate desdeAplicado;
+    private LocalDate hastaAplicado;
     private Consulta seleccionado;
     private List<PersonaRol> personasRoles;
     private final Map<UUID, String> duiPorPersona = new HashMap<>();
@@ -57,26 +75,75 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
 
     @PostConstruct
     public void inicializar() {
-        List<PersonaRol> roles = personaRolDAO == null ? List.of() : personaRolDAO.obtenerTodos();
-        this.personasRoles = roles == null ? List.of() : roles;
+        this.personasRoles = List.of();
         duiPorPersona.clear();
-        if (documentoDAO == null) {
+    }
+
+    public ConsultaModel(ConsultaDAO dao, PersonaRolDAO personas, DocumentoDAO documentos,
+            ClinicaActualBean contexto, ConsultaFlujoService flujo) {
+        this(dao, personas, documentos);
+        clinicaActualBean = contexto;
+        flujoService = flujo;
+    }
+
+    public boolean isClinicaSeleccionada() {
+        return clinicaActualBean != null && clinicaActualBean.isSeleccionada();
+    }
+
+    private UUID clinicaActual() {
+        return isClinicaSeleccionada() ? clinicaActualBean.getIdClinicaActual() : null;
+    }
+
+    private void capturarContexto() {
+        clinicaFormulario = clinicaActual();
+        revisionFormulario = clinicaActualBean == null ? -1 : clinicaActualBean.getRevision();
+    }
+
+    @Override
+    protected boolean isConsultaPermitida() { return isClinicaSeleccionada(); }
+
+    @Override
+    protected List<FiltroDAO> filtrosAdicionales() {
+        List<FiltroDAO> filtros = new ArrayList<>();
+        filtros.add(new FiltroDAO("idPersonaRol.idClinica.idClinica", OperadorFiltro.IGUAL, clinicaActual()));
+        if (desdeAplicado != null) {
+            filtros.add(new FiltroDAO("fechaInicio", OperadorFiltro.MAYOR_O_IGUAL,
+                    Date.from(desdeAplicado.atStartOfDay(ZONA_CLINICA).toInstant())));
+        }
+        if (hastaAplicado != null) {
+            filtros.add(new FiltroDAO("fechaInicio", OperadorFiltro.MENOR_QUE,
+                    Date.from(hastaAplicado.plusDays(1).atStartOfDay(ZONA_CLINICA).toInstant())));
+        }
+        return filtros;
+    }
+
+    public LocalDate getFechaDesde() { return fechaDesde; }
+    public void setFechaDesde(LocalDate fecha) { fechaDesde = fecha; }
+    public LocalDate getFechaHasta() { return fechaHasta; }
+    public void setFechaHasta(LocalDate fecha) { fechaHasta = fecha; }
+
+    public void aplicarFiltroFechas() {
+        if (fechaDesde != null && fechaHasta != null && fechaDesde.isAfter(fechaHasta)) {
+            registrarError("consulta.rangoInvalido");
             return;
         }
-        List<Documento> documentos = documentoDAO.obtenerTodos();
-        if (documentos == null) {
-            return;
-        }
-        for (Documento documento : documentos) {
-            if (documento == null || documento.getValor() == null
-                    || documento.getIdPersona() == null
-                    || documento.getIdPersona().getIdPersona() == null
-                    || documento.getIdTipoDocumento() == null
-                    || !"dui".equals(normalizarBusqueda(documento.getIdTipoDocumento().getNombre()))) {
-                continue;
-            }
-            duiPorPersona.putIfAbsent(documento.getIdPersona().getIdPersona(), documento.getValor());
-        }
+        desdeAplicado = fechaDesde;
+        hastaAplicado = fechaHasta;
+    }
+
+    public void limpiarFiltroFechas() {
+        fechaDesde = null;
+        fechaHasta = null;
+        desdeAplicado = null;
+        hastaAplicado = null;
+    }
+
+    @Override
+    public Consulta getRowData(String id) {
+        if (!isClinicaSeleccionada()) { return null; }
+        Consulta consulta = super.getRowData(id);
+        return consulta != null && ConsultaFlujoService.personaEnClinica(consulta.getIdPersonaRol(), clinicaActual())
+                ? consulta : null;
     }
 
     @Override
@@ -98,17 +165,7 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
 
     /** Devuelve solo pacientes que coinciden por nombre o número de DUI. */
     public List<PersonaRol> buscarPacientes(String consulta) {
-        String nombreBuscado = normalizarBusqueda(consulta);
-        String duiBuscado = consulta == null ? "" : consulta.replaceAll("\\D", "");
-        if (personasRoles == null || (nombreBuscado.isEmpty() && duiBuscado.isEmpty())) {
-            return List.of();
-        }
-        return personasRoles.stream()
-                .filter(this::esPaciente)
-                .filter(paciente -> coincideNombre(paciente, nombreBuscado)
-                        || coincideDui(paciente, duiBuscado))
-                .limit(15)
-                .toList();
+        return personaRolDAO.buscarPacientesPorClinica(clinicaActual(), consulta, 15);
     }
 
     public String getDui(PersonaRol personaRol) {
@@ -116,36 +173,22 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
                 || personaRol.getIdPersona().getIdPersona() == null) {
             return null;
         }
-        return duiPorPersona.get(personaRol.getIdPersona().getIdPersona());
+        UUID id = personaRol.getIdPersona().getIdPersona();
+        if (!duiPorPersona.containsKey(id) && documentoDAO != null) {
+            String dui = documentoDAO.obtenerPagina(0, Integer.MAX_VALUE,
+                    List.of(new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL, id)), List.of())
+                    .stream().filter(d -> d.getIdTipoDocumento() != null
+                        && "dui".equals(normalizarBusqueda(d.getIdTipoDocumento().getNombre())))
+                    .map(Documento::getValor).filter(java.util.Objects::nonNull).findFirst().orElse(null);
+            duiPorPersona.put(id, dui);
+        }
+        return duiPorPersona.get(id);
     }
 
     public String getEtiquetaPaciente(PersonaRol paciente) {
         String nombre = nombreCompleto(paciente);
         String dui = getDui(paciente);
         return dui == null || dui.isBlank() ? nombre : nombre + " — DUI: " + dui;
-    }
-
-    private boolean esPaciente(PersonaRol personaRol) {
-        return personaRol != null
-                && personaRol.getIdRol() != null
-                && !Boolean.FALSE.equals(personaRol.getIdRol().getActivo())
-                && "paciente".equals(normalizarBusqueda(personaRol.getIdRol().getNombre()));
-    }
-
-    private boolean coincideNombre(PersonaRol personaRol, String consulta) {
-        if (consulta.isEmpty() || personaRol.getIdPersona() == null) {
-            return false;
-        }
-        String nombreCompleto = normalizarBusqueda(nombreCompleto(personaRol));
-        return nombreCompleto.contains(consulta);
-    }
-
-    private boolean coincideDui(PersonaRol personaRol, String consulta) {
-        if (consulta.isEmpty()) {
-            return false;
-        }
-        String dui = getDui(personaRol);
-        return dui != null && dui.replaceAll("\\D", "").contains(consulta);
     }
 
     private String nombreCompleto(PersonaRol personaRol) {
@@ -189,12 +232,14 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
     }
 
     public void nuevo() {
+        capturarContexto();
         seleccionado = new Consulta();
         seleccionado.setFechaInicio(new Date());
         setEstado(ESTADO_CRUD.CREACION);
     }
 
     public void seleccionar(Consulta seleccionado) {
+        capturarContexto();
         this.seleccionado = seleccionado;
         setEstado(ESTADO_CRUD.EDICION);
     }
@@ -207,18 +252,22 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
     }
 
     public void guardar() {
-        if (seleccionado == null) {
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) { return; }
+        if (clinicaFormulario == null || !clinicaFormulario.equals(clinicaActual())
+                || revisionFormulario != clinicaActualBean.getRevision()) {
+            registrarError("consultaFlujo.contextoInvalido");
             return;
         }
         seleccionado.setReferenciaExterna(normalizar(seleccionado.getReferenciaExterna()));
         seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> {
-            }
+        try {
+            seleccionado = flujoService.guardarConsulta(seleccionado, clinicaActual(), getEstado() == ESTADO_CRUD.EDICION);
+            setEstado(ESTADO_CRUD.LISTADO);
+        } catch (FlujoConsultaException ex) {
+            registrarError(ex.getMessage());
+        } catch (RuntimeException ex) {
+            registrarError("consultaFlujo.errorGuardar");
         }
-        setEstado(ESTADO_CRUD.LISTADO);
     }
 
     public void cancelar() {

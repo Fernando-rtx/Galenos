@@ -10,3 +10,19 @@
 .personarol-name {
     font-weight: 500;
 }
+.consulta-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    margin-block: 20px;
+}
+
+.consulta-filtros .form-field {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.consulta-filtros .ui-datepicker {
+    width: 100%;
+}

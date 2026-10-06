@@ -47,13 +47,18 @@
                             </p>
                         </div>
 
+                        <h:panelGroup rendered="#{consultaModel.clinicaSeleccionada}">
                         <crud:botones-top
                             model="#{consultaModel}"
                             actualizar="messages consultasTable edicionDialog"
                             resetNuevo="true"
                             oncompleteNuevo="PF('consultaDialog').show()" />
+                        </h:panelGroup>
                     </div>
 
+                    <h:panelGroup rendered="#{not consultaModel.clinicaSeleccionada}" layout="block" role="status">
+                        <h:outputText value="#{msg['clinicaActual.requerida']}" styleClass="form-helper" />
+                    </h:panelGroup>
                     <div class="section-divider"></div>
 
                     <p:messages
@@ -73,8 +78,32 @@
                             value="#{msg['crud.dobleClicEditar']}"
                             styleClass="page-subtitle" />
 
+                        <p:outputPanel id="filtroFechas" layout="block" styleClass="consulta-filtros">
+                            <div class="form-field">
+                                <p:outputLabel for="fechaDesde" value="#{msg['consulta.desde']}" />
+                                <p:datePicker id="fechaDesde" value="#{consultaModel.fechaDesde}"
+                                              pattern="dd/MM/yyyy" showIcon="true" />
+                                <p:message for="fechaDesde" />
+                            </div>
+                            <div class="form-field">
+                                <p:outputLabel for="fechaHasta" value="#{msg['consulta.hasta']}" />
+                                <p:datePicker id="fechaHasta" value="#{consultaModel.fechaHasta}"
+                                              pattern="dd/MM/yyyy" showIcon="true" />
+                                <p:message for="fechaHasta" />
+                            </div>
+                            <p:commandButton value="#{msg['consulta.buscarFechas']}" icon="pi pi-search"
+                                action="#{consultaModel.aplicarFiltroFechas}" process="filtroFechas"
+                                update="messages consultasTable"
+                                oncomplete="if (!args.validationFailed) PF('consultasWidget').getPaginator().setPage(0)" />
+                            <p:commandButton value="#{msg['consulta.limpiarFechas']}" icon="pi pi-times"
+                                action="#{consultaModel.limpiarFiltroFechas}" process="@this"
+                                update="filtroFechas messages consultasTable" resetValues="true"
+                                oncomplete="PF('consultasWidget').getPaginator().setPage(0)" />
+                        </p:outputPanel>
+
                         <p:dataTable
                             id="consultasTable"
+                            widgetVar="consultasWidget"
                             value="#{consultaModel}"
                             var="item"
                             lazy="true"
@@ -103,7 +132,7 @@
                                 <h:outputText
                                     value="#{item.fechaInicio}"
                                     styleClass="consulta-date">
-                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                 </h:outputText>
                             </p:column>
 
@@ -115,7 +144,7 @@
                                 <h:outputText
                                     value="#{item.fechaFin}"
                                     styleClass="consulta-date">
-                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                    <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                 </h:outputText>
                             </p:column>
 
@@ -180,6 +209,9 @@
                 id="edicionContenido"
                 layout="block">
 
+                <p:messages id="consultaMessages" globalOnly="true"
+                            showDetail="false" closable="true" />
+
                 <h:panelGroup rendered="#{consultaModel.seleccionado ne null}">
                     <p:tabView id="consultaTabs">
 
@@ -215,7 +247,7 @@
                                         value="#{consultaModel.seleccionado.fechaInicio}"
                                         showIcon="true"
                                         pattern="dd/MM/yyyy HH:mm"
-                                        showTime="true" timeInput="true"
+                                        showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                         required="true"
                                         requiredMessage="#{msg['mensajes.error']}" />
 
@@ -233,7 +265,7 @@
                                         value="#{consultaModel.seleccionado.fechaFin}"
                                         showIcon="true"
                                         pattern="dd/MM/yyyy HH:mm"
-                                        showTime="true" timeInput="true"
+                                        showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                         validator="#{consultaModel.validarFechaFin}" />
 
                                     <p:message for="consultaFechaFin" />
@@ -273,6 +305,7 @@
 
                                     <p:autoComplete
                                         id="consultaPersonaRol"
+                                        disabled="#{consultaModel.estado eq 'EDICION'}"
                                         value="#{consultaModel.seleccionado.idPersonaRol}"
                                         converter="#{personaRolConverter}"
                                         completeMethod="#{consultaModel.buscarPacientes}"
@@ -294,6 +327,11 @@
                                                 value="#{paciente.idPersona.nombres} #{paciente.idPersona.apellidos}" />
                                         </p:column>
 
+                                        <p:column headerText="#{msg['consulta.fechaNacimiento']}">
+                                            <h:outputText value="#{paciente.idPersona.fechaNacimiento}">
+                                                <f:convertDateTime pattern="dd/MM/yyyy" timeZone="America/El_Salvador" />
+                                            </h:outputText>
+                                        </p:column>
                                         <p:column headerText="#{msg['consulta.documentoDui']}">
                                             <h:outputText
                                                 value="#{empty consultaModel.getDui(paciente)
@@ -312,7 +350,7 @@
                                     procesar="detalleConsulta"
                                     actualizar=":layoutForm:messages consultasTable edicionDialog"
                                     oncompleteCancelar="PF('consultaDialog').hide()"
-                                    oncompleteGuardar="if (!args.validationFailed) PF('consultaDialog').hide()" />
+                                    oncompleteGuardar="if (args.validationFailed) PF('consultaDialog').show(); else PF('consultaDialog').hide()" />
                             </div>
                         </p:tab>
 
@@ -350,14 +388,14 @@
                                     <p:column
                                         headerText="#{msg['consultaProcedimiento.fechaInicio']}">
                                         <h:outputText value="#{procedimiento.fechaInicio}">
-                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                         </h:outputText>
                                     </p:column>
 
                                     <p:column
                                         headerText="#{msg['consultaProcedimiento.fechaFin']}">
                                         <h:outputText value="#{procedimiento.fechaFin}">
-                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                         </h:outputText>
                                     </p:column>
 
@@ -384,6 +422,7 @@
 
                                             <p:selectOneMenu
                                                 id="procedimientoIdProcedimiento"
+                                                disabled="#{consultaProcedimientoModel.estado eq 'EDICION'}"
                                                 value="#{consultaProcedimientoModel.seleccionado.idProcedimiento}"
                                                 required="true"
                                                 requiredMessage="#{msg['mensajes.error']}">
@@ -414,7 +453,7 @@
                                                 value="#{consultaProcedimientoModel.seleccionado.fechaInicio}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" timeInput="true"
+                                                showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 required="true"
                                                 requiredMessage="#{msg['mensajes.error']}" />
 
@@ -432,7 +471,7 @@
                                                 value="#{consultaProcedimientoModel.seleccionado.fechaFin}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" timeInput="true"
+                                                showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 validator="#{consultaProcedimientoModel.validarFechaFin}" />
 
                                             <p:message for="procedimientoFechaFin" />
@@ -465,7 +504,7 @@
                                             value="#{msg['crud.guardar']}"
                                             action="#{consultaProcedimientoModel.guardar()}"
                                             process="procedimientoForm"
-                                            update=":layoutForm:messages :layoutForm:consultaTabs:procedimientosContenido :layoutForm:consultaTabs:pasosContenido" />
+                                            update=":layoutForm:messages :layoutForm:consultaMessages :layoutForm:consultaTabs:procedimientosContenido :layoutForm:consultaTabs:pasosContenido" />
                                     </div>
                                 </h:panelGroup>
                             </p:outputPanel>
@@ -474,13 +513,7 @@
                         <p:tab title="#{msg['consulta.tab.pasos']}"
                                disabled="#{consultaModel.seleccionado.idConsulta eq null}">
                             <p:outputPanel id="pasosContenido">
-                                <p:commandButton
-                                    value="#{msg['consultaProcedimientoPaso.nuevo']}"
-                                    icon="pi pi-plus"
-                                    action="#{consultaProcedimientoPasoModel.nuevo()}"
-                                    process="@this"
-                                    update="pasosContenido"
-                                    disabled="#{consultaProcedimientoModel.getProcedimientosPorConsulta(consultaModel.seleccionado).isEmpty()}" />
+                                <h:outputText value="#{msg['consultaFlujo.pasoAutomaticoAyuda']}" styleClass="form-helper" />
 
                                 <p:dataTable
                                     id="consultaProcedimientoPasoTable"
@@ -516,14 +549,14 @@
                                     <p:column
                                         headerText="#{msg['consultaProcedimientoPaso.fechaInicio']}">
                                         <h:outputText value="#{paso.fechaInicio}">
-                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                         </h:outputText>
                                     </p:column>
 
                                     <p:column
                                         headerText="#{msg['consultaProcedimientoPaso.fechaFin']}">
                                         <h:outputText value="#{paso.fechaFin}">
-                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" />
+                                            <f:convertDateTime type="both" dateStyle="medium" timeStyle="short" timeZone="America/El_Salvador" />
                                         </h:outputText>
                                     </p:column>
 
@@ -555,6 +588,7 @@
 
                                             <p:selectOneMenu
                                                 id="pasoConsultaProcedimiento"
+                                                disabled="true"
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.idConsultaProcedimiento}"
                                                 converter="#{consultaProcedimientoConverter}"
                                                 required="true"
@@ -577,37 +611,11 @@
                                         <div class="form-field">
                                             <p:outputLabel
                                                 for="pasoPersonaRol"
-                                                value="#{msg['consultaProcedimientoPaso.responsableMedico']}"
+                                                value="#{msg['consultaFlujo.responsable']}"
                                                 styleClass="form-label" />
 
-                                            <p:autoComplete
-                                                id="pasoPersonaRol"
-                                                value="#{consultaProcedimientoPasoModel.seleccionado.idPersonaRol}"
-                                                converter="#{personaRolConverter}"
-                                                completeMethod="#{consultaProcedimientoPasoModel.buscarMedicos}"
-                                                var="medico"
-                                                itemLabel="#{consultaProcedimientoPasoModel.getEtiquetaMedico(medico)}"
-                                                itemValue="#{medico}"
-                                                placeholder="#{msg['consultaProcedimientoPaso.buscarMedicoPlaceholder']}"
-                                                forceSelection="true"
-                                                dropdown="false"
-                                                minQueryLength="2"
-                                                queryDelay="250"
-                                                scrollHeight="240"
-                                                emptyMessage="#{msg['consultaProcedimientoPaso.sinMedicos']}"
-                                                required="true"
-                                                requiredMessage="#{msg['mensajes.error']}"
-                                                validator="#{consultaProcedimientoPasoModel.validarResponsable}">
-
-                                                <p:column headerText="#{msg['consultaProcedimientoPaso.responsableMedico']}">
-                                                    <h:outputText
-                                                        value="#{medico.idPersona.nombres} #{medico.idPersona.apellidos}" />
-                                                </p:column>
-
-                                                <p:column headerText="#{msg['consultaProcedimientoPaso.especialidad']}">
-                                                    <h:outputText value="#{medico.idRol.nombre}" />
-                                                </p:column>
-                                            </p:autoComplete>
+                                            <h:outputText id="pasoPersonaRol"
+                                                value="#{consultaProcedimientoPasoModel.getEtiquetaMedico(consultaProcedimientoPasoModel.seleccionado.idPersonaRol)}" />
 
                                             <p:message for="pasoPersonaRol" />
                                         </div>
@@ -623,7 +631,7 @@
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.fechaInicio}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" timeInput="true"
+                                                showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 required="true"
                                                 requiredMessage="#{msg['mensajes.error']}" />
 
@@ -641,7 +649,7 @@
                                                 value="#{consultaProcedimientoPasoModel.seleccionado.fechaFin}"
                                                 showIcon="true"
                                                 pattern="dd/MM/yyyy HH:mm"
-                                                showTime="true" timeInput="true"
+                                                showTime="true" timeInput="true" timeZone="America/El_Salvador"
                                                 validator="#{consultaProcedimientoPasoModel.validarFechaFin}" />
 
                                             <p:message for="pasoFechaFin" />
@@ -692,7 +700,7 @@
                                             value="#{msg['crud.guardar']}"
                                             action="#{consultaProcedimientoPasoModel.guardar()}"
                                             process="pasoForm"
-                                            update=":layoutForm:messages pasosContenido" />
+                                            update=":layoutForm:messages :layoutForm:consultaMessages pasosContenido" />
                                     </div>
                                 </h:panelGroup>
                             </p:outputPanel>

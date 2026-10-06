@@ -34,6 +34,20 @@
                     </div>
 
                     <div class="ui-g-12 ui-md-4 layout-tools">
+                        <p:outputLabel for="clinicaActual" value="#{msg['clinicaActual.seleccionar']}" />
+                        <p:selectOneMenu id="clinicaActual"
+                                         value="#{clinicaActualBean.idClinicaSeleccionada}"
+                                         styleClass="layout-language">
+                            <f:selectItem itemLabel="#{msg['clinicaActual.sinSeleccion']}"
+                                          itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{clinicaActualBean.clinicas}" var="clinica"
+                                           itemLabel="#{clinica.nombre}" itemValue="#{clinica.idClinica}" />
+                            <p:ajax listener="#{clinicaActualBean.cambiarClinica}" process="@this"
+                                    update="clinicaActual contextoMessages"
+                                    oncomplete="if (!args.validationFailed) window.location.reload()" />
+                        </p:selectOneMenu>
+                        <h:outputText rendered="#{not clinicaActualBean.catalogoDisponible}"
+                                      value="#{msg['clinicaActual.errorCarga']}" role="status" />
                         <p:outputLabel
                             for="idioma"
                             value="#{msg['idioma.seleccionar']}" />
@@ -62,6 +76,8 @@
                         </p:selectOneMenu>
                     </div>
                 </header>
+
+                <p:messages id="contextoMessages" globalOnly="true" showDetail="false" closable="true" />
 
                 <main class="layout-body ui-g">
                     <aside class="ui-g-12 ui-md-2 layout-nav">

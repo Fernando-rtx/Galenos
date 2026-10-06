@@ -57,7 +57,7 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
     @Override
     public int count(Map<String, FilterMeta> filterBy) {
         // PrimeFaces usa este total para calcular cuántas páginas mostrar.
-        return limitarConteo(getDao().contar(convertirFiltros(filterBy)));
+        return isConsultaPermitida() ? limitarConteo(getDao().contar(filtrosDeConsulta(filterBy))) : 0;
     }
 
     @Override
@@ -65,7 +65,8 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
             Map<String, FilterMeta> filterBy) {
         // Solo se solicita al DAO el segmento visible; filtros y ordenamientos
         // se conservan para que el conteo y la consulta sean coherentes.
-        List<FiltroDAO> filtros = convertirFiltros(filterBy);
+        if (!isConsultaPermitida()) { setRowCount(0); return List.of(); }
+        List<FiltroDAO> filtros = filtrosDeConsulta(filterBy);
         setRowCount(limitarConteo(getDao().contar(filtros)));
         return getDao().obtenerPagina(first, pageSize, filtros, convertirOrdenamientos(sortBy));
     }
@@ -87,6 +88,26 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
             return getDao().buscarPorId(UUID.fromString(rowKey));
         } catch (IllegalArgumentException ex) {
             return null;
+        }
+    }
+
+    /** Extensión local para filtros de contexto sin duplicar el adaptador lazy. */
+    protected List<FiltroDAO> filtrosAdicionales() { return List.of(); }
+    protected boolean isConsultaPermitida() { return true; }
+
+    private List<FiltroDAO> filtrosDeConsulta(Map<String, FilterMeta> filterBy) {
+        List<FiltroDAO> filtros = convertirFiltros(filterBy);
+        filtros.addAll(filtrosAdicionales());
+        return filtros;
+    }
+
+    protected void registrarError(String clave) {
+        agregarMensaje(FacesMessage.SEVERITY_ERROR, clave);
+        try {
+            FacesContext contexto = FacesContext.getCurrentInstance();
+            if (contexto != null) { contexto.validationFailed(); }
+        } catch (LinkageError ex) {
+            // Las pruebas unitarias no requieren una implementación de Faces.
         }
     }
 

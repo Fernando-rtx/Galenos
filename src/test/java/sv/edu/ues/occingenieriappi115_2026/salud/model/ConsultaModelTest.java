@@ -22,6 +22,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.*;
+import static sv.edu.ues.occingenieriappi115_2026.salud.model.ContextoConsultaFixture.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -33,6 +35,7 @@ class ConsultaModelTest {
         ConsultaModel model = new ConsultaModel(
                 mock(ConsultaDAO.class),
                 mock(PersonaRolDAO.class));
+        configurar(model);
 
         model.nuevo();
 
@@ -46,7 +49,8 @@ class ConsultaModelTest {
         ConsultaModel model = new ConsultaModel(
                 mock(ConsultaDAO.class),
                 mock(PersonaRolDAO.class));
-        Consulta consulta = new Consulta();
+        configurar(model);
+        Consulta consulta = consulta();
 
         model.seleccionar(consulta);
 
@@ -59,12 +63,13 @@ class ConsultaModelTest {
         ConsultaDAO dao = mock(ConsultaDAO.class);
         ConsultaModel model = new ConsultaModel(
                 dao, mock(PersonaRolDAO.class));
+        configurar(model);
         model.nuevo();
         Consulta seleccionado = model.getSeleccionado();
 
         model.guardar();
 
-        verify(dao).guardar(seleccionado);
+        verify(servicio(model)).guardarConsulta(seleccionado, CLINICA, false);
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
 
@@ -73,14 +78,15 @@ class ConsultaModelTest {
         ConsultaDAO dao = mock(ConsultaDAO.class);
         ConsultaModel model = new ConsultaModel(
                 dao, mock(PersonaRolDAO.class));
-        Consulta consulta = new Consulta();
-        Consulta actualizada = new Consulta();
+        configurar(model);
+        Consulta consulta = consulta();
+        Consulta actualizada = consulta();
         model.seleccionar(consulta);
-        when(dao.actualizar(consulta)).thenReturn(actualizada);
+        when(servicio(model).guardarConsulta(consulta, CLINICA, true)).thenReturn(actualizada);
 
         model.guardar();
 
-        verify(dao).actualizar(consulta);
+        verify(servicio(model)).guardarConsulta(consulta, CLINICA, true);
         assertSame(actualizada, model.getSeleccionado());
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
@@ -90,6 +96,7 @@ class ConsultaModelTest {
         ConsultaDAO dao = mock(ConsultaDAO.class);
         ConsultaModel model = new ConsultaModel(
                 dao, mock(PersonaRolDAO.class));
+        configurar(model);
         model.nuevo();
         model.setEstado(ESTADO_CRUD.LISTADO);
 
@@ -104,7 +111,8 @@ class ConsultaModelTest {
         ConsultaModel model = new ConsultaModel(
                 mock(ConsultaDAO.class),
                 mock(PersonaRolDAO.class));
-        model.seleccionar(new Consulta());
+        configurar(model);
+        model.seleccionar(consulta());
 
         model.cancelar();
 
@@ -117,6 +125,7 @@ class ConsultaModelTest {
         ConsultaDAO dao = mock(ConsultaDAO.class);
         ConsultaModel model = new ConsultaModel(
                 dao, mock(PersonaRolDAO.class));
+        configurar(model);
 
         assertDoesNotThrow(model::guardar);
 
@@ -130,8 +139,10 @@ class ConsultaModelTest {
 
         ConsultaModel model = new ConsultaModel(
                 mock(ConsultaDAO.class), personaRolDAO);
+        configurar(model);
 
-        assertEquals(1, model.getPersonasRoles().size());
+        assertEquals(0, model.getPersonasRoles().size());
+        verify(personaRolDAO, org.mockito.Mockito.never()).obtenerTodos();
     }
 
     @Test
@@ -139,7 +150,8 @@ class ConsultaModelTest {
         ConsultaModel model = new ConsultaModel(
                 mock(ConsultaDAO.class),
                 mock(PersonaRolDAO.class));
-        Consulta consulta = new Consulta();
+        configurar(model);
+        Consulta consulta = consulta();
         SelectEvent<Consulta> evento = mock(SelectEvent.class);
         when(evento.getObject()).thenReturn(consulta);
 
@@ -154,6 +166,7 @@ class ConsultaModelTest {
         ConsultaModel model = new ConsultaModel(
                 mock(ConsultaDAO.class),
                 mock(PersonaRolDAO.class));
+        configurar(model);
         SelectEvent<Consulta> evento = mock(SelectEvent.class);
         when(evento.getObject()).thenReturn(null);
 
@@ -168,7 +181,8 @@ class ConsultaModelTest {
         ConsultaModel model = new ConsultaModel(
                 mock(ConsultaDAO.class),
                 mock(PersonaRolDAO.class));
-        Consulta consulta = new Consulta();
+        configurar(model);
+        Consulta consulta = consulta();
         consulta.setFechaInicio(new Date(2_000L));
         model.seleccionar(consulta);
 
@@ -181,7 +195,8 @@ class ConsultaModelTest {
         ConsultaModel model = new ConsultaModel(
                 mock(ConsultaDAO.class),
                 mock(PersonaRolDAO.class));
-        Consulta consulta = new Consulta();
+        configurar(model);
+        Consulta consulta = consulta();
         consulta.setFechaInicio(new Date(1_000L));
         model.seleccionar(consulta);
 
@@ -194,7 +209,8 @@ class ConsultaModelTest {
         ConsultaModel model = new ConsultaModel(
                 mock(ConsultaDAO.class),
                 mock(PersonaRolDAO.class));
-        Consulta consulta = new Consulta();
+        configurar(model);
+        Consulta consulta = consulta();
         consulta.setFechaInicio(new Date(1_000L));
         model.seleccionar(consulta);
 
@@ -206,6 +222,7 @@ class ConsultaModelTest {
     void guardarRecortaReferenciaYObservaciones() {
         ConsultaDAO dao = mock(ConsultaDAO.class);
         ConsultaModel model = new ConsultaModel(dao, mock(PersonaRolDAO.class));
+        configurar(model);
         model.nuevo();
         Consulta consulta = model.getSeleccionado();
         consulta.setReferenciaExterna("  REF-1  ");
@@ -215,7 +232,7 @@ class ConsultaModelTest {
 
         assertEquals("REF-1", consulta.getReferenciaExterna());
         assertEquals("nota", consulta.getObservaciones());
-        verify(dao).guardar(consulta);
+        verify(servicio(model)).guardarConsulta(consulta, CLINICA, false);
     }
 
     private UIComponent componente(String id) {

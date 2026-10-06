@@ -6,12 +6,16 @@ import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
+import jakarta.inject.Inject;
+import java.util.UUID;
+import sv.edu.ues.occingenieriappi115_2026.salud.boundary.ClinicaActualBean;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaFlujoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.FlujoConsultaException;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaProcedimientoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
@@ -28,6 +32,10 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
 
     @EJB
     private ConsultaProcedimientoDAO consultaProcedimientoDAO;
+    @Inject private ClinicaActualBean clinicaActualBean;
+    @EJB private ConsultaFlujoService flujoService;
+    private UUID clinicaFormulario;
+    private long revisionFormulario;
     private ConsultaProcedimiento seleccionado;
     private List<Procedimiento> procedimientos;
     @EJB
@@ -47,8 +55,26 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
     @PostConstruct
     public void inicializar() {
         this.procedimientos = procedimientoDAO.obtenerTodos().stream()
-                .filter(p -> p.getActivo() == null || p.getActivo())
+                .filter(p -> Boolean.TRUE.equals(p.getActivo()))
                 .toList();
+    }
+
+    private UUID clinicaActual() {
+        return clinicaActualBean == null ? null : clinicaActualBean.getIdClinicaActual();
+    }
+
+    private void capturarContexto() {
+        clinicaFormulario = clinicaActual();
+        revisionFormulario = clinicaActualBean == null ? -1 : clinicaActualBean.getRevision();
+    }
+
+    private boolean contextoValido() {
+        return clinicaFormulario != null && clinicaFormulario.equals(clinicaActual())
+                && revisionFormulario == clinicaActualBean.getRevision();
+    }
+
+    private boolean consultaVisible(Consulta consulta) {
+        return consulta != null && ConsultaFlujoService.personaEnClinica(consulta.getIdPersonaRol(), clinicaActual());
     }
 
     @Override
@@ -65,6 +91,7 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
     }
 
     public List<Procedimiento> getProcedimientos() {
+        inicializar();
         return procedimientos;
     }
 
@@ -93,6 +120,7 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
     }
 
     public void nuevo() {
+        capturarContexto();
         seleccionado = new ConsultaProcedimiento();
         seleccionado.setFechaInicio(new Date());
         setEstado(ESTADO_CRUD.CREACION);
@@ -107,12 +135,13 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
      * @return procedimientos de la consulta o lista vacía si aún no existe
      */
     public List<ConsultaProcedimiento> getProcedimientosPorConsulta(Consulta consulta) {
-        if (consulta == null || consulta.getIdConsulta() == null) {
+        if (consulta == null || consulta.getIdConsulta() == null || !consultaVisible(consulta)) {
             return List.of();
         }
         return getDao().obtenerPagina(0, Integer.MAX_VALUE,
                 List.of(new FiltroDAO("idConsulta.idConsulta", OperadorFiltro.IGUAL,
-                        consulta.getIdConsulta())),
+                        consulta.getIdConsulta()),
+                        new FiltroDAO("idConsulta.idPersonaRol.idClinica.idClinica", OperadorFiltro.IGUAL, clinicaActual())),
                 List.of());
     }
 
@@ -122,7 +151,7 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
      * @param consulta consulta que será asignada al procedimiento
      */
     public void nuevoParaConsulta(Consulta consulta) {
-        if (consulta == null || consulta.getIdConsulta() == null) {
+        if (consulta == null || consulta.getIdConsulta() == null || !consultaVisible(consulta)) {
             cancelar();
             return;
         }
@@ -158,26 +187,30 @@ public class ConsultaProcedimientoModel extends AbstractModel<ConsultaProcedimie
                 && procedimiento.getIdConsulta().getIdConsulta() != null
                 && consulta != null
                 && consulta.getIdConsulta() != null
+                && consultaVisible(consulta)
                 && procedimiento.getIdConsulta().getIdConsulta().equals(consulta.getIdConsulta());
     }
 
     public void seleccionar(ConsultaProcedimiento seleccionado) {
+        capturarContexto();
         this.seleccionado = seleccionado;
         setEstado(ESTADO_CRUD.EDICION);
     }
 
     public void guardar() {
-        if (seleccionado == null) {
-            return;
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) { return; }
+        if (!contextoValido()) { registrarError("consultaFlujo.contextoInvalido"); return; }
+        try {
+            seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
+            seleccionado = getEstado() == ESTADO_CRUD.CREACION
+                    ? flujoService.crearProcedimiento(seleccionado, clinicaActual())
+                    : flujoService.actualizarProcedimiento(seleccionado, clinicaActual());
+            setEstado(ESTADO_CRUD.LISTADO);
+        } catch (FlujoConsultaException ex) {
+            registrarError(ex.getMessage());
+        } catch (RuntimeException ex) {
+            registrarError("consultaFlujo.errorGuardar");
         }
-        seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> {
-            }
-        }
-        setEstado(ESTADO_CRUD.LISTADO);
     }
 
     public void cancelar() {

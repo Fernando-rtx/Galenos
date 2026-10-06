@@ -27,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.*;
+import static sv.edu.ues.occingenieriappi115_2026.salud.model.ContextoConsultaFixture.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -38,6 +40,7 @@ class ConsultaProcedimientoModelTest {
     void nuevoCreaConsultaProcedimientoYCambiaEstadoACreacion() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
+        configurar(model);
 
         model.nuevo();
 
@@ -50,6 +53,7 @@ class ConsultaProcedimientoModelTest {
     void seleccionarAsignaEntidadYCambiaEstadoAEdicion() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
+        configurar(model);
         ConsultaProcedimiento entidad = new ConsultaProcedimiento();
 
         model.seleccionar(entidad);
@@ -63,12 +67,13 @@ class ConsultaProcedimientoModelTest {
         ConsultaProcedimientoDAO dao = mock(ConsultaProcedimientoDAO.class);
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 dao, mock(ProcedimientoDAO.class));
+        configurar(model);
         model.nuevo();
         ConsultaProcedimiento seleccionado = model.getSeleccionado();
 
         model.guardar();
 
-        verify(dao).guardar(seleccionado);
+        verify(servicio(model)).crearProcedimiento(seleccionado, CLINICA);
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
 
@@ -77,14 +82,15 @@ class ConsultaProcedimientoModelTest {
         ConsultaProcedimientoDAO dao = mock(ConsultaProcedimientoDAO.class);
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 dao, mock(ProcedimientoDAO.class));
+        configurar(model);
         ConsultaProcedimiento entidad = new ConsultaProcedimiento();
         ConsultaProcedimiento actualizada = new ConsultaProcedimiento();
         model.seleccionar(entidad);
-        when(dao.actualizar(entidad)).thenReturn(actualizada);
+        when(servicio(model).actualizarProcedimiento(entidad, CLINICA)).thenReturn(actualizada);
 
         model.guardar();
 
-        verify(dao).actualizar(entidad);
+        verify(servicio(model)).actualizarProcedimiento(entidad, CLINICA);
         assertSame(actualizada, model.getSeleccionado());
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
     }
@@ -94,6 +100,7 @@ class ConsultaProcedimientoModelTest {
         ConsultaProcedimientoDAO dao = mock(ConsultaProcedimientoDAO.class);
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 dao, mock(ProcedimientoDAO.class));
+        configurar(model);
         model.nuevo();
         model.setEstado(ESTADO_CRUD.LISTADO);
 
@@ -107,6 +114,7 @@ class ConsultaProcedimientoModelTest {
     void cancelarLimpiaSeleccionadoYVuelveAListado() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
+        configurar(model);
         model.seleccionar(new ConsultaProcedimiento());
 
         model.cancelar();
@@ -120,6 +128,7 @@ class ConsultaProcedimientoModelTest {
         ConsultaProcedimientoDAO dao = mock(ConsultaProcedimientoDAO.class);
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 dao, mock(ProcedimientoDAO.class));
+        configurar(model);
 
         assertDoesNotThrow(model::guardar);
 
@@ -129,10 +138,11 @@ class ConsultaProcedimientoModelTest {
     @Test
     void constructorCargaProcedimientosDelCatalogo() {
         ProcedimientoDAO procedimientoDAO = mock(ProcedimientoDAO.class);
-        when(procedimientoDAO.obtenerTodos()).thenReturn(List.of(new Procedimiento()));
+        when(procedimientoDAO.obtenerTodos()).thenReturn(List.of(procedimientoActivo()));
 
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), procedimientoDAO);
+        configurar(model);
 
         assertEquals(1, model.getProcedimientos().size());
     }
@@ -148,6 +158,7 @@ class ConsultaProcedimientoModelTest {
 
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), dao);
+        configurar(model);
 
         assertEquals(List.of(activo), model.getProcedimientos());
     }
@@ -157,8 +168,9 @@ class ConsultaProcedimientoModelTest {
         ConsultaProcedimientoDAO dao = mock(ConsultaProcedimientoDAO.class);
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 dao, mock(ProcedimientoDAO.class));
+        configurar(model);
 
-        List<ConsultaProcedimiento> resultado = model.getProcedimientosPorConsulta(new Consulta());
+        List<ConsultaProcedimiento> resultado = model.getProcedimientosPorConsulta(consulta());
 
         assertTrue(resultado.isEmpty());
         verifyNoInteractions(dao);
@@ -169,14 +181,16 @@ class ConsultaProcedimientoModelTest {
         ConsultaProcedimientoDAO dao = mock(ConsultaProcedimientoDAO.class);
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 dao, mock(ProcedimientoDAO.class));
+        configurar(model);
         UUID idConsulta = UUID.randomUUID();
-        Consulta consulta = new Consulta();
+        Consulta consulta = consulta();
         consulta.setIdConsulta(idConsulta);
         ConsultaProcedimiento procedimiento = new ConsultaProcedimiento();
         when(dao.obtenerPagina(
                 0,
                 Integer.MAX_VALUE,
-                List.of(new FiltroDAO("idConsulta.idConsulta", OperadorFiltro.IGUAL, idConsulta)),
+                List.of(new FiltroDAO("idConsulta.idConsulta", OperadorFiltro.IGUAL, idConsulta),
+                        new FiltroDAO("idConsulta.idPersonaRol.idClinica.idClinica", OperadorFiltro.IGUAL, CLINICA)),
                 List.of())).thenReturn(List.of(procedimiento));
 
         List<ConsultaProcedimiento> resultado = model.getProcedimientosPorConsulta(consulta);
@@ -188,7 +202,8 @@ class ConsultaProcedimientoModelTest {
     void nuevoParaConsultaAsignaConsultaYCambiaEstadoACreacion() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
-        Consulta consulta = new Consulta();
+        configurar(model);
+        Consulta consulta = consulta();
         consulta.setIdConsulta(UUID.randomUUID());
 
         model.nuevoParaConsulta(consulta);
@@ -202,9 +217,10 @@ class ConsultaProcedimientoModelTest {
     void nuevoParaConsultaSinIdLimpiaSeleccionado() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
+        configurar(model);
         model.seleccionar(new ConsultaProcedimiento());
 
-        model.nuevoParaConsulta(new Consulta());
+        model.nuevoParaConsulta(consulta());
 
         assertNull(model.getSeleccionado());
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
@@ -214,9 +230,10 @@ class ConsultaProcedimientoModelTest {
     void isSeleccionadoParaConsultaEsFalsoCuandoProcedimientoEsDeOtraConsulta() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
-        Consulta consulta = new Consulta();
+        configurar(model);
+        Consulta consulta = consulta();
         consulta.setIdConsulta(UUID.randomUUID());
-        Consulta otraConsulta = new Consulta();
+        Consulta otraConsulta = consulta();
         otraConsulta.setIdConsulta(UUID.randomUUID());
         ConsultaProcedimiento ajeno = new ConsultaProcedimiento();
         ajeno.setIdConsulta(otraConsulta);
@@ -229,7 +246,8 @@ class ConsultaProcedimientoModelTest {
     void isSeleccionadoParaConsultaEsVerdaderoCuandoProcedimientoPertenece() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
-        Consulta consulta = new Consulta();
+        configurar(model);
+        Consulta consulta = consulta();
         consulta.setIdConsulta(UUID.randomUUID());
         ConsultaProcedimiento propio = new ConsultaProcedimiento();
         propio.setIdConsulta(consulta);
@@ -242,7 +260,8 @@ class ConsultaProcedimientoModelTest {
     void seleccionarParaConsultaIgnoraProcedimientoDeOtraConsulta() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
-        Consulta consulta = new Consulta();
+        configurar(model);
+        Consulta consulta = consulta();
         consulta.setIdConsulta(UUID.randomUUID());
 
         model.seleccionarParaConsulta(new ConsultaProcedimiento(), consulta);
@@ -254,7 +273,8 @@ class ConsultaProcedimientoModelTest {
     void seleccionarParaConsultaSeleccionaProcedimientoPropio() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
-        Consulta consulta = new Consulta();
+        configurar(model);
+        Consulta consulta = consulta();
         consulta.setIdConsulta(UUID.randomUUID());
         ConsultaProcedimiento propio = new ConsultaProcedimiento();
         propio.setIdConsulta(consulta);
@@ -270,6 +290,7 @@ class ConsultaProcedimientoModelTest {
         ProcedimientoDAO procedimientoDAO = mock(ProcedimientoDAO.class);
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), procedimientoDAO);
+        configurar(model);
         UUID idProcedimiento = UUID.randomUUID();
         ConsultaProcedimiento consultaProcedimiento = new ConsultaProcedimiento();
         consultaProcedimiento.setIdProcedimiento(idProcedimiento);
@@ -284,6 +305,7 @@ class ConsultaProcedimientoModelTest {
     void getNombreProcedimientoDevuelveVacioSinProcedimientoOSinId() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
+        configurar(model);
 
         assertEquals("", model.getNombreProcedimiento(null));
         assertEquals("", model.getNombreProcedimiento(new ConsultaProcedimiento()));
@@ -294,6 +316,7 @@ class ConsultaProcedimientoModelTest {
         ProcedimientoDAO procedimientoDAO = mock(ProcedimientoDAO.class);
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), procedimientoDAO);
+        configurar(model);
         UUID idProcedimiento = UUID.randomUUID();
         ConsultaProcedimiento consultaProcedimiento = new ConsultaProcedimiento();
         consultaProcedimiento.setIdProcedimiento(idProcedimiento);
@@ -310,6 +333,7 @@ class ConsultaProcedimientoModelTest {
         ProcedimientoDAO procedimientoDAO = mock(ProcedimientoDAO.class);
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), procedimientoDAO);
+        configurar(model);
         UUID idProcedimiento = UUID.randomUUID();
         ConsultaProcedimiento consultaProcedimiento = new ConsultaProcedimiento();
         consultaProcedimiento.setIdProcedimiento(idProcedimiento);
@@ -321,6 +345,7 @@ class ConsultaProcedimientoModelTest {
     void fechaFinAnteriorAInicioEsRechazada() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
+        configurar(model);
         ConsultaProcedimiento seleccionado = new ConsultaProcedimiento();
         seleccionado.setFechaInicio(new Date(2_000L));
         model.seleccionar(seleccionado);
@@ -333,6 +358,7 @@ class ConsultaProcedimientoModelTest {
     void fechaFinNulaEsAceptada() {
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 mock(ConsultaProcedimientoDAO.class), mock(ProcedimientoDAO.class));
+        configurar(model);
         ConsultaProcedimiento seleccionado = new ConsultaProcedimiento();
         seleccionado.setFechaInicio(new Date(1_000L));
         model.seleccionar(seleccionado);
@@ -346,6 +372,7 @@ class ConsultaProcedimientoModelTest {
         ConsultaProcedimientoDAO dao = mock(ConsultaProcedimientoDAO.class);
         ConsultaProcedimientoModel model = new ConsultaProcedimientoModel(
                 dao, mock(ProcedimientoDAO.class));
+        configurar(model);
         model.nuevo();
         ConsultaProcedimiento seleccionado = model.getSeleccionado();
         seleccionado.setObservaciones("  revision  ");
@@ -353,7 +380,7 @@ class ConsultaProcedimientoModelTest {
         model.guardar();
 
         assertEquals("revision", seleccionado.getObservaciones());
-        verify(dao).guardar(seleccionado);
+        verify(servicio(model)).crearProcedimiento(seleccionado, CLINICA);
     }
 
     private UIComponent componente(String id) {
