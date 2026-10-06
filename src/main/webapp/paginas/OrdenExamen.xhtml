@@ -50,16 +50,21 @@
 
                         <crud:botones-top
                             model="#{ordenExamenModel}"
-                            actualizar="messages ordenExamenTable edicionDialog"
+                            actualizar=":layoutForm:messages :layoutForm:ordenExamenTable :layoutForm:edicionDialog"
                             oncompleteNuevo="PF('ordenExamenDialog').show()" />
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
-                        showDetail="false"
-                        closable="true" />
+                    <p:outputPanel id="messages">
+                        <p:messages
+                            id="listaMessages"
+                            globalOnly="true"
+                            redisplay="false"
+                            showDetail="false"
+                            rendered="#{ordenExamenModel.estado eq 'LISTADO'}"
+                            closable="true" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -90,7 +95,7 @@
                                 event="rowDblselect"
                                 listener="#{ordenExamenModel.seleccionar(ordenExamenModel.seleccionado)}"
                                 process="@this"
-                                update="edicionDialog"
+                                update=":layoutForm:messages :layoutForm:edicionDialog"
                                 resetValues="true"
                                 oncomplete="PF('ordenExamenDialog').show()" />
 
@@ -123,16 +128,6 @@
                                     value="#{item.indicaciones != null ? item.indicaciones : msg['ordenExamen.sinIndicaciones']}"
                                     styleClass="#{item.indicaciones != null ? 'indicaciones-text' : 'empty-note'}" />
                             </p:column>
-
-                            <p:column
-                                headerText="#{msg['ordenExamen.resultados']}"
-                                styleClass="action-cell">
-
-                                <h:link outcome="/paginas/ExamenResultado" value="#{msg['crud.ver']}">
-                                    <f:param name="idOrden" value="#{item.idOrdenExamen}" />
-                                </h:link>
-                            </p:column>
-
                         </p:dataTable>
                     </div>
                 </div>
@@ -155,7 +150,17 @@
                 id="edicionContenido"
                 layout="block">
 
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
+
                 <h:panelGroup rendered="#{ordenExamenModel.seleccionado ne null}">
+                    <div class="context-actions">
+                        <h:link outcome="/paginas/ExamenResultado"
+                                value="#{msg['ordenExamen.resultados']}"
+                                styleClass="context-link"
+                                rendered="#{ordenExamenModel.seleccionado.idOrdenExamen ne null}">
+                            <f:param name="idOrden" value="#{ordenExamenModel.seleccionado.idOrdenExamen}" />
+                        </h:link>
+                    </div>
                     <div class="dialog-intro">
                         <div class="dialog-intro-icon">
                             <i class="pi pi-file-edit"></i>
@@ -184,7 +189,7 @@
                                 value="#{ordenExamenModel.seleccionado.idConsultaProcedimientoPaso}"
                                 converter="#{consultaProcedimientoPasoConverter}"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}">
+                                requiredMessage="#{msg['ordenExamen.pasoRequerido']}">
 
                                 <f:selectItem
                                     itemLabel="#{msg['crud.seleccionar']}"
@@ -196,6 +201,7 @@
                                     itemLabel="#{cpp.idConsultaProcedimiento.idConsulta.referenciaExterna} - #{cpp.estado}"
                                     itemValue="#{cpp}" />
                             </p:selectOneMenu>
+                            <p:message for="consultaProcedimientoPaso" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="form-field">
@@ -211,7 +217,9 @@
                                 pattern="dd/MM/yyyy HH:mm"
                                 showTime="true"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}" />
+                                requiredMessage="#{msg['ordenExamen.fechaRequerida']}"
+                                converterMessage="#{msg['ordenExamen.fechaInvalida']}" />
+                            <p:message for="fechaCreacion" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="form-field">
@@ -232,8 +240,8 @@
                     <div class="dialog-actions">
                         <crud:botones-bottom
                             model="#{ordenExamenModel}"
-                            procesar="@this edicionContenido"
-                            actualizar="messages ordenExamenTable edicionDialog"
+                            procesar="@this :layoutForm:edicionContenido"
+                            actualizar=":layoutForm:messages :layoutForm:ordenExamenTable :layoutForm:edicionContenido"
                             oncompleteCancelar="PF('ordenExamenDialog').hide()"
                             oncompleteGuardar="if (!args.validationFailed) PF('ordenExamenDialog').hide()" />
                     </div>

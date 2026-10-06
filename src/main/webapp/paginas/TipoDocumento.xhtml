@@ -4,6 +4,7 @@
 <ui:composition
     xmlns="http://www.w3.org/1999/xhtml"
     xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:f="jakarta.faces.core"
     xmlns:h="jakarta.faces.html"
     xmlns:p="primefaces"
     xmlns:ui="jakarta.faces.facelets"
@@ -53,15 +54,17 @@
                         <crud:botones-top
                             model="#{tipoDocumentoModel}"
                             actualizar="messages documentosTable edicionDialog"
-                            oncompleteNuevo="PF('tipoDocumentoDialog').show()" />
+                            oncompleteNuevo="PF('tipoDocumentoDialog').show()"  resetNuevo="true" />
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{tipoDocumentoModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -96,7 +99,7 @@
                                 event="rowDblselect"
                                 listener="#{tipoDocumentoModel.seleccionar(tipoDocumentoModel.seleccionado)}"
                                 process="@this"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('tipoDocumentoDialog').show()" />
 
@@ -121,6 +124,13 @@
                                     severity="#{item.activo eq true
                                                 ? 'success'
                                                 : 'secondary'}" />
+                            </p:column>
+
+                            <p:column headerText="#{msg['tipoDocumento.expresionRegular']}">
+                                <h:outputText value="#{empty item.expresionRegular
+                                                       ? msg['comun.sinDato']
+                                                       : item.expresionRegular}"
+                                              styleClass="regex-value" />
                             </p:column>
 
                             <p:column
@@ -158,6 +168,7 @@
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{tipoDocumentoModel.seleccionado ne null}">
                     <div class="dialog-intro">
@@ -189,7 +200,9 @@
                                 value="#{tipoDocumentoModel.seleccionado.nombre}"
                                 placeholder="#{msg['tipoDocumento.nombrePlaceholder']}"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}" />
+                                requiredMessage="#{msg['tipoDocumento.nombreRequerido']}" />
+
+<p:message for="nombre" showSummary="true" showDetail="false" />
 
                             <span class="form-helper">
                                 #{msg['tipoDocumento.nombreAyuda']}
@@ -197,17 +210,17 @@
                         </div>
 
                         <div class="form-field">
-                            <p:outputLabel
-                                for="indicaciones"
-                                value="#{msg['tipoDocumento.indicaciones']}"
-                                styleClass="form-label" />
-
-                            <p:inputTextarea
-                                id="indicaciones"
-                                value="#{tipoDocumentoModel.seleccionado.indicaciones}"
-                                rows="5"
-                                autoResize="false"
-                                placeholder="#{msg['tipoDocumento.indicacionesPlaceholder']}" />
+                            <p:outputLabel for="formatoSugerido"
+                                           value="#{msg['tipoDocumento.formatoSugerido']}"
+                                           styleClass="form-label" />
+                            <p:selectOneMenu id="formatoSugerido"
+                                             value="#{tipoDocumentoModel.formatoSugerido}">
+                                <f:selectItems value="#{tipoDocumentoModel.formatosSugeridos}"
+                                               var="formato"
+                                               itemValue="#{formato}"
+                                               itemLabel="#{msg[formato.clave]}" />
+                                <p:ajax process="@this" update="expresionRegular" />
+                            </p:selectOneMenu>
                         </div>
 
                         <div class="form-field">
@@ -218,8 +231,25 @@
 
                             <p:inputText
                                 id="expresionRegular"
+                                styleClass="regex-input"
                                 value="#{tipoDocumentoModel.seleccionado.expresionRegular}"
                                 placeholder="#{msg['tipoDocumento.expresionRegularPlaceholder']}" />
+
+                            <span class="form-helper">#{msg['tipoDocumento.expresionRegularAyuda']}</span>
+<p:message for="expresionRegular" showSummary="true" showDetail="false" />
+                        </div>
+
+                        <div class="form-field">
+                            <p:outputLabel
+                                for="indicaciones"
+                                value="#{msg['tipoDocumento.indicaciones']}"
+                                styleClass="form-label" />
+                            <p:inputTextarea
+                                id="indicaciones"
+                                value="#{tipoDocumentoModel.seleccionado.indicaciones}"
+                                rows="5"
+                                autoResize="false"
+                                placeholder="#{msg['tipoDocumento.indicacionesPlaceholder']}" />
                         </div>
 
                         <div class="toggle-field">
@@ -244,7 +274,7 @@
                         <crud:botones-bottom
                             model="#{tipoDocumentoModel}"
                             procesar="@this edicionContenido"
-                            actualizar="messages documentosTable edicionDialog"
+                            actualizar="messages documentosTable edicionContenido"
                             oncompleteCancelar="PF('tipoDocumentoDialog').hide()"
                             oncompleteGuardar="if (!args.validationFailed) PF('tipoDocumentoDialog').hide()" />
                     </div>

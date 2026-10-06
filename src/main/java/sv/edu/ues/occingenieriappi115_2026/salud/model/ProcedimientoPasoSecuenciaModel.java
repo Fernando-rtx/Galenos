@@ -47,11 +47,14 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
     @Inject
     transient FacesContext facesContext;
     private ProcedimientoPasoSecuencia seleccionado;
+    private UUID origenOriginalId;
+    private UUID destinoOriginalId;
 
     private List<ProcedimientoPaso> procedimientosPaso;
     private Procedimiento procedimientoSeleccionado;
     private ProcedimientoPaso pasoSiguienteSeleccionado;
     private List<String> tiposSecuencia;
+    private List<ProcedimientoPasoSecuencia> secuenciasCache;
 
     public ProcedimientoPasoSecuenciaModel() {
     }
@@ -93,6 +96,9 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
                 .filter(paso -> paso != null && paso.getIdProcedimiento() != null
                 && paso.getIdProcedimiento().getIdProcedimiento() != null)
                 .map(ProcedimientoPaso::getIdProcedimiento)
+                .filter(procedimiento -> Boolean.TRUE.equals(procedimiento.getActivo())
+                || (getEstado() == ESTADO_CRUD.EDICION && procedimientoSeleccionado != null
+                && procedimiento.getIdProcedimiento().equals(procedimientoSeleccionado.getIdProcedimiento())))
                 .collect(java.util.stream.Collectors.toMap(
                         Procedimiento::getIdProcedimiento,
                         procedimiento -> procedimiento,
@@ -154,8 +160,7 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
     }
 
     public boolean isPasoSiguienteEditable() {
-        return isEstructuraEditable() || seleccionado == null
-                || seleccionado.getIdProcedimientoPasoReferencia() == null;
+        return isEstructuraEditable();
     }
 
     public String getNombrePasoSiguiente(ProcedimientoPasoSecuencia secuencia) {
@@ -224,6 +229,34 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
                 .toList();
     }
 
+    public List<ProcedimientoPasoSecuencia> getSecuenciasPorPaso(ProcedimientoPaso paso) {
+        if (paso == null || paso.getIdProcedimientoPaso() == null) {
+            return List.of();
+        }
+        UUID idPaso = paso.getIdProcedimientoPaso();
+        return obtenerSecuencias().stream()
+                .filter(secuencia -> secuencia != null
+                && secuencia.getIdProcedimientoPaso() != null
+                && idPaso.equals(secuencia.getIdProcedimientoPaso().getIdProcedimientoPaso()))
+                .sorted(Comparator.comparing(ProcedimientoPasoSecuencia::getTipoSecuencia,
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .toList();
+    }
+
+    public void invalidarCache() {
+        secuenciasCache = null;
+    }
+
+    public boolean isPasoInicial(ProcedimientoPaso paso) {
+        if (paso == null || paso.getIdProcedimientoPaso() == null) {
+            return false;
+        }
+        UUID idPaso = paso.getIdProcedimientoPaso();
+        return obtenerSecuencias().stream()
+                .noneMatch(secuencia -> secuencia != null
+                && idPaso.equals(secuencia.getIdProcedimientoPasoReferencia()));
+    }
+
     public void nuevo() {
         seleccionado = new ProcedimientoPasoSecuencia();
         procedimientoSeleccionado = null;
@@ -246,6 +279,8 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
 
     private void prepararEdicion() {
         ProcedimientoPaso origen = seleccionado == null ? null : seleccionado.getIdProcedimientoPaso();
+        origenOriginalId = origen == null ? null : origen.getIdProcedimientoPaso();
+        destinoOriginalId = seleccionado == null ? null : seleccionado.getIdProcedimientoPasoReferencia();
         procedimientoSeleccionado = origen == null ? null : origen.getIdProcedimiento();
         UUID idSiguiente = seleccionado == null
                 ? null : seleccionado.getIdProcedimientoPasoReferencia();
@@ -295,6 +330,7 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
             return;
         }
         setEstado(ESTADO_CRUD.LISTADO);
+        secuenciasCache = null;
     }
 
     public void cancelar() {
@@ -335,6 +371,7 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
             volverAlListado();
         }
         agregarMensaje("secuencia.quitada", FacesMessage.SEVERITY_INFO);
+        secuenciasCache = null;
     }
 
     /**
@@ -344,6 +381,18 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
      * faces y devuelve {@code false}
      */
     private boolean validarAntesDeGuardar() {
+        UUID origenActual = seleccionado.getIdProcedimientoPaso() == null
+                ? null : seleccionado.getIdProcedimientoPaso().getIdProcedimientoPaso();
+        UUID destinoActual = pasoSiguienteSeleccionado == null
+                ? seleccionado.getIdProcedimientoPasoReferencia()
+                : pasoSiguienteSeleccionado.getIdProcedimientoPaso();
+        if (getEstado() == ESTADO_CRUD.EDICION
+                && (!Objects.equals(origenOriginalId, origenActual)
+                || !Objects.equals(destinoOriginalId, destinoActual)
+                || !Objects.equals(destinoOriginalId, seleccionado.getIdProcedimientoPasoReferencia()))) {
+            agregarError("relaciones.noEditables");
+            return false;
+        }
         ProcedimientoPaso origen = seleccionado.getIdProcedimientoPaso();
         if (origen == null || origen.getIdProcedimientoPaso() == null) {
             agregarError("secuencia.pasoOrigenRequerido");
@@ -418,8 +467,11 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
     }
 
     private List<ProcedimientoPasoSecuencia> obtenerSecuencias() {
-        List<ProcedimientoPasoSecuencia> secuencias = getDao().obtenerTodos();
-        return secuencias == null ? List.of() : secuencias;
+        if (secuenciasCache == null) {
+            List<ProcedimientoPasoSecuencia> secuencias = getDao().obtenerTodos();
+            secuenciasCache = secuencias == null ? List.of() : secuencias;
+        }
+        return secuenciasCache;
     }
 
     private boolean mismoRegistro(ProcedimientoPasoSecuencia existente) {

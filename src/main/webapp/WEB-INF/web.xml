@@ -24,6 +24,6 @@
     </session-config>
     <!-- Destino de bienvenida declarado actualmente; este comentario no corrige su ruta. -->
     <welcome-file-list>
-        <welcome-file>paginas/TipoDocumento.xhtml</welcome-file>
+        <welcome-file>paginas/CambiarRol.xhtml</welcome-file>
     </welcome-file-list>
 </web-app>

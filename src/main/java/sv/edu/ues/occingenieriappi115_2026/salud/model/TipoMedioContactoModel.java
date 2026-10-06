@@ -9,8 +9,9 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoMedioContactoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoMedioContacto;
 
@@ -36,49 +37,30 @@ public class TipoMedioContactoModel extends AbstractModel<TipoMedioContacto> imp
     @Inject
     transient FacesContext facesContext;
 
-    public enum FormatoContacto {
-        TELEFONO("^[267][0-9]{7}$"),
-        RESIDENCIAL("^2[0-9]{7}$"),
-        CORREO("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"),
-        ACTUAL(null);
+    private FormatoRegexSugerido formatoSugerido = FormatoRegexSugerido.PERSONALIZADO;
 
-        private final String expresion;
-
-        FormatoContacto(String expresion) {
-            this.expresion = expresion;
-        }
-
-        public String getClave() {
-            return "tipoMedioContacto.formato." + name();
-        }
+    public FormatoRegexSugerido getFormatoSugerido() {
+        return formatoSugerido;
     }
 
-    public FormatoContacto getFormatoContacto() {
-        String expresion = seleccionado == null ? null : seleccionado.getExpresionRegular();
-        if (expresion == null || expresion.isBlank()) {
-            return null;
-        }
-        for (FormatoContacto formato : FormatoContacto.values()) {
-            if (expresion.equals(formato.expresion)) {
-                return formato;
+    public void setFormatoSugerido(FormatoRegexSugerido formato) {
+        FormatoRegexSugerido nuevoFormato = formato == null
+                ? FormatoRegexSugerido.PERSONALIZADO : formato;
+        if (seleccionado != null && nuevoFormato != formatoSugerido) {
+            if (nuevoFormato.getExpresionRegular() != null) {
+                seleccionado.setExpresionRegular(nuevoFormato.getExpresionRegular());
             }
-        }
-        return FormatoContacto.ACTUAL;
-    }
-
-    public void setFormatoContacto(FormatoContacto formato) {
-        // Preserve custom/legacy rules unless the user explicitly chooses another format.
-        if (seleccionado != null && formato != FormatoContacto.ACTUAL
-                && formato != getFormatoContacto()) {
-            seleccionado.setExpresionRegular(formato == null ? null : formato.expresion);
+            formatoSugerido = nuevoFormato;
         }
     }
 
-    public List<FormatoContacto> getFormatosContacto() {
-        return Arrays.stream(FormatoContacto.values())
-                .filter(formato -> formato != FormatoContacto.ACTUAL
-                        || getFormatoContacto() == FormatoContacto.ACTUAL)
-                .toList();
+    public List<FormatoRegexSugerido> getFormatosSugeridos() {
+        return List.of(FormatoRegexSugerido.values());
+    }
+
+    private FormatoRegexSugerido reconocerFormatoActual() {
+        String expresion = seleccionado == null ? null : seleccionado.getExpresionRegular();
+        return FormatoRegexSugerido.desdeExpresion(expresion);
     }
 
     public TipoMedioContactoModel() {
@@ -104,12 +86,14 @@ public class TipoMedioContactoModel extends AbstractModel<TipoMedioContacto> imp
     public void nuevo() {
         // Inicia una creación sin persistir todavía.
         seleccionado = new TipoMedioContacto();
+        formatoSugerido = FormatoRegexSugerido.PERSONALIZADO;
         setEstado(ESTADO_CRUD.CREACION);
     }
 
     public void seleccionar(TipoMedioContacto seleccionado) {
         // Cambia a edición con la fila entregada por PrimeFaces.
         this.seleccionado = seleccionado;
+        formatoSugerido = reconocerFormatoActual();
         setEstado(ESTADO_CRUD.EDICION);
     }
 
@@ -126,9 +110,14 @@ public class TipoMedioContactoModel extends AbstractModel<TipoMedioContacto> imp
             errorCampo("indicaciones", "tipoMedioContacto.indicacionesRequeridas");
             return;
         }
-        if (getFormatoContacto() == null) {
-            errorCampo("formatoContacto", "tipoMedioContacto.formatoRequerido");
-            return;
+        String expresion = seleccionado.getExpresionRegular();
+        if (expresion != null && !expresion.isBlank()) {
+            try {
+                Pattern.compile(expresion);
+            } catch (PatternSyntaxException ex) {
+                errorCampo("expresionRegular", "tipoMedioContacto.expresionRegularInvalida");
+                return;
+            }
         }
         seleccionado.setNombre(seleccionado.getNombre().strip());
         seleccionado.setIndicaciones(seleccionado.getIndicaciones().strip());
@@ -139,6 +128,7 @@ public class TipoMedioContactoModel extends AbstractModel<TipoMedioContacto> imp
             }
         }
         setEstado(ESTADO_CRUD.LISTADO);
+        agregarMensaje(FacesMessage.SEVERITY_INFO, "mensajes.guardado");
     }
 
     private void errorCampo(String id, String clave) {
@@ -173,6 +163,7 @@ public class TipoMedioContactoModel extends AbstractModel<TipoMedioContacto> imp
     public void cancelar() {
         // Limpia el formulario y regresa a LISTADO sin tocar la base.
         seleccionado = null;
+        formatoSugerido = FormatoRegexSugerido.PERSONALIZADO;
         setEstado(ESTADO_CRUD.LISTADO);
     }
 }

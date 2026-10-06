@@ -6,6 +6,8 @@ import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.validator.ValidatorException;
 import java.util.Date;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ListResourceBundle;
 import java.util.ResourceBundle;
 import java.util.UUID;
@@ -59,7 +61,7 @@ class PersonaModelTest {
         assertEquals("Ana", persona.getNombres());
         assertEquals("López", persona.getApellidos());
         verify(dao).guardar(persona);
-        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+        assertEquals(ESTADO_CRUD.EDICION, modelo.getEstado());
     }
 
     @Test
@@ -77,7 +79,7 @@ class PersonaModelTest {
         verify(contexto).addMessage(isNull(), argThat(mensaje ->
                 "Persona creada correctamente.".equals(mensaje.getSummary())));
         verify(contexto, never()).validationFailed();
-        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+        assertEquals(ESTADO_CRUD.EDICION, modelo.getEstado());
     }
 
     @Test
@@ -97,7 +99,7 @@ class PersonaModelTest {
         verify(contexto).addMessage(isNull(), argThat(mensaje ->
                 "Persona actualizada correctamente.".equals(mensaje.getSummary())));
         verify(contexto, never()).validationFailed();
-        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+        assertEquals(ESTADO_CRUD.EDICION, modelo.getEstado());
     }
 
     @Test
@@ -296,6 +298,32 @@ class PersonaModelTest {
     }
 
     @Test
+    void nuevaPersonaLimpiaLasRelacionesContextualesAnteriores() {
+        Persona anterior = new Persona(UUID.randomUUID());
+        var documentos = new DocumentoModel(mock(sv.edu.ues.occingenieriappi115_2026.salud.control.DocumentoDAO.class),
+                mock(PersonaDAO.class), mock(sv.edu.ues.occingenieriappi115_2026.salud.control.TipoDocumentoDAO.class));
+        var contactos = new MedioContactoModel(mock(sv.edu.ues.occingenieriappi115_2026.salud.control.MedioContactoDAO.class),
+                mock(PersonaDAO.class), mock(sv.edu.ues.occingenieriappi115_2026.salud.control.TipoMedioContactoDAO.class));
+        var roles = new PersonaRolModel(mock(sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaRolDAO.class),
+                mock(PersonaDAO.class), mock(sv.edu.ues.occingenieriappi115_2026.salud.control.RolDAO.class),
+                mock(sv.edu.ues.occingenieriappi115_2026.salud.control.ClinicaDAO.class));
+        documentos.nuevoParaPersona(anterior);
+        contactos.nuevoParaPersona(anterior);
+        roles.nuevoParaPersona(anterior);
+        PersonaModel modelo = new PersonaModel(mock(PersonaDAO.class));
+
+        modelo.nuevaPersona(documentos, contactos, roles);
+
+        assertNull(documentos.getSeleccionado());
+        assertNull(documentos.getPersonaContexto());
+        assertNull(contactos.getSeleccionado());
+        assertNull(contactos.getPersonaContexto());
+        assertNull(roles.getSeleccionado());
+        assertNull(roles.getPersonaContexto());
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
+    @Test
     void seleccionarEdita() {
         PersonaModel m = new PersonaModel(mock(PersonaDAO.class));
         Persona p = new Persona();
@@ -410,6 +438,31 @@ class PersonaModelTest {
     }
 
     @Test
+    void fechasHistoricasDelParcialSonAceptadas() {
+        PersonaModel model = new PersonaModel(mock(PersonaDAO.class));
+        assertAll(
+                () -> assertDoesNotThrow(() -> model.validarFechaNacimiento(contexto(), componente("fechaNacimiento"),
+                        fecha("2005-05-19"))),
+                () -> assertDoesNotThrow(() -> model.validarFechaNacimiento(contexto(), componente("fechaNacimiento"),
+                        fecha("1990-12-31"))),
+                () -> assertDoesNotThrow(() -> model.validarFechaNacimiento(contexto(), componente("fechaNacimiento"),
+                        fecha("1960-01-01"))));
+    }
+
+    @Test
+    void fechaDeHoyEsAceptada() {
+        PersonaModel model = new PersonaModel(mock(PersonaDAO.class));
+        assertDoesNotThrow(() -> model.validarFechaNacimiento(
+                contexto(), componente("fechaNacimiento"), new Date()));
+    }
+
+    @Test
+    void rangoDelCalendarioTerminaEnElAnioActual() {
+        PersonaModel model = new PersonaModel(mock(PersonaDAO.class));
+        assertEquals("1900:" + LocalDate.now().getYear(), model.getRangoAniosNacimiento());
+    }
+
+    @Test
     void fechaDelAnio0200EsRechazada() {
         PersonaModel model = new PersonaModel(mock(PersonaDAO.class));
         Date antigua = new Date(-55_853_280_000_000L);
@@ -438,6 +491,10 @@ class PersonaModelTest {
 
     private static Date fechaValida() {
         return new Date(946_684_800_000L);
+    }
+
+    private static Date fecha(String iso) {
+        return Date.from(LocalDate.parse(iso).atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
     private void verificarUnicoError(FacesContext contexto, String clientId, String resumen) {

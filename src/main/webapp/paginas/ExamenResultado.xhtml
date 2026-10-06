@@ -50,16 +50,21 @@
 
                         <crud:botones-top
                             model="#{examenResultadoModel}"
-                            actualizar="messages examenResultadoTable edicionDialog"
+                            actualizar=":layoutForm:messages :layoutForm:examenResultadoTable :layoutForm:edicionDialog"
                             oncompleteNuevo="PF('examenResultadoDialog').show()" />
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
-                        showDetail="false"
-                        closable="true" />
+                    <p:outputPanel id="messages">
+                        <p:messages
+                            id="listaMessages"
+                            globalOnly="true"
+                            redisplay="false"
+                            showDetail="false"
+                            rendered="#{examenResultadoModel.estado eq 'LISTADO'}"
+                            closable="true" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -89,7 +94,7 @@
                                 event="rowDblselect"
                                 listener="#{examenResultadoModel.seleccionar(examenResultadoModel.seleccionado)}"
                                 process="@this"
-                                update="edicionDialog"
+                                update=":layoutForm:messages :layoutForm:edicionDialog"
                                 resetValues="true"
                                 oncomplete="PF('examenResultadoDialog').show()" />
 
@@ -163,6 +168,8 @@
                 id="edicionContenido"
                 layout="block">
 
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
+
                 <h:panelGroup rendered="#{examenResultadoModel.seleccionado ne null}">
                     <div class="dialog-intro">
                         <div class="dialog-intro-icon">
@@ -192,7 +199,7 @@
                                 value="#{examenResultadoModel.seleccionado.idOrdenExamen}"
                                 converter="#{ordenExamenConverter}"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}">
+                                requiredMessage="#{msg['examenResultado.ordenRequerida']}">
 
                                 <f:selectItem
                                     itemLabel="#{msg['crud.seleccionar']}"
@@ -204,6 +211,7 @@
                                     itemLabel="#{oe.idConsultaProcedimientoPaso.idConsultaProcedimiento.idConsulta.referenciaExterna} - #{oe.idConsultaProcedimientoPaso.estado}"
                                     itemValue="#{oe}" />
                             </p:selectOneMenu>
+                            <p:message for="ordenExamen" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="form-field">
@@ -219,7 +227,9 @@
                                 pattern="dd/MM/yyyy HH:mm"
                                 showTime="true"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}" />
+                                requiredMessage="#{msg['examenResultado.fechaRequerida']}"
+                                converterMessage="#{msg['examenResultado.fechaInvalida']}" />
+                            <p:message for="fechaCreacion" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="form-field">
@@ -234,6 +244,7 @@
                                 rows="4"
                                 placeholder="#{msg['examenResultado.resultadoPlaceholder']}"
                                 autoResize="false" />
+                            <p:message for="resultado" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="form-field">
@@ -248,6 +259,7 @@
                                 rows="4"
                                 placeholder="#{msg['examenResultado.interpretacionPlaceholder']}"
                                 autoResize="false" />
+                            <p:message for="interpretacion" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="form-field">
@@ -260,14 +272,15 @@
                                 id="rutaAtestado"
                                 value="#{examenResultadoModel.seleccionado.rutaAtestado}"
                                 placeholder="#{msg['examenResultado.rutaAtestadoPlaceholder']}" />
+                            <p:message for="rutaAtestado" showSummary="true" showDetail="false" />
                         </div>
                     </div>
 
                     <div class="dialog-actions">
                         <crud:botones-bottom
                             model="#{examenResultadoModel}"
-                            procesar="@this edicionContenido"
-                            actualizar="messages examenResultadoTable edicionDialog"
+                            procesar="@this :layoutForm:edicionContenido"
+                            actualizar=":layoutForm:messages :layoutForm:examenResultadoTable :layoutForm:edicionContenido"
                             oncompleteCancelar="PF('examenResultadoDialog').hide()"
                             oncompleteGuardar="if (!args.validationFailed) PF('examenResultadoDialog').hide()" />
                     </div>

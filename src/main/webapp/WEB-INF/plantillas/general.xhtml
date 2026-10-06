@@ -9,11 +9,16 @@
 
     <f:view locale="#{idiomaBean.locale}">
     <h:head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="dark light" />
+        <!-- Script síncrono en head: aplica la preferencia antes de mostrar el contenido. -->
+        <h:outputScript library="scripts" name="tema.js" target="head" />
         <title>
             <ui:insert name="titulo">#{msg['app.nombre']}</ui:insert>
         </title>
         <h:outputStylesheet library="estilos" name="galenos.css" />
         <ui:insert name="head" />
+        <h:outputStylesheet library="estilos" name="galenos-oscuro.css" />
     </h:head>
 
     <h:body styleClass="clinical-body">
@@ -22,6 +27,14 @@
 
                 <header class="layout-header ui-g">
                     <div class="ui-g-12 ui-md-4 layout-logo">
+                        <button type="button" id="menuToggle"
+                                class="layout-menu-toggle"
+                                aria-label="#{msg['app.menu']}"
+                                title="#{msg['app.menu']}"
+                                aria-expanded="false"
+                                aria-controls="layoutNavigation">
+                            <i class="pi pi-bars" aria-hidden="true"></i>
+                        </button>
                         <h:graphicImage library="imagenes"
                                         name="galenos-sv-logo.png"
                                         alt="Galenos SV — Clínica General"
@@ -29,9 +42,26 @@
                                         styleClass="layout-logo-image" />
                     </div>
 
-                    <div class="ui-g-12 ui-md-4 layout-brand">
-                        #{msg['app.nombre']}
-                    </div>
+                    <!-- El selector original conserva su ID y permanece en layoutForm. -->
+                    <h:panelGroup layout="block" styleClass="layout-clinic"
+                                  rendered="#{view.viewId ne '/paginas/CambiarRol.xhtml'}">
+                        <p:outputLabel for="clinicaActual" value="#{msg['clinicaActual.seleccionar']}" />
+                        <p:selectOneMenu id="clinicaActual"
+                                         value="#{clinicaActualBean.idClinicaSeleccionada}"
+                                         styleClass="layout-language">
+                            <f:selectItem itemLabel="#{msg['clinicaActual.sinSeleccion']}"
+                                          itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{clinicaActualBean.clinicas}" var="clinica"
+                                           itemLabel="#{clinica.nombre}" itemValue="#{clinica.idClinica}" />
+                            <p:ajax listener="#{clinicaActualBean.cambiarClinica}" process="@this"
+                                    update="clinicaActual contextoMessages"
+                                    oncomplete="if (!args.validationFailed) window.location.reload()" />
+                        </p:selectOneMenu>
+                        <h:outputText rendered="#{not clinicaActualBean.catalogoDisponible}"
+                                      value="#{msg['clinicaActual.errorCarga']}" role="status" />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" styleClass="layout-clinic layout-clinic-spacer"
+                                  rendered="#{view.viewId eq '/paginas/CambiarRol.xhtml'}" />
 
                     <div class="ui-g-12 ui-md-4 layout-tools">
                         <p:outputLabel
@@ -60,93 +90,90 @@
                                 process="@this"
                                 update="@all" />
                         </p:selectOneMenu>
+                        <button type="button" id="themeToggle" class="layout-theme-toggle">
+                            <span class="theme-to-light">
+                                <i class="pi pi-sun" aria-hidden="true"></i>
+                                <span>Modo claro</span>
+                            </span>
+                            <span class="theme-to-dark">
+                                <i class="pi pi-moon" aria-hidden="true"></i>
+                                <span>Modo oscuro</span>
+                            </span>
+                        </button>
+                        <h:link outcome="/paginas/CambiarRol" styleClass="layout-user-profile"
+                                title="#{msg['cambiarRol.cambiar']}">
+                            <i class="pi pi-user" aria-hidden="true"></i>
+                            <span class="layout-user-profile-copy">
+                                <strong>#{rolActualBean.seleccionado ? rolActualBean.nombrePersona : msg['cambiarRol.seleccionar']}</strong>
+                                <small>#{rolActualBean.seleccionado ? rolActualBean.nombreRol.concat(' · ').concat(rolActualBean.nombreClinica) : msg['cambiarRol.sinUsuario']}</small>
+                            </span>
+                            <i class="pi pi-chevron-down" aria-hidden="true"></i>
+                        </h:link>
                     </div>
                 </header>
 
-                <main class="layout-body ui-g">
-                    <aside class="ui-g-12 ui-md-2 layout-nav">
-                        <div class="layout-nav-inner">
+                <p:messages id="contextoMessages" globalOnly="true" showDetail="false" closable="true" />
+
+                <main class="layout-body">
+                    <aside id="layoutNavigation" class="layout-nav" hidden="hidden">
+                        <nav class="layout-nav-inner" aria-label="#{msg['app.navegacion']}">
                             <span class="layout-nav-title">
                                 #{msg['app.navegacion']}
                             </span>
 
-                            <h:link
-                                outcome="/paginas/Persona"
-                                value="#{msg['nav.persona']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/CambiarRol"
+                                    value="#{msg['nav.cambiarRol']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/CambiarRol.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/Consulta"
-                                value="#{msg['nav.consulta']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/Clinica"
+                                    value="#{msg['nav.clinica']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Clinica.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/Examen"
-                                value="#{msg['nav.examen']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/Rol"
+                                    value="#{msg['nav.rol']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Rol.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/OrdenExamen"
-                                value="#{msg['nav.ordenExamen']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/TipoMedioContacto"
+                                    value="#{msg['nav.tipoMedioContacto']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/TipoMedioContacto.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/ExamenResultado"
-                                value="#{msg['nav.examenResultado']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/TipoDocumento"
+                                    value="#{msg['nav.tipoDocumento']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/TipoDocumento.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/Procedimiento"
-                                value="#{msg['nav.procedimiento']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/TipoExamen"
+                                    value="#{msg['nav.tipoExamen']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/TipoExamen.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/ProcedimientoPaso"
-                                value="#{msg['nav.procedimientoPaso']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/Examen"
+                                    value="#{msg['nav.examen']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Examen.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/ProcedimientoPasoExamen"
-                                value="#{msg['nav.procedimientoPasoExamen']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/Procedimiento"
+                                    value="#{msg['nav.procedimiento']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Procedimiento.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/ProcedimientoPasoSecuencia"
-                                value="#{msg['nav.secuencia']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/Persona"
+                                    value="#{msg['nav.persona']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Persona.xhtml' ? 'is-current' : ''}" />
 
-                            <span class="layout-nav-title">
-                                #{msg['nav.catalogos']}
-                            </span>
+                            <h:link outcome="/paginas/Consulta"
+                                    value="#{msg['nav.consulta']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/Consulta.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/Clinica"
-                                value="#{msg['nav.clinica']}"
-                                styleClass="layout-nav-link" />
+                            <div class="layout-nav-divider"></div>
 
-                            <h:link
-                                outcome="/paginas/Rol"
-                                value="#{msg['nav.rol']}"
-                                styleClass="layout-nav-link" />
+                            <h:link outcome="/paginas/OrdenExamen"
+                                    value="#{msg['nav.ordenExamen']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/OrdenExamen.xhtml' ? 'is-current' : ''}" />
 
-                            <h:link
-                                outcome="/paginas/TipoDocumento"
-                                value="#{msg['nav.tipoDocumento']}"
-                                styleClass="layout-nav-link" />
-
-                            <h:link
-                                outcome="/paginas/TipoMedioContacto"
-                                value="#{msg['nav.tipoMedioContacto']}"
-                                styleClass="layout-nav-link" />
-
-                            <h:link
-                                outcome="/paginas/TipoExamen"
-                                value="#{msg['nav.tipoExamen']}"
-                                styleClass="layout-nav-link" />
-                        </div>
+                            <h:link outcome="/paginas/ExamenResultado"
+                                    value="#{msg['nav.examenResultado']}"
+                                    styleClass="layout-nav-link #{view.viewId eq '/paginas/ExamenResultado.xhtml' ? 'is-current' : ''}" />
+                        </nav>
                     </aside>
 
-                    <section class="ui-g-12 ui-md-10 layout-workspace">
+                    <section class="layout-workspace">
                         <ui:insert name="contenido" />
                     </section>
                 </main>
@@ -158,6 +185,7 @@
                 </footer>
             </div>
         </h:form>
+        <h:outputScript library="scripts" name="menu.js" target="body" />
     </h:body>
     </f:view>
 </html>

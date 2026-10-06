@@ -74,6 +74,7 @@ class ProcedimientoPasoExamenModelTest {
         UUID idExamen = UUID.randomUUID();
         ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
         Examen examen = new Examen();
+        examen.setActivo(true);
         examen.setIdExamen(idExamen);
         model.getSeleccionado().setIdProcedimientoPaso(paso);
         model.getSeleccionado().setIdExamen(examen);
@@ -98,6 +99,7 @@ class ProcedimientoPasoExamenModelTest {
         UUID idExamen = UUID.randomUUID();
         ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
         Examen examen = new Examen();
+        examen.setActivo(true);
         examen.setIdExamen(idExamen);
         ProcedimientoPasoExamen ppe = new ProcedimientoPasoExamen();
         ppe.setIdProcedimientoPaso(paso);
@@ -145,7 +147,9 @@ class ProcedimientoPasoExamenModelTest {
         ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
         ExamenDAO examenDao = mock(ExamenDAO.class);
         when(ppDao.obtenerTodos()).thenReturn(List.of(new ProcedimientoPaso()));
-        when(examenDao.obtenerTodos()).thenReturn(List.of(new Examen()));
+        Examen activo = new Examen();
+        activo.setActivo(true);
+        when(examenDao.obtenerTodos()).thenReturn(List.of(activo));
 
         ProcedimientoPasoExamenModel model = new ProcedimientoPasoExamenModel(
                 mock(ProcedimientoPasoExamenDAO.class), ppDao, examenDao);
@@ -158,7 +162,9 @@ class ProcedimientoPasoExamenModelTest {
     void filtraPasosDisponiblesPorProcedimiento() {
         ProcedimientoPasoDAO ppDao = mock(ProcedimientoPasoDAO.class);
         Procedimiento procedimiento = new Procedimiento(UUID.randomUUID());
+        procedimiento.setActivo(true);
         Procedimiento otro = new Procedimiento(UUID.randomUUID());
+        otro.setActivo(true);
         ProcedimientoPaso pasoElegido = new ProcedimientoPaso(UUID.randomUUID());
         pasoElegido.setIdProcedimiento(procedimiento);
         ProcedimientoPaso pasoOtro = new ProcedimientoPaso(UUID.randomUUID());
@@ -226,6 +232,7 @@ class ProcedimientoPasoExamenModelTest {
         model.nuevo();
         UUID idPaso = UUID.randomUUID();
         Examen examen = new Examen();
+        examen.setActivo(true);
         examen.setIdExamen(UUID.randomUUID());
         model.getSeleccionado().setIdProcedimientoPaso(new ProcedimientoPaso(idPaso));
         model.getSeleccionado().setIdExamen(examen);
@@ -248,6 +255,7 @@ class ProcedimientoPasoExamenModelTest {
         UUID idExamen = UUID.randomUUID();
         ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
         Examen examen = new Examen();
+        examen.setActivo(true);
         examen.setIdExamen(idExamen);
         model.getSeleccionado().setIdProcedimientoPaso(paso);
         model.getSeleccionado().setIdExamen(examen);
@@ -271,6 +279,7 @@ class ProcedimientoPasoExamenModelTest {
         UUID idExamen = UUID.randomUUID();
         ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
         Examen examen = new Examen();
+        examen.setActivo(true);
         examen.setIdExamen(idExamen);
         model.getSeleccionado().setIdProcedimientoPaso(paso);
         model.getSeleccionado().setIdExamen(examen);
@@ -299,6 +308,7 @@ class ProcedimientoPasoExamenModelTest {
         UUID idExamen = UUID.randomUUID();
         ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
         Examen examen = new Examen();
+        examen.setActivo(true);
         examen.setIdExamen(idExamen);
         ProcedimientoPasoExamen ppe = new ProcedimientoPasoExamen();
         ppe.setIdProcedimientoPasoExamen(idPropio);
@@ -332,6 +342,7 @@ class ProcedimientoPasoExamenModelTest {
         UUID idExamen = UUID.randomUUID();
         ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
         Examen examen = new Examen();
+        examen.setActivo(true);
         examen.setIdExamen(idExamen);
         model.getSeleccionado().setIdProcedimientoPaso(paso);
         model.getSeleccionado().setIdExamen(examen);
@@ -426,6 +437,7 @@ class ProcedimientoPasoExamenModelTest {
         UUID idExamen = UUID.randomUUID();
         ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
         Examen examen = new Examen(idExamen);
+        examen.setActivo(true);
         model.getSeleccionado().setIdProcedimientoPaso(paso);
         model.getSeleccionado().setIdExamen(examen);
         when(ppDao.buscarPorId(idPaso)).thenReturn(paso);
@@ -454,6 +466,7 @@ class ProcedimientoPasoExamenModelTest {
         UUID idExamen = UUID.randomUUID();
         ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
         Examen examen = new Examen(idExamen);
+        examen.setActivo(true);
         model.getSeleccionado().setIdProcedimientoPaso(paso);
         model.getSeleccionado().setIdExamen(examen);
         when(ppDao.buscarPorId(idPaso)).thenReturn(paso);
@@ -500,6 +513,7 @@ class ProcedimientoPasoExamenModelTest {
         UUID idExamen = UUID.randomUUID();
         ProcedimientoPaso paso = new ProcedimientoPaso(idPaso);
         Examen examen = new Examen(idExamen);
+        examen.setActivo(true);
         examen.setActivo(Boolean.FALSE);
         model.getSeleccionado().setIdProcedimientoPaso(paso);
         model.getSeleccionado().setIdExamen(examen);

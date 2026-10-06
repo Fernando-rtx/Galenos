@@ -46,7 +46,7 @@ class MedioContactoModelTest {
         tipo.setExpresionRegular("[0-9]{8}");
         modelo.nuevo();
         MedioContacto contacto = modelo.getSeleccionado();
-        contacto.setIdPersona(new Persona());
+        contacto.setIdPersona(new Persona(UUID.randomUUID()));
         contacto.setIdTipoMedioContacto(tipo);
         contacto.setValor(" 12345678 ");
 
@@ -55,6 +55,7 @@ class MedioContactoModelTest {
         verify(dao).guardar(contacto);
         assertEquals("12345678", contacto.getValor());
         assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
+        assertNull(modelo.getSeleccionado());
     }
 
     @Test
@@ -66,7 +67,7 @@ class MedioContactoModelTest {
         MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
         modelo.nuevo();
         MedioContacto contacto = modelo.getSeleccionado();
-        contacto.setIdPersona(new Persona());
+        contacto.setIdPersona(new Persona(UUID.randomUUID()));
         contacto.setIdTipoMedioContacto(tipo);
         contacto.setValor("rubenvenabidez@gmail.com");
 
@@ -84,7 +85,7 @@ class MedioContactoModelTest {
         MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
         modelo.nuevo();
         MedioContacto contacto = modelo.getSeleccionado();
-        contacto.setIdPersona(new Persona());
+        contacto.setIdPersona(new Persona(UUID.randomUUID()));
         contacto.setIdTipoMedioContacto(tipo);
         contacto.setValor("rubengmail.com");
 
@@ -114,7 +115,7 @@ class MedioContactoModelTest {
         MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
         modelo.nuevo();
         MedioContacto contacto = modelo.getSeleccionado();
-        contacto.setIdPersona(new Persona());
+        contacto.setIdPersona(new Persona(UUID.randomUUID()));
         contacto.setIdTipoMedioContacto(tipoActivo(tipoDAO));
         contacto.setValor("contacto");
         doThrow(new IllegalStateException("Error de persistencia")).when(dao).guardar(contacto);
@@ -127,6 +128,125 @@ class MedioContactoModelTest {
 
     private MedioContactoModel model(MedioContactoDAO d, PersonaDAO p, TipoMedioContactoDAO t) {
         return new MedioContactoModel(d, p, t);
+    }
+
+    private MedioContactoModel nuevaAsignacion(MedioContactoDAO dao,
+            Persona persona, TipoMedioContacto tipo, String valor) {
+        PersonaDAO personaDAO = mock(PersonaDAO.class);
+        TipoMedioContactoDAO tipoDAO = mock(TipoMedioContactoDAO.class);
+        when(personaDAO.buscarPorId(persona.getIdPersona())).thenReturn(persona);
+        when(tipoDAO.buscarPorId(tipo.getIdTipoMedioContacto())).thenReturn(tipo);
+        MedioContactoModel modelo = model(dao, personaDAO, tipoDAO);
+        modelo.nuevo();
+        modelo.getSeleccionado().setIdPersona(persona);
+        modelo.getSeleccionado().setIdTipoMedioContacto(tipo);
+        modelo.getSeleccionado().setValor(valor);
+        return modelo;
+    }
+
+    @Test
+    void rechazaMismoTipoValorYPersonaDuplicados() {
+        MedioContactoDAO dao = mock(MedioContactoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoMedioContacto tipo = new TipoMedioContacto(UUID.randomUUID());
+        tipo.setActivo(true);
+        when(dao.existeContacto(persona.getIdPersona(), tipo.getIdTipoMedioContacto(), "72105157", null))
+                .thenReturn(true);
+        MedioContactoModel modelo = nuevaAsignacion(dao, persona, tipo, "72105157");
+
+        modelo.guardar();
+
+        verify(dao).existeContacto(persona.getIdPersona(), tipo.getIdTipoMedioContacto(), "72105157", null);
+        verify(dao, never()).guardar(any());
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+        assertEquals("72105157", modelo.getSeleccionado().getValor());
+    }
+
+    @Test
+    void permiteMismoTipoYPersonaConValorDiferente() {
+        MedioContactoDAO dao = mock(MedioContactoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoMedioContacto tipo = new TipoMedioContacto(UUID.randomUUID());
+        tipo.setActivo(true);
+        MedioContactoModel modelo = nuevaAsignacion(dao, persona, tipo, "77778888");
+        MedioContacto contacto = modelo.getSeleccionado();
+
+        modelo.guardar();
+
+        verify(dao).existeContacto(persona.getIdPersona(), tipo.getIdTipoMedioContacto(), "77778888", null);
+        verify(dao).guardar(contacto);
+    }
+
+    @Test
+    void permiteTipoDiferenteConValorValidoParaLaMismaPersona() {
+        MedioContactoDAO dao = mock(MedioContactoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoMedioContacto tipoCorreo = new TipoMedioContacto(UUID.randomUUID());
+        tipoCorreo.setActivo(true);
+        tipoCorreo.setExpresionRegular("^[^@]+@[^@]+\\.[^@]+$");
+        MedioContactoModel modelo = nuevaAsignacion(dao, persona, tipoCorreo, "correo1@gmail.com");
+        MedioContacto contacto = modelo.getSeleccionado();
+
+        modelo.guardar();
+
+        verify(dao).existeContacto(persona.getIdPersona(), tipoCorreo.getIdTipoMedioContacto(),
+                "correo1@gmail.com", null);
+        verify(dao).guardar(contacto);
+    }
+
+    @Test
+    void editarContactoRechazaValorQueYaUsaOtroRegistro() {
+        MedioContactoDAO dao = mock(MedioContactoDAO.class);
+        TipoMedioContactoDAO tipoDAO = mock(TipoMedioContactoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoMedioContacto tipo = tipoActivo(tipoDAO);
+        MedioContacto existente = new MedioContacto(UUID.randomUUID());
+        existente.setIdPersona(persona);
+        existente.setIdTipoMedioContacto(tipo);
+        existente.setValor("72105157");
+        MedioContacto editado = new MedioContacto(UUID.randomUUID());
+        editado.setIdPersona(persona);
+        editado.setIdTipoMedioContacto(tipo);
+        editado.setValor("72105158");
+        when(dao.buscarPorId(editado.getIdMedioContacto())).thenReturn(editado);
+        when(dao.existeContacto(persona.getIdPersona(), tipo.getIdTipoMedioContacto(),
+                "72105157", editado.getIdMedioContacto())).thenReturn(true);
+        MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
+        modelo.seleccionar(editado);
+        editado.setValor("72105157");
+
+        modelo.guardar();
+
+        verify(dao).existeContacto(persona.getIdPersona(), tipo.getIdTipoMedioContacto(),
+                "72105157", editado.getIdMedioContacto());
+        verify(dao, never()).actualizar(any());
+        assertSame(editado, modelo.getSeleccionado());
+        assertEquals(ESTADO_CRUD.EDICION, modelo.getEstado());
+    }
+
+    @Test
+    void editarContactoPermiteConservarSuPropioValor() {
+        MedioContactoDAO dao = mock(MedioContactoDAO.class);
+        TipoMedioContactoDAO tipoDAO = mock(TipoMedioContactoDAO.class);
+        Persona persona = new Persona(UUID.randomUUID());
+        TipoMedioContacto tipo = tipoActivo(tipoDAO);
+        MedioContacto editado = new MedioContacto(UUID.randomUUID());
+        editado.setIdPersona(persona);
+        editado.setIdTipoMedioContacto(tipo);
+        editado.setValor("72105157");
+        when(dao.buscarPorId(editado.getIdMedioContacto())).thenReturn(editado);
+        when(dao.existeContacto(persona.getIdPersona(), tipo.getIdTipoMedioContacto(),
+                "72105157", editado.getIdMedioContacto())).thenReturn(false);
+        when(dao.actualizar(editado)).thenReturn(editado);
+        MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
+        modelo.seleccionar(editado);
+
+        modelo.guardar();
+
+        verify(dao).existeContacto(persona.getIdPersona(), tipo.getIdTipoMedioContacto(),
+                "72105157", editado.getIdMedioContacto());
+        verify(dao).actualizar(editado);
+        assertEquals(ESTADO_CRUD.LISTADO, modelo.getEstado());
     }
 
     @Test
@@ -154,16 +274,19 @@ class MedioContactoModelTest {
         MedioContactoModel m = model(d, mock(PersonaDAO.class), tipoDAO);
         m.nuevo();
         MedioContacto n = m.getSeleccionado();
-        n.setIdPersona(new Persona());
+        n.setIdPersona(new Persona(UUID.randomUUID()));
         n.setIdTipoMedioContacto(tipoActivo(tipoDAO));
         n.setValor("contacto");
         m.guardar();
         verify(d).guardar(n);
+        n.setIdMedioContacto(UUID.randomUUID());
+        when(d.buscarPorId(n.getIdMedioContacto())).thenReturn(n);
         MedioContacto a = new MedioContacto();
         when(d.actualizar(n)).thenReturn(a);
         m.seleccionar(n);
         m.guardar();
-        assertSame(a, m.getSeleccionado());
+        verify(d).actualizar(n);
+        assertNull(m.getSeleccionado());
     }
 
     private TipoMedioContacto tipoActivo(TipoMedioContactoDAO dao) {
@@ -182,7 +305,7 @@ class MedioContactoModelTest {
         when(tipoDAO.buscarPorId(tipo.getIdTipoMedioContacto())).thenReturn(tipo);
         MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
         modelo.nuevo();
-        modelo.getSeleccionado().setIdPersona(new Persona());
+        modelo.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
         modelo.getSeleccionado().setIdTipoMedioContacto(tipo);
         modelo.getSeleccionado().setValor("12345678");
 
@@ -190,6 +313,48 @@ class MedioContactoModelTest {
 
         verifyNoInteractions(dao);
         assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
+    @Test
+    void expresionRegularMalConfiguradaRechazaElContacto() {
+        MedioContactoDAO dao = mock(MedioContactoDAO.class);
+        TipoMedioContactoDAO tipoDAO = mock(TipoMedioContactoDAO.class);
+        TipoMedioContacto tipo = tipoActivo(tipoDAO);
+        tipo.setExpresionRegular("[0-9");
+        MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
+        modelo.nuevo();
+        modelo.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
+        modelo.getSeleccionado().setIdTipoMedioContacto(tipo);
+        modelo.getSeleccionado().setValor("12345678");
+
+        modelo.guardar();
+
+        verifyNoInteractions(dao);
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
+    @Test
+    void tipoDeContactoNoSePuedeCambiarDuranteEdicion() {
+        MedioContactoDAO dao = mock(MedioContactoDAO.class);
+        TipoMedioContactoDAO tipoDAO = mock(TipoMedioContactoDAO.class);
+        TipoMedioContacto original = tipoActivo(tipoDAO);
+        TipoMedioContacto nuevoTipo = tipoActivo(tipoDAO);
+        MedioContacto contacto = new MedioContacto(UUID.randomUUID());
+        contacto.setIdPersona(new Persona(UUID.randomUUID()));
+        contacto.setIdTipoMedioContacto(original);
+        contacto.setValor("actualizado");
+        when(dao.buscarPorId(contacto.getIdMedioContacto())).thenReturn(contacto);
+        MedioContactoModel modelo = model(dao, mock(PersonaDAO.class), tipoDAO);
+        modelo.seleccionar(contacto);
+
+        modelo.setTipoMedioSeleccionadoId(nuevoTipo.getIdTipoMedioContacto().toString());
+        assertSame(original, contacto.getIdTipoMedioContacto());
+        contacto.setIdTipoMedioContacto(nuevoTipo);
+        modelo.guardar();
+
+        assertSame(original, contacto.getIdTipoMedioContacto());
+        verify(dao, never()).actualizar(any());
+        assertEquals(ESTADO_CRUD.EDICION, modelo.getEstado());
     }
 
     @Test
@@ -234,7 +399,7 @@ class MedioContactoModelTest {
         MedioContactoDAO d = mock(MedioContactoDAO.class);
         MedioContactoModel m = model(d, mock(PersonaDAO.class), mock(TipoMedioContactoDAO.class));
         m.nuevo();
-        m.getSeleccionado().setIdPersona(new Persona());
+        m.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
         m.getSeleccionado().setIdTipoMedioContacto(new TipoMedioContacto());
         m.getSeleccionado().setValor("   ");
         m.guardar();
@@ -248,7 +413,7 @@ class MedioContactoModelTest {
         TipoMedioContacto tipo = new TipoMedioContacto();
         tipo.setExpresionRegular("[0-9]{8}");
         m.nuevo();
-        m.getSeleccionado().setIdPersona(new Persona());
+        m.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
         m.getSeleccionado().setIdTipoMedioContacto(tipo);
         m.getSeleccionado().setValor("correo@example.com");
         m.guardar();

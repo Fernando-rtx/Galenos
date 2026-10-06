@@ -6,6 +6,11 @@ import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
+import jakarta.inject.Inject;
+import java.util.UUID;
+import sv.edu.ues.occingenieriappi115_2026.salud.boundary.ClinicaActualBean;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaFlujoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.FlujoConsultaException;
 import java.io.Serializable;
 import java.text.Normalizer;
 import java.util.Date;
@@ -33,6 +38,10 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
     private ConsultaProcedimientoDAO consultaProcedimientoDAO;
     @EJB
     private PersonaRolDAO personaRolDAO;
+    @Inject private ClinicaActualBean clinicaActualBean;
+    @EJB private ConsultaFlujoService flujoService;
+    private UUID clinicaFormulario;
+    private long revisionFormulario;
     private ConsultaProcedimientoPaso seleccionado;
     private List<PersonaRol> personasRoles;
 
@@ -49,7 +58,25 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
 
     @PostConstruct
     public void inicializar() {
-        this.personasRoles = personaRolDAO.obtenerTodos();
+        this.personasRoles = List.of();
+    }
+
+    private UUID clinicaActual() {
+        return clinicaActualBean == null ? null : clinicaActualBean.getIdClinicaActual();
+    }
+
+    private void capturarContexto() {
+        clinicaFormulario = clinicaActual();
+        revisionFormulario = clinicaActualBean == null ? -1 : clinicaActualBean.getRevision();
+    }
+
+    private boolean contextoValido() {
+        return clinicaFormulario != null && clinicaFormulario.equals(clinicaActual())
+                && revisionFormulario == clinicaActualBean.getRevision();
+    }
+
+    private boolean consultaVisible(Consulta consulta) {
+        return consulta != null && ConsultaFlujoService.personaEnClinica(consulta.getIdPersonaRol(), clinicaActual());
     }
 
     @Override
@@ -71,23 +98,10 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
 
     /** Busca responsables médicos por nombre o por el rol/especialidad asignado. */
     public List<PersonaRol> buscarMedicos(String consulta) {
-        String criterio = normalizarBusqueda(consulta);
-        if (criterio.isEmpty() || personasRoles == null) {
-            return List.of();
-        }
-        return personasRoles.stream()
-                .filter(this::esMedico)
-                .filter(personaRol -> {
-                    String nombre = personaRol.getIdPersona() == null ? ""
-                            : normalizarBusqueda(texto(personaRol.getIdPersona().getNombres())
-                                    + " " + texto(personaRol.getIdPersona().getApellidos()));
-                    String rol = normalizarBusqueda(personaRol.getIdRol().getNombre());
-                    String detalle = normalizarBusqueda(personaRol.getIdRol().getObservaciones());
-                    return nombre.contains(criterio) || rol.contains(criterio)
-                            || detalle.contains(criterio);
-                })
-                .limit(15)
-                .toList();
+        if (seleccionado == null || seleccionado.getIdPersonaRol() == null
+                || seleccionado.getIdPersonaRol().getIdRol() == null) { return List.of(); }
+        return personaRolDAO.buscarResponsablesPorClinicaYRol(clinicaActual(),
+                seleccionado.getIdPersonaRol().getIdRol().getIdRol());
     }
 
     public String getEtiquetaMedico(PersonaRol medico) {
@@ -97,25 +111,6 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
         return (texto(medico.getIdPersona().getNombres()) + " "
                 + texto(medico.getIdPersona().getApellidos())).trim() + " — "
                 + texto(medico.getIdRol().getNombre());
-    }
-
-    private boolean esMedico(PersonaRol personaRol) {
-        if (personaRol == null || personaRol.getIdPersona() == null
-                || personaRol.getIdRol() == null
-                || Boolean.FALSE.equals(personaRol.getIdRol().getActivo())) {
-            return false;
-        }
-        String nombreRol = normalizarBusqueda(personaRol.getIdRol().getNombre());
-        if ("paciente".equals(nombreRol)) {
-            return false;
-        }
-        String detalleRol = normalizarBusqueda(personaRol.getIdRol().getObservaciones());
-        return nombreRol.startsWith("medico")
-                || nombreRol.startsWith("doctor")
-                || nombreRol.startsWith("especialista")
-                || detalleRol.contains("medico")
-                || detalleRol.contains("doctor")
-                || detalleRol.contains("especialista");
     }
 
     private String normalizarBusqueda(String valor) {
@@ -134,6 +129,7 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
     }
 
     public void nuevo() {
+        capturarContexto();
         seleccionado = new ConsultaProcedimientoPaso();
         seleccionado.setFechaInicio(new Date());
         setEstado(ESTADO_CRUD.CREACION);
@@ -146,12 +142,13 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
      * @return pasos de la consulta o lista vacía si aún no existe
      */
     public List<ConsultaProcedimientoPaso> getPasosPorConsulta(Consulta consulta) {
-        if (consulta == null || consulta.getIdConsulta() == null) {
+        if (consulta == null || consulta.getIdConsulta() == null || !consultaVisible(consulta)) {
             return List.of();
         }
         return getDao().obtenerPagina(0, Integer.MAX_VALUE,
                 List.of(new FiltroDAO("idConsultaProcedimiento.idConsulta.idConsulta",
-                        OperadorFiltro.IGUAL, consulta.getIdConsulta())),
+                        OperadorFiltro.IGUAL, consulta.getIdConsulta()),
+                        new FiltroDAO("idConsultaProcedimiento.idConsulta.idPersonaRol.idClinica.idClinica", OperadorFiltro.IGUAL, clinicaActual())),
                 List.of());
     }
 
@@ -162,12 +159,13 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
      * @return procedimientos de la consulta o lista vacía si aún no existe
      */
     public List<ConsultaProcedimiento> getConsultaProcedimientosPorConsulta(Consulta consulta) {
-        if (consulta == null || consulta.getIdConsulta() == null) {
+        if (consulta == null || consulta.getIdConsulta() == null || !consultaVisible(consulta)) {
             return List.of();
         }
         return consultaProcedimientoDAO.obtenerPagina(0, Integer.MAX_VALUE,
                 List.of(new FiltroDAO("idConsulta.idConsulta", OperadorFiltro.IGUAL,
-                        consulta.getIdConsulta())),
+                        consulta.getIdConsulta()),
+                        new FiltroDAO("idConsulta.idPersonaRol.idClinica.idClinica", OperadorFiltro.IGUAL, clinicaActual())),
                 List.of());
     }
 
@@ -202,7 +200,7 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
      * @return {@code true} si hay un paso nuevo o un paso de esa consulta en edición
      */
     public boolean isFormularioVisibleParaConsulta(Consulta consulta) {
-        if (consulta == null || consulta.getIdConsulta() == null) {
+        if (consulta == null || consulta.getIdConsulta() == null || !consultaVisible(consulta)) {
             return false;
         }
         if (getEstado() == ESTADO_CRUD.CREACION
@@ -220,26 +218,33 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
                 && paso.getIdConsultaProcedimiento().getIdConsulta().getIdConsulta() != null
                 && consulta != null
                 && consulta.getIdConsulta() != null
+                && consultaVisible(consulta)
                 && paso.getIdConsultaProcedimiento().getIdConsulta().getIdConsulta()
                         .equals(consulta.getIdConsulta());
     }
 
     public void seleccionar(ConsultaProcedimientoPaso seleccionado) {
+        capturarContexto();
         this.seleccionado = seleccionado;
         setEstado(ESTADO_CRUD.EDICION);
     }
 
     public void guardar() {
-        if (seleccionado == null) {
-            return;
-        }
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> {
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) { return; }
+        if (!contextoValido()) { registrarError("consultaFlujo.contextoInvalido"); return; }
+        try {
+            if (getEstado() == ESTADO_CRUD.CREACION) {
+                registrarError("consultaFlujo.pasoAutomatico");
+                return;
             }
+            seleccionado = flujoService.actualizarPaso(seleccionado, clinicaActual());
+            setEstado(ESTADO_CRUD.LISTADO);
+            agregarMensaje(jakarta.faces.application.FacesMessage.SEVERITY_INFO, "mensajes.guardado");
+        } catch (FlujoConsultaException ex) {
+            registrarError(ex.getMessage());
+        } catch (RuntimeException ex) {
+            registrarError("consultaFlujo.errorGuardar");
         }
-        setEstado(ESTADO_CRUD.LISTADO);
     }
 
     public void cancelar() {
@@ -257,14 +262,9 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
      * @param valor responsable elegido
      */
     public void validarResponsable(FacesContext contexto, UIComponent componente, Object valor) {
-        if (!(valor instanceof PersonaRol responsable)) {
-            return;
-        }
-        if (!personasRoles.contains(responsable)) {
-            lanzarValidacion(contexto, "consultaProcedimientoPaso.responsableNoExiste");
-        }
-        if (!esMedico(responsable)) {
-            lanzarValidacion(contexto, "consultaProcedimientoPaso.responsableDebeSerMedico");
+        if (!(valor instanceof PersonaRol responsable)
+                || !ConsultaFlujoService.personaEnClinica(responsable, clinicaActual())) {
+            lanzarValidacion(contexto, "consultaFlujo.sinResponsable");
         }
     }
 

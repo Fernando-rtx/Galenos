@@ -46,15 +46,17 @@
                         <crud:botones-top
                             model="#{clinicaModel}"
                             actualizar="messages clinicasTable edicionDialog"
-                            oncompleteNuevo="PF('clinicaDialog').show()" />
+                            oncompleteNuevo="PF('clinicaDialog').show()"  resetNuevo="true" />
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{clinicaModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -63,6 +65,8 @@
                                 #{msg['clinica.lista']}
                             </div>
                         </div>
+
+                        <p class="page-subtitle">#{msg['crud.dobleClicEditar']}</p>
 
                         <p:dataTable
                             id="clinicasTable"
@@ -81,7 +85,7 @@
                             <p:ajax
                                 event="rowDblselect"
                                 listener="#{clinicaModel.seleccionarFila()}"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('clinicaDialog').show()" />
 
@@ -159,6 +163,7 @@
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{clinicaModel.seleccionado ne null}">
                     <div class="dialog-intro">
@@ -189,7 +194,10 @@
                                 value="#{clinicaModel.seleccionado.nombre}"
                                 placeholder="#{msg['clinica.nombrePlaceholder']}"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}" />
+                                requiredMessage="#{msg['clinica.nombreRequerido']}"
+                                maxlength="255" />
+
+                            <p:message for="nombre" showSummary="true" showDetail="false" />
 
                             <span class="form-helper">
                                 #{msg['clinica.nombreAyuda']}
@@ -206,7 +214,11 @@
                                 id="tipo"
                                 value="#{clinicaModel.seleccionado.tipo}"
                                 placeholder="#{msg['clinica.tipoPlaceholder']}"
+                                required="true"
+                                requiredMessage="#{msg['clinica.tipoRequerido']}"
                                 maxlength="20" />
+
+                            <p:message for="tipo" showSummary="true" showDetail="false" />
 
                             <span class="form-helper">
                                 #{msg['clinica.tipoAyuda']}
@@ -248,7 +260,7 @@
                         <crud:botones-bottom
                             model="#{clinicaModel}"
                             procesar="@this edicionContenido"
-                            actualizar="messages clinicasTable edicionDialog"
+                            actualizar="messages clinicasTable edicionContenido"
                             oncompleteCancelar="PF('clinicaDialog').hide()"
                             oncompleteGuardar="if (!args.validationFailed) PF('clinicaDialog').hide()" />
                     </div>

@@ -36,21 +36,19 @@
                             <nav class="procedure-flow" aria-label="#{msg['procedimiento.flow']}">
                                 <h:link outcome="/paginas/Procedimiento" value="#{msg['nav.procedimiento']}" />
                                 <span aria-hidden="true">›</span>
-                                <h:link outcome="/paginas/ProcedimientoPaso" value="#{msg['nav.procedimientoPaso']}" />
-                                <span aria-hidden="true">›</span>
-                                <h:link outcome="/paginas/ProcedimientoPasoSecuencia" value="#{msg['nav.secuencia']}" />
-                                <span aria-hidden="true">›</span>
-                                <strong>#{msg['nav.procedimientoPasoExamen']}</strong>
+                                <strong>#{msg['ppe.titulo']}</strong>
                             </nav>
                         </div>
                         <crud:botones-top
                             model="#{procedimientoPasoExamenModel}"
                             actualizar="messages ppeTable edicionDialog"
-                            oncompleteNuevo="PF('ppeDialog').show()" />
+                            oncompleteNuevo="PF('ppeDialog').show()"  resetNuevo="true" />
                     </div>
 
                     <div class="section-divider"></div>
-                    <p:messages id="messages" showDetail="false" closable="true" />
+                    <p:outputPanel id="messages">
+                        <p:messages id="listaMessages" showDetail="false" closable="true"  globalOnly="true" redisplay="false" rendered="#{procedimientoPasoExamenModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -68,7 +66,7 @@
                             styleClass="ppe-table">
 
                             <p:ajax event="rowDblselect" listener="#{procedimientoPasoExamenModel.seleccionarFila()}"
-                                update="edicionDialog" resetValues="true"
+                                update="edicionDialog messages" resetValues="true"
                                 oncomplete="PF('ppeDialog').show()" />
 
                             <p:column headerText="#{msg['procedimientoPaso.procedimiento']}"
@@ -121,6 +119,7 @@
             styleClass="clinical-dialog">
 
             <p:outputPanel id="edicionContenido" layout="block">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
                 <h:panelGroup rendered="#{procedimientoPasoExamenModel.seleccionado ne null}">
                     <div class="dialog-intro">
                         <div class="dialog-intro-icon"><i class="pi pi-file-edit"></i></div>
@@ -209,7 +208,7 @@
                         </p:commandButton>
                         <crud:botones-bottom model="#{procedimientoPasoExamenModel}"
                             procesar="@this edicionContenido"
-                            actualizar="messages ppeTable edicionDialog"
+                            actualizar="messages ppeTable edicionContenido"
                             oncompleteCancelar="PF('ppeDialog').hide()"
                             oncompleteGuardar="if (args.validationFailed) PF('ppeDialog').show(); else PF('ppeDialog').hide()" />
                     </div>

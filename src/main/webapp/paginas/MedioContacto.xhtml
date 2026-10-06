@@ -41,7 +41,7 @@
                                     rendered="#{not medioContactoModel.conPersonaContexto}" />
                             <crud:botones-top model="#{medioContactoModel}"
                                               actualizar="messages contactoTable edicionDialog"
-                                              oncompleteNuevo="PF('contactoDialog').show()" />
+                                              oncompleteNuevo="PF('contactoDialog').show()"  resetNuevo="true" />
                         </div>
                     </div>
                     <h:panelGroup layout="block"
@@ -51,9 +51,11 @@
                                   #{medioContactoModel.personaContexto.nombres}
                                   #{medioContactoModel.personaContexto.apellidos}</h:panelGroup>
                     <div class="section-divider"></div>
-                    <p:messages id="messages"
+                    <p:outputPanel id="messages">
+                        <p:messages id="listaMessages"
                                 showDetail="false"
-                                closable="true" />
+                                closable="true"  globalOnly="true" redisplay="false" rendered="#{medioContactoModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <!-- Tabla principal -->
                     <div class="table-title">#{msg['medioContacto.lista']}</div>
@@ -69,9 +71,11 @@
                                  rowKey="#{medioContactoModel.getRowKey(item)}"
                                  emptyMessage="#{msg['medioContacto.sinRegistros']}"
                                  styleClass="clinical-table medio-contacto-table">
-                        <p:ajax event="rowSelect"
-                                listener="#{medioContactoModel.seleccionar(item)}"
-                                update="edicionDialog"
+                        <p:ajax event="rowDblselect"
+                                listener="#{medioContactoModel.seleccionar(medioContactoModel.seleccionado)}"
+                                process="@this"
+                                update="edicionDialog messages"
+                                resetValues="true"
                                 oncomplete="PF('contactoDialog').show()" />
                         <p:column headerText="#{msg['medioContacto.persona']}"
                                   field="idPersona.nombres">
@@ -88,16 +92,6 @@
                             <h:outputText value="#{item.valor}"
                                           styleClass="valor-contacto" />
                         </p:column>
-                        <p:column headerText="#{msg['comun.acciones']}"
-                                  styleClass="action-cell">
-                            <p:commandButton icon="pi pi-pencil"
-                                             title="#{msg['crud.editar']}"
-                                             action="#{medioContactoModel.seleccionar(item)}"
-                                             process="@this"
-                                             update="edicionDialog"
-                                             oncomplete="PF('contactoDialog').show()"
-                                             styleClass="edit-button" />
-                        </p:column>
                     </p:dataTable>
                 </div>
             </section>
@@ -113,6 +107,7 @@
                   width="580"
                   styleClass="clinical-dialog">
             <p:outputPanel id="edicionContenido">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
                 <h:panelGroup rendered="#{medioContactoModel.seleccionado ne null}">
                     <div class="dialog-form">
                         <div class="form-field">
@@ -122,7 +117,7 @@
                                              value="#{medioContactoModel.personaSeleccionadaId}"
                                              required="true"
                                              requiredMessage="#{msg['medioContacto.personaRequerida']}"
-                                             disabled="#{medioContactoModel.conPersonaContexto}"
+                                             disabled="#{medioContactoModel.conPersonaContexto or medioContactoModel.estado eq 'EDICION'}"
                                              styleClass="selector-wide">
                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                               itemValue="#{null}"
@@ -133,7 +128,7 @@
                                                itemLabel="#{persona.nombres} #{persona.apellidos}" />
                             </p:selectOneMenu>
 
-                            <p:message for="persona" />
+<p:message for="persona" showSummary="true" showDetail="false" />
                         </div>
                         <div class="form-field">
                             <p:outputLabel for="tipo"
@@ -141,21 +136,22 @@
                             <p:selectOneMenu id="tipo"
                                              value="#{medioContactoModel.tipoMedioSeleccionadoId}"
                                              required="true"
+                                             disabled="#{medioContactoModel.estado eq 'EDICION'}"
                                              requiredMessage="#{msg['medioContacto.tipoRequerido']}"
                                              styleClass="selector-wide">
                                 <f:selectItem itemLabel="#{msg['selector.seleccione']}"
                                               itemValue="#{null}"
                                               noSelectionOption="true" />
-                                <f:selectItems value="#{medioContactoModel.tiposMedioContacto}"
+                                <f:selectItems value="#{medioContactoModel.tiposMedioContactoAsignables}"
                                                var="tipo"
                                                itemValue="#{tipo.idTipoMedioContacto}"
-                                               itemLabel="#{tipo.nombre}" />
+                                               itemLabel="#{tipo.activo eq true ? tipo.nombre : tipo.nombre.concat(' (').concat(msg['tipoMedioContacto.inactivo']).concat(')')}" />
 
                                 <p:ajax
                                     process="@this" />
                             </p:selectOneMenu>
 
-                            <p:message for="tipo" />
+<p:message for="tipo" showSummary="true" showDetail="false" />
                         </div>
                         <div class="form-field">
                             <p:outputLabel for="valor"
@@ -165,13 +161,13 @@
                                          required="true"
                                          requiredMessage="#{msg['medioContacto.valorRequerido']}" />
 
-                            <p:message for="valor" />
+<p:message for="valor" showSummary="true" showDetail="false" />
                         </div>
                     </div>
                     <div class="dialog-actions">
                         <crud:botones-bottom model="#{medioContactoModel}"
                                              procesar="@this edicionContenido"
-                                             actualizar="messages contactoTable edicionDialog"
+                                             actualizar="messages contactoTable edicionContenido"
                                              oncompleteCancelar="PF('contactoDialog').hide()"
                                              oncompleteGuardar="if (!args.validationFailed) PF('contactoDialog').hide()" />
                     </div>

@@ -52,7 +52,7 @@
                         <!-- Componente reutilizable que llama nuevo() y abre el diálogo al completar AJAX. -->
                         <crud:botones-top
                             model="#{tipoExamenModel}"
-                            actualizar="messages tiposExamenTable edicionDialog"
+                            actualizar=":layoutForm:messages :layoutForm:edicionDialog"
                             resetNuevo="true"
                             oncompleteNuevo="PF('tipoExamenDialog').show()" />
                     </div>
@@ -60,11 +60,12 @@
                     <div class="section-divider"></div>
 
                     <!-- Área preparada para mensajes de validación y FacesMessage. -->
-                    <p:messages
-                        id="messages"
-                        globalOnly="true"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{tipoExamenModel.estado eq 'LISTADO'}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -96,12 +97,12 @@
                             emptyMessage="#{msg['tipoExamen.sinRegistros']}"
                             styleClass="tipo-table">
 
-                            <!-- El doble clic abre la fila seleccionada y limpia valores de ediciones anteriores. -->
+                            <!-- El panel está directamente bajo layoutForm; dialog no es NamingContainer. -->
                             <p:ajax
                                 event="rowDblselect"
-                                listener="#{tipoExamenModel.seleccionar(tipoExamenModel.seleccionado)}"
+                                listener="#{tipoExamenModel.seleccionar}"
                                 process="@this"
-                                update="edicionDialog"
+                                update=":layoutForm:edicionContenido :layoutForm:messages"
                                 resetValues="true"
                                 oncomplete="PF('tipoExamenDialog').show()" />
 
@@ -174,6 +175,7 @@
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
+                <p:messages id="dialogMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{tipoExamenModel.seleccionado ne null}">
                     <div class="dialog-intro">
@@ -208,7 +210,7 @@
                                 requiredMessage="#{msg['tipoExamen.nombreRequerido']}"
                                 validator="#{tipoExamenModel.validarNombre}" />
 
-                            <p:message for="nombre" />
+<p:message id="nombreMessage" for="nombre" showSummary="true" showDetail="false" />
 
                             <span class="form-helper">
                                 #{msg['tipoExamen.nombreAyuda']}
@@ -248,15 +250,15 @@
 
                     <div class="dialog-actions">
                         <!--
-                        Guardar procesa el contenido, actualiza mensajes/tabla/diálogo y
-                        solo oculta el diálogo cuando args.validationFailed es falso.
+                        El proceso y el refresco usan los client IDs reales de esta vista.
+                        El diálogo solo se cierra si el servidor confirma guardado=true.
                         -->
                         <crud:botones-bottom
                             model="#{tipoExamenModel}"
-                            procesar="@this edicionContenido"
-                            actualizar="messages tiposExamenTable edicionDialog"
+                            procesar=":layoutForm:edicionContenido"
+                            actualizar=":layoutForm:messages :layoutForm:tiposExamenTable :layoutForm:edicionContenido"
                             oncompleteCancelar="PF('tipoExamenDialog').hide()"
-                            oncompleteGuardar="if (!args.validationFailed) PF('tipoExamenDialog').hide()" />
+                            oncompleteGuardar="if (args &amp;&amp; args.guardado === true) PF('tipoExamenDialog').hide()" />
                     </div>
                 </h:panelGroup>
             </p:outputPanel>

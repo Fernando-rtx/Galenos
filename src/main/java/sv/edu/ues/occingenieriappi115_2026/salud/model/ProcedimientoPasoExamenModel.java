@@ -41,10 +41,13 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
     @Inject
     transient FacesContext facesContext;
     private ProcedimientoPasoExamen seleccionado;
+    private UUID pasoOriginalId;
+    private UUID examenOriginalId;
 
     private List<ProcedimientoPaso> procedimientosPaso;
     private List<Examen> examenes;
     private Procedimiento procedimientoSeleccionado;
+    private List<ProcedimientoPasoExamen> relacionesCache;
 
     public ProcedimientoPasoExamenModel() {
     }
@@ -60,7 +63,9 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
     @PostConstruct
     public void inicializar() {
         this.procedimientosPaso = procedimientoPasoDAO.obtenerTodos();
-        this.examenes = examenDAO.obtenerTodos();
+        this.examenes = examenDAO.obtenerTodos().stream()
+                .filter(examen -> examen != null && Boolean.TRUE.equals(examen.getActivo()))
+                .toList();
     }
 
     @Override
@@ -81,6 +86,12 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
     }
 
     public List<Examen> getExamenes() {
+        Examen actual = seleccionado == null ? null : seleccionado.getIdExamen();
+        if (getEstado() == ESTADO_CRUD.EDICION && actual != null && !examenes.contains(actual)) {
+            List<Examen> disponibles = new java.util.ArrayList<>(examenes);
+            disponibles.add(actual);
+            return disponibles;
+        }
         return examenes;
     }
 
@@ -92,6 +103,9 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
                 .filter(paso -> paso != null && paso.getIdProcedimiento() != null
                 && paso.getIdProcedimiento().getIdProcedimiento() != null)
                 .map(ProcedimientoPaso::getIdProcedimiento)
+                .filter(procedimiento -> Boolean.TRUE.equals(procedimiento.getActivo())
+                || (getEstado() == ESTADO_CRUD.EDICION && procedimientoSeleccionado != null
+                && procedimiento.getIdProcedimiento().equals(procedimientoSeleccionado.getIdProcedimiento())))
                 .collect(java.util.stream.Collectors.toMap(
                         Procedimiento::getIdProcedimiento,
                         procedimiento -> procedimiento,
@@ -150,7 +164,26 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
                 .toList();
     }
 
+    public List<ProcedimientoPasoExamen> getExamenesPorPaso(ProcedimientoPaso paso) {
+        if (paso == null || paso.getIdProcedimientoPaso() == null) {
+            return List.of();
+        }
+        UUID idPaso = paso.getIdProcedimientoPaso();
+        return obtenerRelaciones().stream()
+                .filter(relacion -> relacion != null && relacion.getIdProcedimientoPaso() != null
+                && idPaso.equals(relacion.getIdProcedimientoPaso().getIdProcedimientoPaso()))
+                .sorted(Comparator.comparing(relacion -> relacion.getIdExamen() == null
+                        ? null : relacion.getIdExamen().getNombre(),
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .toList();
+    }
+
+    public void invalidarCache() {
+        relacionesCache = null;
+    }
+
     public void nuevo() {
+        inicializar();
         seleccionado = new ProcedimientoPasoExamen();
         procedimientoSeleccionado = null;
         seleccionado.setFechaCreacion(new Date());
@@ -172,6 +205,10 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
     }
 
     private void prepararEdicion() {
+        pasoOriginalId = seleccionado == null || seleccionado.getIdProcedimientoPaso() == null
+                ? null : seleccionado.getIdProcedimientoPaso().getIdProcedimientoPaso();
+        examenOriginalId = seleccionado == null || seleccionado.getIdExamen() == null
+                ? null : seleccionado.getIdExamen().getIdExamen();
         procedimientoSeleccionado = seleccionado == null
                 || seleccionado.getIdProcedimientoPaso() == null
                 ? null : seleccionado.getIdProcedimientoPaso().getIdProcedimiento();
@@ -206,6 +243,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
             return;
         }
         setEstado(ESTADO_CRUD.LISTADO);
+        relacionesCache = null;
     }
 
     public void cancelar() {
@@ -246,6 +284,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
             volverAlListado();
         }
         agregarMensaje("ppe.quitada", FacesMessage.SEVERITY_INFO);
+        relacionesCache = null;
     }
 
     /**
@@ -266,6 +305,12 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
             agregarError("ppe.examenRequerido");
             return false;
         }
+        if (getEstado() == ESTADO_CRUD.EDICION
+                && (!java.util.Objects.equals(pasoOriginalId, paso.getIdProcedimientoPaso())
+                || !java.util.Objects.equals(examenOriginalId, examen.getIdExamen()))) {
+            agregarError("relaciones.noEditables");
+            return false;
+        }
         if (procedimientoPasoDAO.buscarPorId(paso.getIdProcedimientoPaso()) == null) {
             agregarError("ppe.pasoNoExiste");
             return false;
@@ -283,7 +328,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
             agregarError("ppe.examenNoExiste");
             return false;
         }
-        if (Boolean.FALSE.equals(examenPersistido.getActivo())) {
+        if (getEstado() == ESTADO_CRUD.CREACION && !Boolean.TRUE.equals(examenPersistido.getActivo())) {
             agregarError("ppe.examenInactivo");
             return false;
         }
@@ -304,8 +349,11 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
     }
 
     private List<ProcedimientoPasoExamen> obtenerRelaciones() {
-        List<ProcedimientoPasoExamen> relaciones = getDao().obtenerTodos();
-        return relaciones == null ? List.of() : relaciones;
+        if (relacionesCache == null) {
+            List<ProcedimientoPasoExamen> relaciones = getDao().obtenerTodos();
+            relacionesCache = relaciones == null ? List.of() : relaciones;
+        }
+        return relacionesCache;
     }
 
     private boolean mismoRegistro(ProcedimientoPasoExamen existente) {

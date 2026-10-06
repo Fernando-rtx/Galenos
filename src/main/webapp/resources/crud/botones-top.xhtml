@@ -13,7 +13,7 @@
     <cc:interface>
         <cc:attribute name="resetNuevo"
                       required="false"
-                      default="false"
+                      default="true"
                       type="java.lang.Boolean" />
         <cc:attribute name="model"
                       required="true" />
@@ -49,6 +49,7 @@
                 process="@this"
                 update="#{cc.attrs.actualizar}"
                 immediate="true"
+                resetValues="true"
                 rendered="#{cc.attrs.model.estado ne 'LISTADO'}"
                 oncomplete="#{cc.attrs.oncompleteCancelar}"
                 styleClass="cancel-button" />

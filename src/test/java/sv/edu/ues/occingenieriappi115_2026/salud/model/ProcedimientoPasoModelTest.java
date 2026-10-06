@@ -67,11 +67,12 @@ class ProcedimientoPasoModelTest {
     void guardarEnCreacionDelegaAGuardarYVuelveAListado() {
         ProcedimientoPasoDAO dao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoDAO procDao = mock(ProcedimientoDAO.class);
+        RolDAO rolDao = mock(RolDAO.class);
         ProcedimientoPasoModel model = new ProcedimientoPasoModel(
-                dao, procDao, mock(RolDAO.class));
+                dao, procDao, rolDao);
         model.nuevo();
         model.getSeleccionado().setNombre("Preparación");
-        prepararProcedimientoValido(procDao, model);
+        prepararProcedimientoValido(procDao, rolDao, dao, model);
         ProcedimientoPaso seleccionado = model.getSeleccionado();
 
         model.guardar();
@@ -84,13 +85,14 @@ class ProcedimientoPasoModelTest {
     void guardarEnEdicionDelegaAActualizarYVuelveAListado() {
         ProcedimientoPasoDAO dao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoDAO procDao = mock(ProcedimientoDAO.class);
+        RolDAO rolDao = mock(RolDAO.class);
         ProcedimientoPasoModel model = new ProcedimientoPasoModel(
-                dao, procDao, mock(RolDAO.class));
+                dao, procDao, rolDao);
         ProcedimientoPaso paso = new ProcedimientoPaso();
         paso.setNombre("Preparación");
         ProcedimientoPaso actualizado = new ProcedimientoPaso();
         model.seleccionar(paso);
-        prepararProcedimientoValido(procDao, model);
+        prepararProcedimientoValido(procDao, rolDao, dao, model);
         when(dao.actualizar(paso)).thenReturn(actualizado);
 
         model.guardar();
@@ -129,8 +131,12 @@ class ProcedimientoPasoModelTest {
     void constructorCargaProcedimientosYRoles() {
         ProcedimientoDAO procDao = mock(ProcedimientoDAO.class);
         RolDAO rolDao = mock(RolDAO.class);
-        when(procDao.obtenerTodos()).thenReturn(List.of(new Procedimiento()));
-        when(rolDao.obtenerTodos()).thenReturn(List.of(new Rol()));
+        Procedimiento procedimiento = new Procedimiento();
+        procedimiento.setActivo(true);
+        Rol rol = new Rol();
+        rol.setActivo(true);
+        when(procDao.obtenerTodos()).thenReturn(List.of(procedimiento));
+        when(rolDao.obtenerTodos()).thenReturn(List.of(rol));
 
         ProcedimientoPasoModel model = new ProcedimientoPasoModel(
                 mock(ProcedimientoPasoDAO.class), procDao, rolDao);
@@ -143,11 +149,12 @@ class ProcedimientoPasoModelTest {
     void guardarRecortaEspaciosDelNombre() {
         ProcedimientoPasoDAO dao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoDAO procDao = mock(ProcedimientoDAO.class);
+        RolDAO rolDao = mock(RolDAO.class);
         ProcedimientoPasoModel model = new ProcedimientoPasoModel(
-                dao, procDao, mock(RolDAO.class));
+                dao, procDao, rolDao);
         model.nuevo();
         model.getSeleccionado().setNombre("  Preparación  ");
-        prepararProcedimientoValido(procDao, model);
+        prepararProcedimientoValido(procDao, rolDao, dao, model);
 
         model.guardar();
 
@@ -268,11 +275,12 @@ class ProcedimientoPasoModelTest {
     void guardarConNombreDuplicadoEnElMismoProcedimientoNoDelega() {
         ProcedimientoPasoDAO dao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoDAO procDao = mock(ProcedimientoDAO.class);
+        RolDAO rolDao = mock(RolDAO.class);
         ProcedimientoPasoModel model = new ProcedimientoPasoModel(
-                dao, procDao, mock(RolDAO.class));
+                dao, procDao, rolDao);
         model.nuevo();
         model.getSeleccionado().setNombre("Preparación");
-        prepararProcedimientoValido(procDao, model);
+        prepararProcedimientoValido(procDao, rolDao, dao, model);
         ProcedimientoPaso existente = new ProcedimientoPaso(UUID.randomUUID());
         existente.setNombre("  preparación  ");
         existente.setIdProcedimiento(model.getSeleccionado().getIdProcedimiento());
@@ -288,11 +296,12 @@ class ProcedimientoPasoModelTest {
     void guardarPermiteNombreRepetidoEnOtroProcedimiento() {
         ProcedimientoPasoDAO dao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoDAO procDao = mock(ProcedimientoDAO.class);
+        RolDAO rolDao = mock(RolDAO.class);
         ProcedimientoPasoModel model = new ProcedimientoPasoModel(
-                dao, procDao, mock(RolDAO.class));
+                dao, procDao, rolDao);
         model.nuevo();
         model.getSeleccionado().setNombre("Preparación");
-        prepararProcedimientoValido(procDao, model);
+        prepararProcedimientoValido(procDao, rolDao, dao, model);
         ProcedimientoPaso existente = new ProcedimientoPaso(UUID.randomUUID());
         existente.setNombre("Preparación");
         existente.setIdProcedimiento(new Procedimiento(UUID.randomUUID()));
@@ -372,13 +381,14 @@ class ProcedimientoPasoModelTest {
     void guardarConErrorDeDaoPublicaErrorGuardarYConservaEstado() {
         ProcedimientoPasoDAO dao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoDAO procDao = mock(ProcedimientoDAO.class);
+        RolDAO rolDao = mock(RolDAO.class);
         ProcedimientoPasoModel model = new ProcedimientoPasoModel(
-                dao, procDao, mock(RolDAO.class));
+                dao, procDao, rolDao);
         FacesContext contexto = contexto("procedimientoPaso.errorGuardar");
         model.facesContext = contexto;
         model.nuevo();
         model.getSeleccionado().setNombre("Preparación");
-        prepararProcedimientoValido(procDao, model);
+        prepararProcedimientoValido(procDao, rolDao, dao, model);
         ProcedimientoPaso seleccionado = model.getSeleccionado();
         doThrow(new IllegalStateException("fallo")).when(dao).guardar(seleccionado);
 
@@ -393,13 +403,14 @@ class ProcedimientoPasoModelTest {
     void guardarEnCreacionPublicaMensajeDeExito() {
         ProcedimientoPasoDAO dao = mock(ProcedimientoPasoDAO.class);
         ProcedimientoDAO procDao = mock(ProcedimientoDAO.class);
+        RolDAO rolDao = mock(RolDAO.class);
         ProcedimientoPasoModel model = new ProcedimientoPasoModel(
-                dao, procDao, mock(RolDAO.class));
+                dao, procDao, rolDao);
         FacesContext contexto = contexto("procedimientoPaso.creadoCorrectamente");
         model.facesContext = contexto;
         model.nuevo();
         model.getSeleccionado().setNombre("Preparación");
-        prepararProcedimientoValido(procDao, model);
+        prepararProcedimientoValido(procDao, rolDao, dao, model);
 
         model.guardar();
 
@@ -409,12 +420,24 @@ class ProcedimientoPasoModelTest {
                 && ("Mensaje procedimientoPaso.creadoCorrectamente").equals(mensaje.getSummary())));
     }
 
-    private void prepararProcedimientoValido(ProcedimientoDAO procDao,
-            ProcedimientoPasoModel model) {
+    private void prepararProcedimientoValido(ProcedimientoDAO procDao, RolDAO rolDao,
+            ProcedimientoPasoDAO pasoDao, ProcedimientoPasoModel model) {
         UUID id = UUID.randomUUID();
         Procedimiento procedimiento = new Procedimiento(id);
+        procedimiento.setActivo(true);
         when(procDao.buscarPorId(id)).thenReturn(procedimiento);
         model.getSeleccionado().setIdProcedimiento(procedimiento);
+        UUID idRol = UUID.randomUUID();
+        Rol rol = new Rol(idRol);
+        rol.setActivo(Boolean.TRUE);
+        when(rolDao.buscarPorId(idRol)).thenReturn(rol);
+        model.getSeleccionado().setIdRol(rol);
+        if (model.getEstado() == ESTADO_CRUD.EDICION) {
+            UUID idPaso = UUID.randomUUID();
+            model.getSeleccionado().setIdProcedimientoPaso(idPaso);
+            when(pasoDao.buscarPorId(idPaso)).thenReturn(model.getSeleccionado());
+            model.seleccionar(model.getSeleccionado());
+        }
     }
 
     @Test

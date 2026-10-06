@@ -4,6 +4,7 @@
 <ui:composition
     xmlns="http://www.w3.org/1999/xhtml"
     xmlns:crud="jakarta.faces.composite/crud"
+    xmlns:f="jakarta.faces.core"
     xmlns:h="jakarta.faces.html"
     xmlns:p="primefaces"
     xmlns:ui="jakarta.faces.facelets"
@@ -45,16 +46,19 @@
 
                         <crud:botones-top
                             model="#{procedimientoModel}"
+                            resetNuevo="true"
                             actualizar="messages procedimientosTable edicionDialog"
                             oncompleteNuevo="PF('procedimientoDialog').show()" />
                     </div>
 
                     <div class="section-divider"></div>
 
-                    <p:messages
-                        id="messages"
+                    <p:outputPanel id="messages">
+                        <p:messages
+                        id="listaMessages"
                         showDetail="false"
-                        closable="true" />
+                        closable="true"  globalOnly="true" redisplay="false" rendered="#{procedimientoModel.estado eq 'LISTADO' and not procedimientoFlujoModel.formularioAbierto}" />
+                    </p:outputPanel>
 
                     <div class="table-section">
                         <div class="table-heading">
@@ -85,7 +89,7 @@
                             <p:ajax
                                 event="rowDblselect"
                                 listener="#{procedimientoModel.seleccionarFila()}"
-                                update="edicionDialog"
+                                update="edicionDialog messages"
                                 resetValues="true"
                                 oncomplete="PF('procedimientoDialog').show()" />
 
@@ -146,6 +150,9 @@
             <p:outputPanel
                 id="edicionContenido"
                 layout="block">
+                <p:outputPanel id="dialogMensajes">
+                    <p:messages id="dialogMessages" rendered="#{not procedimientoFlujoModel.formularioAbierto}" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
+                </p:outputPanel>
 
                 <h:panelGroup rendered="#{procedimientoModel.seleccionado ne null}">
                     <p:tabView id="procedimientoTabs">
@@ -169,7 +176,7 @@
                                         #{msg['procedimiento.nombreAyuda']}
                                     </span>
 
-                                    <p:message for="nombre" />
+<p:message for="nombre" showSummary="true" showDetail="false" />
                                 </div>
 
                                 <div class="toggle-field">
@@ -187,11 +194,7 @@
                                         id="activo"
                                         value="#{procedimientoModel.seleccionado.activo}" />
                                 </div>
-                            </div>
-                        </p:tab>
 
-                        <p:tab title="#{msg['procedimiento.observaciones']}">
-                            <div class="dialog-form">
                                 <div class="form-field">
                                     <p:outputLabel
                                         for="observaciones"
@@ -201,136 +204,122 @@
                                     <p:inputTextarea
                                         id="observaciones"
                                         value="#{procedimientoModel.seleccionado.observaciones}"
-                                        rows="5"
+                                        rows="4"
                                         autoResize="false"
                                         placeholder="#{msg['procedimiento.observacionesPlaceholder']}" />
                                 </div>
                             </div>
                         </p:tab>
 
-                        <p:tab title="#{msg['procedimientoPaso.titulo']}"
-                               disabled="#{procedimientoModel.seleccionado.idProcedimiento eq null}">
-                            <div class="related-tab-header">
-                                <span>#{msg['procedimientoPaso.lista']}</span>
-                                <h:link outcome="/paginas/ProcedimientoPaso"
-                                        value="#{msg['nav.procedimientoPaso']}"
-                                        styleClass="related-tab-link" />
-                            </div>
-
-                            <p:dataTable
-                                id="pasosProcedimientoTable"
-                                value="#{procedimientoPasoModel.getPasosPorProcedimiento(procedimientoModel.seleccionado)}"
-                                var="paso"
-                                reflow="true"
-                                emptyMessage="#{msg['procedimientoPaso.sinRegistros']}"
-                                styleClass="procedimiento-table related-table">
-
-                                <p:column headerText="#{msg['procedimientoPaso.nombre']}">
-                                    <h:outputText value="#{paso.nombre}"
-                                                  styleClass="procedimiento-name" />
-                                </p:column>
-
-                                <p:column headerText="#{msg['procedimientoPaso.rol']}">
-                                    <h:outputText value="#{empty paso.idRol
-                                                           ? msg['comun.sinDato']
-                                                           : paso.idRol.nombre}" />
-                                </p:column>
-
-                                <p:column headerText="#{msg['procedimientoPaso.indicaFin']}">
-                                    <p:tag
-                                        styleClass="clinical-status"
-                                        value="#{paso.indicaFin eq true
-                                                 ? msg['procedimientoPaso.finSi']
-                                                 : msg['procedimientoPaso.finNo']}"
-                                        severity="#{paso.indicaFin eq true
-                                                    ? 'success'
-                                                    : 'secondary'}" />
-                                </p:column>
-                            </p:dataTable>
-                        </p:tab>
-
                         <p:tab title="#{msg['secuencia.titulo']}"
                                disabled="#{procedimientoModel.seleccionado.idProcedimiento eq null}">
                             <div class="related-tab-header">
-                                <span>#{msg['secuencia.lista']}</span>
-                                <h:link outcome="/paginas/ProcedimientoPasoSecuencia"
-                                        value="#{msg['nav.secuencia']}"
-                                        styleClass="related-tab-link" />
+                                <div>
+                                    <strong>#{msg['flujo.titulo']}</strong>
+                                    <span class="form-helper">#{msg['flujo.ayuda']}</span>
+                                </div>
+                                <p:commandButton
+                                    value="#{msg['flujo.nuevoInicial']}"
+                                    icon="pi pi-plus"
+                                    styleClass="ui-button-primary"
+                                    rendered="#{procedimientoFlujoModel.puedeCrearInicial(procedimientoModel.seleccionado)}"
+                                    actionListener="#{procedimientoFlujoModel.nuevoInicial(procedimientoModel.seleccionado)}"
+                                    process="@this"
+                                    update=":layoutForm:messages :layoutForm:dialogMensajes :layoutForm:pasoDialog" resetValues="true"
+                                    oncomplete="PF('flujoPasoDialog').show()" />
                             </div>
 
-                            <p:dataTable
-                                id="secuenciasProcedimientoTable"
-                                value="#{procedimientoPasoSecuenciaModel.getSecuenciasPorProcedimiento(procedimientoModel.seleccionado)}"
-                                var="secuencia"
-                                reflow="true"
-                                emptyMessage="#{msg['secuencia.sinRegistros']}"
-                                styleClass="procedimiento-table related-table">
+                            <p:outputPanel id="flujoProcedimiento">
+                                <p:outputPanel
+                                    rendered="#{procedimientoFlujoModel.isInicialDisponible(procedimientoModel.seleccionado)}"
+                                    styleClass="empty-flow-state">
+                                    <i class="pi pi-share-alt"></i>
+                                    <strong>#{msg['flujo.sinPasos']}</strong>
+                                    <span>#{msg['flujo.creaInicial']}</span>
+                                </p:outputPanel>
 
-                                <p:column headerText="#{msg['secuencia.tipo']}">
-                                    <h:outputText
-                                        value="#{empty secuencia.tipoSecuencia
-                                                 ? msg['secuencia.sinTipo']
-                                                 : procedimientoPasoSecuenciaModel.getTipoSecuenciaLabel(secuencia.tipoSecuencia)}"
-                                        styleClass="#{empty secuencia.tipoSecuencia
-                                                      ? 'empty-note'
-                                                      : ''}" />
-                                </p:column>
+                                <ui:repeat
+                                    value="#{procedimientoFlujoModel.getPasos(procedimientoModel.seleccionado)}"
+                                    var="paso"
+                                    varStatus="pasoIndex">
+                                    <section class="flow-step-card">
+                                        <div class="flow-step-heading">
+                                            <div>
+                                                <span class="flow-step-kicker">
+                                                    #{pasoIndex.index + 1}. #{procedimientoPasoSecuenciaModel.isPasoInicial(paso)
+                                                      ? msg['flujo.pasoInicial']
+                                                      : msg['flujo.paso']}
+                                                </span>
+                                                <h3>#{paso.nombre}</h3>
+                                                <span class="flow-step-role">#{empty paso.idRol ? msg['comun.sinDato'] : paso.idRol.nombre}</span>
+                                                <h:panelGroup layout="block"
+                                                              styleClass="flow-step-exams"
+                                                              rendered="#{not empty procedimientoPasoExamenModel.getExamenesPorPaso(paso)}">
+                                                    <span>#{msg['ppe.examen']}:</span>
+                                                    <ui:repeat value="#{procedimientoPasoExamenModel.getExamenesPorPaso(paso)}" var="examenPaso">
+                                                        <span class="flow-exam-chip">#{examenPaso.idExamen.nombre}</span>
+                                                    </ui:repeat>
+                                                </h:panelGroup>
+                                            </div>
+                                            <div class="flow-step-actions">
+                                                <p:commandButton
+                                                    icon="pi pi-pencil"
+                                                    title="#{msg['flujo.editarPaso']}"
+                                                    ariaLabel="#{msg['flujo.editarPaso']}"
+                                                    styleClass="ui-button-rounded ui-button-text ui-button-secondary ui-button-sm"
+                                                    actionListener="#{procedimientoFlujoModel.editar(paso)}"
+                                                    process="@this"
+                                                    update=":layoutForm:messages :layoutForm:dialogMensajes :layoutForm:pasoDialog" resetValues="true"
+                                                    oncomplete="PF('flujoPasoDialog').show()" />
+                                                <p:tag
+                                                    value="#{paso.indicaFin eq true ? msg['procedimientoPaso.finSi'] : msg['procedimientoPaso.finNo']}"
+                                                    severity="#{paso.indicaFin eq true ? 'success' : 'secondary'}" />
+                                                <p:commandButton
+                                                    icon="pi pi-trash"
+                                                    title="#{msg['flujo.eliminarPaso']}"
+                                                    ariaLabel="#{msg['flujo.eliminarPaso']}"
+                                                    styleClass="ui-button-rounded ui-button-text ui-button-danger ui-button-sm"
+                                                    rendered="#{procedimientoFlujoModel.puedeEliminar(paso)}"
+                                                    actionListener="#{procedimientoFlujoModel.eliminarPaso(paso)}"
+                                                    process="@this"
+                                                    update=":layoutForm:messages :layoutForm:dialogMensajes :layoutForm:procedimientoTabs:flujoProcedimiento">
+                                                    <p:confirm
+                                                        header="#{msg['crud.confirmar']}"
+                                                        message="#{msg['flujo.confirmarEliminarPaso']}"
+                                                        icon="pi pi-exclamation-triangle" />
+                                                </p:commandButton>
+                                            </div>
+                                        </div>
 
-                                <p:column headerText="#{msg['secuencia.pasoOrigen']}">
-                                    <h:outputText value="#{secuencia.idProcedimientoPaso.nombre}" />
-                                </p:column>
+                                        <div class="flow-step-children">
+                                            <strong>#{msg['flujo.siguientes']}</strong>
+                                            <ui:repeat
+                                                value="#{procedimientoPasoSecuenciaModel.getSecuenciasPorPaso(paso)}"
+                                                var="enlace">
+                                                <div class="flow-child-row">
+                                                    <span class="flow-connector" aria-hidden="true">↳</span>
+                                                    <span>#{procedimientoPasoSecuenciaModel.getTipoSecuenciaLabel(enlace.tipoSecuencia)}</span>
+                                                    <strong>#{procedimientoPasoSecuenciaModel.getNombrePasoSiguiente(enlace)}</strong>
+                                                </div>
+                                            </ui:repeat>
+                                            <h:outputText
+                                                value="#{msg['flujo.sinSiguientes']}"
+                                                rendered="#{empty procedimientoPasoSecuenciaModel.getSecuenciasPorPaso(paso)}"
+                                                styleClass="empty-note" />
 
-                                <p:column headerText="#{msg['secuencia.pasoSiguiente']}">
-                                    <h:outputText
-                                        value="#{empty secuencia.idProcedimientoPasoReferencia
-                                                 ? msg['secuencia.sinReferencia']
-                                                 : (empty procedimientoPasoSecuenciaModel.getNombrePasoSiguiente(secuencia)
-                                                    ? msg['secuencia.pasoNoDisponible']
-                                                    : procedimientoPasoSecuenciaModel.getNombrePasoSiguiente(secuencia))}"
-                                        styleClass="#{empty secuencia.idProcedimientoPasoReferencia
-                                                      ? 'empty-note'
-                                                      : ''}" />
-                                </p:column>
-                            </p:dataTable>
-                        </p:tab>
-
-                        <p:tab title="#{msg['ppe.titulo']}"
-                               disabled="#{procedimientoModel.seleccionado.idProcedimiento eq null}">
-                            <div class="related-tab-header">
-                                <span>#{msg['ppe.lista']}</span>
-                                <h:link outcome="/paginas/ProcedimientoPasoExamen"
-                                        value="#{msg['nav.procedimientoPasoExamen']}"
-                                        styleClass="related-tab-link" />
-                            </div>
-
-                            <p:dataTable
-                                id="examenesProcedimientoTable"
-                                value="#{procedimientoPasoExamenModel.getExamenesPorProcedimiento(procedimientoModel.seleccionado)}"
-                                var="relacion"
-                                reflow="true"
-                                emptyMessage="#{msg['ppe.sinRegistros']}"
-                                styleClass="procedimiento-table related-table">
-
-                                <p:column headerText="#{msg['ppe.examen']}">
-                                    <h:outputText value="#{relacion.idExamen.nombre}"
-                                                  styleClass="procedimiento-name" />
-                                </p:column>
-
-                                <p:column headerText="#{msg['ppe.paso']}">
-                                    <h:outputText value="#{relacion.idProcedimientoPaso.nombre}" />
-                                </p:column>
-
-                                <p:column headerText="#{msg['ppe.activo']}">
-                                    <p:tag
-                                        styleClass="clinical-status"
-                                        value="#{relacion.activo eq true
-                                                 ? msg['ppe.activoLabel']
-                                                 : msg['ppe.inactivo']}"
-                                        severity="#{relacion.activo eq true
-                                                    ? 'success'
-                                                    : 'secondary'}" />
-                                </p:column>
-                            </p:dataTable>
+                                            <p:commandButton
+                                                value="#{msg['flujo.agregarSiguiente']}"
+                                                icon="pi pi-plus"
+                                                styleClass="ui-button-outlined ui-button-sm"
+                                                rendered="#{procedimientoFlujoModel.puedeAgregarSiguiente(paso, procedimientoModel.seleccionado)}"
+                                                actionListener="#{procedimientoFlujoModel.nuevoSiguiente(procedimientoModel.seleccionado, paso)}"
+                                                process="@this"
+                                                update=":layoutForm:messages :layoutForm:dialogMensajes :layoutForm:pasoDialog" resetValues="true"
+                                                oncomplete="PF('flujoPasoDialog').show()" />
+                                        </div>
+                                    </section>
+                                </ui:repeat>
+                            </p:outputPanel>
                         </p:tab>
                     </p:tabView>
 
@@ -338,11 +327,131 @@
                         <crud:botones-bottom
                             model="#{procedimientoModel}"
                             procesar="@this edicionContenido"
-                            actualizar="messages procedimientosTable edicionDialog"
+                            actualizar="messages procedimientosTable edicionContenido"
                             oncompleteCancelar="PF('procedimientoDialog').hide()"
                             oncompleteGuardar="if (!args.validationFailed) PF('procedimientoDialog').hide()" />
                     </div>
                 </h:panelGroup>
+            </p:outputPanel>
+        </p:dialog>
+
+        <p:confirmDialog global="true" responsive="true">
+            <p:commandButton value="#{msg['crud.no']}" type="button"
+                             styleClass="ui-confirmdialog-no ui-button-secondary" />
+            <p:commandButton value="#{msg['crud.si']}" type="button"
+                             styleClass="ui-confirmdialog-yes ui-button-danger" />
+        </p:confirmDialog>
+
+        <p:dialog
+            id="pasoDialog"
+            widgetVar="flujoPasoDialog"
+            header="#{procedimientoFlujoModel.editando
+                     ? msg['flujo.editarPaso']
+                     : procedimientoFlujoModel.inicial
+                       ? msg['flujo.nuevoInicial']
+                       : msg['flujo.nuevoSiguiente']}"
+            modal="true"
+            responsive="true"
+            resizable="false"
+            width="680"
+            styleClass="clinical-dialog">
+            <p:ajax event="close" listener="#{procedimientoFlujoModel.cancelar()}"
+                    process="@this" update=":layoutForm:pasoContenido" resetValues="true" />
+            <p:outputPanel id="pasoContenido" layout="block">
+                <p:messages id="pasoMessages" globalOnly="true" redisplay="false" showDetail="false" closable="true" />
+                <div class="dialog-intro">
+                    <div class="dialog-intro-icon"><i class="pi pi-share-alt"></i></div>
+                    <div>
+                        <strong>#{procedimientoFlujoModel.procedimiento.nombre}</strong>
+                        <span>#{procedimientoFlujoModel.editando
+                              ? msg['flujo.editarAyuda']
+                              : procedimientoFlujoModel.inicial
+                                ? msg['flujo.inicialAyuda']
+                                : msg['flujo.siguienteAyuda']}</span>
+                    </div>
+                </div>
+                <div class="dialog-form">
+                    <div class="form-field">
+                        <p:outputLabel for="pasoNombre" value="#{msg['procedimientoPaso.nombre']}" styleClass="form-label" />
+                        <p:inputText id="pasoNombre"
+                                     value="#{procedimientoFlujoModel.nombre}"
+                                     maxlength="155"
+                                     required="true"
+                                     requiredMessage="#{msg['procedimientoPaso.nombreRequerido']}"
+                                     placeholder="#{msg['flujo.nombrePlaceholder']}" />
+                        <p:message for="pasoNombre" showSummary="true" showDetail="false" />
+                    </div>
+
+                    <div class="form-field">
+                        <p:outputLabel for="pasoRol" value="#{msg['procedimientoPaso.rol']}" styleClass="form-label" />
+                        <p:selectOneMenu id="pasoRol" disabled="#{procedimientoFlujoModel.editando}"
+                                         value="#{procedimientoFlujoModel.rol}"
+                                         converter="#{rolConverter}"
+                                         required="true"
+                                         requiredMessage="#{msg['procedimientoPaso.rolRequerido']}"
+                                         styleClass="full-width">
+                            <f:selectItem itemLabel="#{msg['flujo.seleccionarRol']}" itemValue="#{null}" />
+                            <f:selectItems value="#{procedimientoFlujoModel.rolesDisponibles}"
+                                           var="rolDisponible"
+                                           itemLabel="#{rolDisponible.nombre}"
+                                           itemValue="#{rolDisponible}" />
+                        </p:selectOneMenu>
+                        <p:message for="pasoRol" showSummary="true" showDetail="false" />
+                    </div>
+
+                    <span class="form-helper">#{msg['flujo.rolesUnicos']}</span>
+
+                    <h:panelGroup layout="block"
+                                  styleClass="form-field"
+                                  rendered="#{not procedimientoFlujoModel.inicial and not procedimientoFlujoModel.editando}">
+                        <p:outputLabel for="tipoFlujo" value="#{msg['secuencia.tipo']}" styleClass="form-label" />
+                        <p:selectOneMenu id="tipoFlujo" value="#{procedimientoFlujoModel.tipoSecuencia}" styleClass="full-width">
+                            <f:selectItem itemLabel="#{msg['secuencia.tipoSiguiente']}" itemValue="SIGUIENTE" />
+                            <f:selectItem itemLabel="#{msg['secuencia.tipoAlternativa']}" itemValue="ALTERNATIVA" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+
+                    <div class="form-field">
+                        <p:outputLabel for="pasoExamenes" value="#{msg['ppe.examen']}" styleClass="form-label" />
+                        <p:selectCheckboxMenu id="pasoExamenes" disabled="#{procedimientoFlujoModel.editando}"
+                                              value="#{procedimientoFlujoModel.examenesSeleccionados}"
+                                              converter="#{examenConverter}"
+                                              label="#{msg['flujo.seleccionarExamenes']}"
+                                              updateLabel="true"
+                                              scrollHeight="220"
+                                              styleClass="full-width">
+                            <f:selectItems value="#{procedimientoFlujoModel.examenesDisponibles}"
+                                           var="examenDisponible"
+                                           itemLabel="#{examenDisponible.nombre}"
+                                           itemValue="#{examenDisponible}" />
+                        </p:selectCheckboxMenu>
+                        <span class="form-helper">#{msg['flujo.examenesOpcionales']}</span>
+                    </div>
+
+                    <div class="toggle-field">
+                        <div class="toggle-info">
+                            <strong>#{msg['procedimientoPaso.indicaFin']}</strong>
+                            <span>#{msg['procedimientoPaso.indicaFinAyuda']}</span>
+                        </div>
+                        <p:toggleSwitch id="pasoFinal" value="#{procedimientoFlujoModel.indicaFin}" />
+                    </div>
+                </div>
+                <div class="dialog-actions">
+                    <p:commandButton value="#{msg['crud.cancelar']}"
+                                     action="#{procedimientoFlujoModel.cancelar()}"
+                                     process="@this" immediate="true" resetValues="true"
+                                     update=":layoutForm:messages :layoutForm:dialogMensajes :layoutForm:pasoDialog"
+                                     icon="pi pi-times"
+                                     styleClass="ui-button-secondary"
+                                     oncomplete="PF('flujoPasoDialog').hide()" />
+                    <p:commandButton value="#{procedimientoFlujoModel.editando ? msg['flujo.actualizarPaso'] : msg['crud.guardar']}"
+                                     icon="pi pi-check"
+                                     actionListener="#{procedimientoFlujoModel.guardar()}"
+                                     process="@this pasoContenido"
+                                     update=":layoutForm:messages :layoutForm:dialogMensajes :layoutForm:procedimientoTabs:flujoProcedimiento :layoutForm:pasoContenido"
+                                     styleClass="ui-button-primary"
+                                     oncomplete="if (!args.validationFailed) PF('flujoPasoDialog').hide()" />
+                </div>
             </p:outputPanel>
         </p:dialog>
     </ui:define>
