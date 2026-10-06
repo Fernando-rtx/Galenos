@@ -44,12 +44,6 @@
                             </p>
                             <nav class="procedure-flow" aria-label="#{msg['procedimiento.flow']}">
                                 <h:link outcome="/paginas/Procedimiento" value="#{msg['nav.procedimiento']}" />
-                                <span aria-hidden="true">›</span>
-                                <strong>#{msg['nav.procedimientoPaso']}</strong>
-                                <span aria-hidden="true">›</span>
-                                <h:link outcome="/paginas/ProcedimientoPasoSecuencia" value="#{msg['nav.secuencia']}" />
-                                <span aria-hidden="true">›</span>
-                                <h:link outcome="/paginas/ProcedimientoPasoExamen" value="#{msg['nav.procedimientoPasoExamen']}" />
                             </nav>
                         </div>
 
@@ -63,6 +57,7 @@
 
                     <p:messages
                         id="messages"
+                        globalOnly="true"
                         showDetail="false"
                         closable="true" />
 
@@ -192,7 +187,10 @@
                                 value="#{procedimientoPasoModel.seleccionado.nombre}"
                                 placeholder="#{msg['procedimientoPaso.nombrePlaceholder']}"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}" />
+                                requiredMessage="#{msg['procedimientoPaso.nombreRequerido']}"
+                                maxlength="155" />
+
+                            <p:message for="nombre" showSummary="true" showDetail="false" />
 
                             <span class="form-helper">
                                 #{msg['procedimientoPaso.nombreAyuda']}
@@ -211,7 +209,8 @@
                                 converter="#{procedimientoConverter}"
 
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}"
+                                requiredMessage="#{msg['procedimientoPaso.procedimientoRequerido']}"
+                                disabled="#{not procedimientoPasoModel.estructuraEditable}"
                                 styleClass="full-width">
 
                                 <f:selectItem
@@ -223,6 +222,8 @@
                                     itemLabel="#{procedimiento.nombre}"
                                     itemValue="#{procedimiento}" />
                             </p:selectOneMenu>
+
+                            <p:message for="idProcedimiento" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="form-field">
@@ -237,7 +238,8 @@
                                 converter="#{rolConverter}"
 
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}"
+                                requiredMessage="#{msg['procedimientoPaso.rolRequerido']}"
+                                disabled="#{not procedimientoPasoModel.estructuraEditable}"
                                 styleClass="full-width">
 
                                 <f:selectItem
@@ -249,6 +251,8 @@
                                     itemLabel="#{rol.nombre}"
                                     itemValue="#{rol}" />
                             </p:selectOneMenu>
+
+                            <p:message for="idRol" showSummary="true" showDetail="false" />
                         </div>
 
                         <div class="toggle-field">

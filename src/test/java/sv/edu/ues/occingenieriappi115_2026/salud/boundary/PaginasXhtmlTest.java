@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import sv.edu.ues.occingenieriappi115_2026.salud.model.ClinicaModel;
 import sv.edu.ues.occingenieriappi115_2026.salud.model.ProcedimientoModel;
+import sv.edu.ues.occingenieriappi115_2026.salud.model.ProcedimientoFlujoModel;
 import sv.edu.ues.occingenieriappi115_2026.salud.model.ProcedimientoPasoExamenModel;
 import sv.edu.ues.occingenieriappi115_2026.salud.model.ProcedimientoPasoModel;
 import sv.edu.ues.occingenieriappi115_2026.salud.model.ProcedimientoPasoSecuenciaModel;
@@ -26,6 +27,7 @@ class PaginasXhtmlTest {
 
     private static final Map<String, Class<?>> BEANS = Map.of(
             "procedimientoModel", ProcedimientoModel.class,
+            "procedimientoFlujoModel", ProcedimientoFlujoModel.class,
             "clinicaModel", ClinicaModel.class,
             "rolModel", RolModel.class,
             "procedimientoPasoModel", ProcedimientoPasoModel.class,
@@ -101,6 +103,9 @@ class PaginasXhtmlTest {
                         }
                     }
                     cierre++;
+                }
+                if (cierre >= cadena.length()) {
+                    return;
                 }
                 for (String argumento : cadena.substring(fin + 1, cierre).split(",")) {
                     validar(pagina, argumento);

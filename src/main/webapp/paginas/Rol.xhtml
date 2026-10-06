@@ -53,6 +53,7 @@
 
                     <p:messages
                         id="messages"
+                        globalOnly="true"
                         showDetail="false"
                         closable="true" />
 
@@ -177,7 +178,10 @@
                                 value="#{rolModel.seleccionado.nombre}"
                                 placeholder="#{msg['rol.nombrePlaceholder']}"
                                 required="true"
-                                requiredMessage="#{msg['mensajes.error']}" />
+                                requiredMessage="#{msg['rol.nombreRequerido']}"
+                                maxlength="155" />
+
+                            <p:message for="nombre" showSummary="true" showDetail="false" />
 
                             <span class="form-helper">
                                 #{msg['rol.nombreAyuda']}

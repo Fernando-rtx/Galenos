@@ -67,8 +67,15 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
 
     @PostConstruct
     public void inicializar() {
-        this.procedimientos = procedimientoDAO.obtenerTodos();
-        this.roles = rolDAO.obtenerTodos();
+        List<Procedimiento> procedimientosCatalogo = procedimientoDAO.obtenerTodos();
+        List<Rol> rolesCatalogo = rolDAO.obtenerTodos();
+        this.procedimientos = (procedimientosCatalogo == null ? List.<Procedimiento>of() : procedimientosCatalogo).stream()
+                .filter(procedimiento -> procedimiento != null
+                && !Boolean.FALSE.equals(procedimiento.getActivo()))
+                .toList();
+        this.roles = (rolesCatalogo == null ? List.<Rol>of() : rolesCatalogo).stream()
+                .filter(rol -> rol != null && !Boolean.FALSE.equals(rol.getActivo()))
+                .toList();
     }
 
     @Override
@@ -92,6 +99,10 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
         return roles;
     }
 
+    public boolean isEstructuraEditable() {
+        return getEstado() != ESTADO_CRUD.EDICION;
+    }
+
     public List<ProcedimientoPaso> getPasosPorProcedimiento(Procedimiento procedimiento) {
         if (procedimiento == null || procedimiento.getIdProcedimiento() == null) {
             return List.of();
@@ -111,12 +122,32 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
 
     public void seleccionar(ProcedimientoPaso seleccionado) {
         this.seleccionado = seleccionado;
+        agregarOpcionesActuales();
         setEstado(ESTADO_CRUD.EDICION);
     }
 
     public void seleccionarFila() {
         if (seleccionado != null) {
+            agregarOpcionesActuales();
             setEstado(ESTADO_CRUD.EDICION);
+        }
+    }
+
+    private void agregarOpcionesActuales() {
+        if (seleccionado == null) {
+            return;
+        }
+        Procedimiento procedimiento = seleccionado.getIdProcedimiento();
+        if (procedimiento != null && procedimientos.stream().noneMatch(opcion ->
+                procedimiento.getIdProcedimiento().equals(opcion.getIdProcedimiento()))) {
+            procedimientos = new java.util.ArrayList<>(procedimientos);
+            procedimientos.add(procedimiento);
+        }
+        Rol rol = seleccionado.getIdRol();
+        if (rol != null && roles.stream().noneMatch(opcion ->
+                rol.getIdRol().equals(opcion.getIdRol()))) {
+            roles = new java.util.ArrayList<>(roles);
+            roles.add(rol);
         }
     }
 
@@ -221,11 +252,82 @@ public class ProcedimientoPasoModel extends AbstractModel<ProcedimientoPaso> imp
         if (!procedimientoValido()) {
             return false;
         }
+        if (!rolValido()) {
+            return false;
+        }
+        if (getEstado() == ESTADO_CRUD.EDICION && !relacionesSinCambios()) {
+            agregarError("procedimientoPaso.relacionesBloqueadas");
+            return false;
+        }
         if (tieneNombreDuplicado()) {
             agregarError("procedimientoPaso.nombreDuplicado");
             return false;
         }
+        if (tieneRolDuplicado()) {
+            agregarError("procedimientoPaso.rolDuplicado");
+            return false;
+        }
+        if (getEstado() == ESTADO_CRUD.CREACION && yaTienePasosEnProcedimiento()) {
+            agregarError("flujo.useFlujo");
+            return false;
+        }
         return true;
+    }
+
+    private boolean yaTienePasosEnProcedimiento() {
+        UUID idProcedimiento = seleccionado.getIdProcedimiento().getIdProcedimiento();
+        return getDao().obtenerTodos().stream()
+                .anyMatch(paso -> paso != null && paso.getIdProcedimiento() != null
+                && idProcedimiento.equals(paso.getIdProcedimiento().getIdProcedimiento()));
+    }
+
+    private boolean rolValido() {
+        Rol rol = seleccionado.getIdRol();
+        if (rol == null || rol.getIdRol() == null) {
+            agregarError("procedimientoPaso.rolRequerido");
+            return false;
+        }
+        Rol existente = rolDAO.buscarPorId(rol.getIdRol());
+        if (existente == null) {
+            agregarError("procedimientoPaso.rolNoExiste");
+            return false;
+        }
+        if (Boolean.FALSE.equals(existente.getActivo())) {
+            ProcedimientoPaso original = seleccionado.getIdProcedimientoPaso() == null
+                    ? null : getDao().buscarPorId(seleccionado.getIdProcedimientoPaso());
+            boolean conservaRol = original != null && original.getIdRol() != null
+                    && rol.getIdRol().equals(original.getIdRol().getIdRol());
+            if (!conservaRol) {
+                agregarError("procedimientoPaso.rolInactivo");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean relacionesSinCambios() {
+        ProcedimientoPaso original = getDao().buscarPorId(seleccionado.getIdProcedimientoPaso());
+        if (original == null || original.getIdProcedimiento() == null
+                || original.getIdRol() == null) {
+            return false;
+        }
+        return original.getIdProcedimiento().getIdProcedimiento().equals(
+                seleccionado.getIdProcedimiento().getIdProcedimiento())
+                && original.getIdRol().getIdRol().equals(seleccionado.getIdRol().getIdRol());
+    }
+
+    private boolean tieneRolDuplicado() {
+        UUID idProcedimiento = seleccionado.getIdProcedimiento().getIdProcedimiento();
+        UUID idRol = seleccionado.getIdRol().getIdRol();
+        UUID idPropio = seleccionado.getIdProcedimientoPaso();
+        return getDao().obtenerTodos().stream()
+                .filter(existente -> existente != null && existente.getIdRol() != null
+                && existente.getIdProcedimiento() != null)
+                .filter(existente -> idPropio == null
+                || !idPropio.equals(existente.getIdProcedimientoPaso()))
+                .anyMatch(existente -> idProcedimiento.equals(
+                        existente.getIdProcedimiento().getIdProcedimiento())
+                && idRol.equals(existente.getIdRol().getIdRol()));
     }
 
     private boolean procedimientoValido() {

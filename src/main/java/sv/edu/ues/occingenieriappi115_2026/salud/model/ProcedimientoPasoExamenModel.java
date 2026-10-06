@@ -45,6 +45,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
     private List<ProcedimientoPaso> procedimientosPaso;
     private List<Examen> examenes;
     private Procedimiento procedimientoSeleccionado;
+    private List<ProcedimientoPasoExamen> relacionesCache;
 
     public ProcedimientoPasoExamenModel() {
     }
@@ -60,7 +61,9 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
     @PostConstruct
     public void inicializar() {
         this.procedimientosPaso = procedimientoPasoDAO.obtenerTodos();
-        this.examenes = examenDAO.obtenerTodos();
+        this.examenes = examenDAO.obtenerTodos().stream()
+                .filter(examen -> examen != null && !Boolean.FALSE.equals(examen.getActivo()))
+                .toList();
     }
 
     @Override
@@ -92,6 +95,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
                 .filter(paso -> paso != null && paso.getIdProcedimiento() != null
                 && paso.getIdProcedimiento().getIdProcedimiento() != null)
                 .map(ProcedimientoPaso::getIdProcedimiento)
+                .filter(procedimiento -> !Boolean.FALSE.equals(procedimiento.getActivo()))
                 .collect(java.util.stream.Collectors.toMap(
                         Procedimiento::getIdProcedimiento,
                         procedimiento -> procedimiento,
@@ -150,6 +154,24 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
                 .toList();
     }
 
+    public List<ProcedimientoPasoExamen> getExamenesPorPaso(ProcedimientoPaso paso) {
+        if (paso == null || paso.getIdProcedimientoPaso() == null) {
+            return List.of();
+        }
+        UUID idPaso = paso.getIdProcedimientoPaso();
+        return obtenerRelaciones().stream()
+                .filter(relacion -> relacion != null && relacion.getIdProcedimientoPaso() != null
+                && idPaso.equals(relacion.getIdProcedimientoPaso().getIdProcedimientoPaso()))
+                .sorted(Comparator.comparing(relacion -> relacion.getIdExamen() == null
+                        ? null : relacion.getIdExamen().getNombre(),
+                        Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .toList();
+    }
+
+    public void invalidarCache() {
+        relacionesCache = null;
+    }
+
     public void nuevo() {
         seleccionado = new ProcedimientoPasoExamen();
         procedimientoSeleccionado = null;
@@ -206,6 +228,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
             return;
         }
         setEstado(ESTADO_CRUD.LISTADO);
+        relacionesCache = null;
     }
 
     public void cancelar() {
@@ -246,6 +269,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
             volverAlListado();
         }
         agregarMensaje("ppe.quitada", FacesMessage.SEVERITY_INFO);
+        relacionesCache = null;
     }
 
     /**
@@ -304,8 +328,11 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
     }
 
     private List<ProcedimientoPasoExamen> obtenerRelaciones() {
-        List<ProcedimientoPasoExamen> relaciones = getDao().obtenerTodos();
-        return relaciones == null ? List.of() : relaciones;
+        if (relacionesCache == null) {
+            List<ProcedimientoPasoExamen> relaciones = getDao().obtenerTodos();
+            relacionesCache = relaciones == null ? List.of() : relaciones;
+        }
+        return relacionesCache;
     }
 
     private boolean mismoRegistro(ProcedimientoPasoExamen existente) {
