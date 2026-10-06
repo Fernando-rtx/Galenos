@@ -61,11 +61,14 @@
                     </h:panelGroup>
                     <div class="section-divider"></div>
 
-                    <p:outputPanel id="messages">
+                    <p:outputPanel id="messages" layout="block">
                         <p:messages
-                        id="listaMessages"
-                        showDetail="false"
-                        closable="true"  globalOnly="true" redisplay="false" rendered="#{consultaModel.estado eq 'LISTADO'}" />
+                            id="listaMessages"
+                            rendered="#{consultaModel.estado eq 'LISTADO'}"
+                            globalOnly="true"
+                            redisplay="false"
+                            showDetail="false"
+                            closable="true" />
                     </p:outputPanel>
 
                     <div class="table-section">
@@ -122,7 +125,7 @@
                                 event="rowDblselect"
                                 listener="#{consultaModel.seleccionarFila}"
                                 process="@this"
-                                update="edicionDialog messages"
+                                update="messages edicionDialog"
                                 resetValues="true"
                                 oncomplete="PF('consultaDialog').show()" />
 
@@ -212,6 +215,7 @@
                 layout="block">
 
                 <p:messages id="consultaMessages" globalOnly="true" redisplay="false"
+                            rendered="#{consultaModel.estado ne 'LISTADO'}"
                             showDetail="false" closable="true" />
 
                 <h:panelGroup rendered="#{consultaModel.seleccionado ne null}">
@@ -352,9 +356,9 @@
                                 <crud:botones-bottom
                                     model="#{consultaModel}"
                                     procesar="detalleConsulta"
-                                    actualizar=":layoutForm:messages consultasTable edicionContenido"
+                                    actualizar=":layoutForm:messages :layoutForm:consultasTable :layoutForm:edicionContenido"
                                     oncompleteCancelar="PF('consultaDialog').hide()"
-                                    oncompleteGuardar="if (args.validationFailed) PF('consultaDialog').show(); else PF('consultaDialog').hide()" />
+                                    oncompleteGuardar="if (args &amp;&amp; !args.validationFailed) PF('consultaDialog').hide()" />
                             </div>
                         </p:tab>
 

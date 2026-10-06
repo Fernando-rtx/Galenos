@@ -63,6 +63,40 @@ body.clinical-body {
     object-fit: contain;
 }
 
+.layout-logo {
+    gap: 12px;
+}
+
+.layout-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: #303038;
+    color: #ffffff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.layout-menu-toggle .pi {
+    font-size: 18px;
+}
+
+.layout-menu-toggle:hover,
+.layout-menu-toggle[aria-expanded="true"] {
+    background: #41414a;
+}
+
+.layout-menu-toggle:focus-visible {
+    outline: 3px solid #1683b6;
+    outline-offset: 3px;
+}
+
 .layout-language {
     min-width: 170px;
 }
@@ -83,7 +117,23 @@ body.clinical-body {
 
 /* Área principal: navegación lateral y espacio dinámico de las vistas. */
 .layout-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 24px;
     padding: 24px;
+}
+
+.layout-body.is-menu-open {
+    grid-template-columns: 240px minmax(0, 1fr);
+}
+
+.layout-nav[hidden] {
+    display: none;
+}
+
+.layout-workspace {
+    min-width: 0;
 }
 
 .layout-nav,
@@ -113,6 +163,13 @@ body.clinical-body {
     font-weight: 600;
     padding: 10px 0;
     text-decoration: none;
+}
+
+.layout-nav-link:hover,
+.layout-nav-link:focus-visible {
+    color: #106f9c;
+    text-decoration: underline;
+    text-underline-offset: 4px;
 }
 
 /* Pie común de la plantilla Facelets. */
@@ -496,6 +553,10 @@ body.clinical-body {
 }
 
 @media (max-width: 720px) {
+    .layout-body.is-menu-open {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .layout-header {
         grid-template-columns: minmax(0, 1fr);
         gap: 8px;
