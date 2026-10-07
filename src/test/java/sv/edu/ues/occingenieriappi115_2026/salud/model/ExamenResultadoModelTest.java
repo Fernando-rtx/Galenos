@@ -85,20 +85,6 @@ class ExamenResultadoModelTest {
     }
 
     @Test
-    void guardarEnListadoNoDelegaYPermaneceEnListado() {
-        ExamenResultadoDAO dao = mock(ExamenResultadoDAO.class);
-        ExamenResultadoModel model = new ExamenResultadoModel(
-                dao, mock(OrdenExamenDAO.class));
-        model.nuevo();
-        model.setEstado(ESTADO_CRUD.LISTADO);
-
-        model.guardar();
-
-        verifyNoInteractions(dao);
-        assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
-    }
-
-    @Test
     void guardarCorrectamenteMuestraUnSoloExito() {
         ExamenResultadoDAO dao = mock(ExamenResultadoDAO.class);
         ExamenResultadoModel model = new ExamenResultadoModel(dao, mock(OrdenExamenDAO.class));

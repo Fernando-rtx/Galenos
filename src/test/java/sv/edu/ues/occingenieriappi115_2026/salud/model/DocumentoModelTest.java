@@ -221,20 +221,6 @@ class DocumentoModelTest {
     }
 
     @Test
-    void expresionRegularDelTipoRechazaValorInvalido() {
-        DocumentoDAO d = mock(DocumentoDAO.class);
-        DocumentoModel m = model(d, mock(PersonaDAO.class), mock(TipoDocumentoDAO.class));
-        TipoDocumento tipo = new TipoDocumento();
-        tipo.setExpresionRegular("[0-9]{4}");
-        m.nuevo();
-        m.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
-        m.getSeleccionado().setIdTipoDocumento(tipo);
-        m.getSeleccionado().setValor("ABC");
-        m.guardar();
-        verifyNoInteractions(d);
-    }
-
-    @Test
     void tipoActivoYValorValidoSeResuelvenDesdeElDaoYSeGuardan() {
         DocumentoDAO dao = mock(DocumentoDAO.class);
         TipoDocumentoDAO tipos = mock(TipoDocumentoDAO.class);

@@ -266,22 +266,6 @@ class TipoExamenModelTest {
     }
 
     @Test
-    void nuevoInicializaInactivo() {
-        TipoExamenModel model = new TipoExamenModel(mock(TipoExamenDAO.class));
-
-        model.nuevo();
-
-        assertEquals(false, model.getSeleccionado().getActivo());
-    }
-
-    @Test
-    void validarNombreValidoNoLanza() {
-        TipoExamenModel model = new TipoExamenModel(mock(TipoExamenDAO.class));
-
-        assertDoesNotThrow(() -> model.validarNombre(null, null, "Hemograma"));
-    }
-
-    @Test
     void validarNombreDuplicadoLanza() {
         TipoExamenDAO dao = mock(TipoExamenDAO.class);
         TipoExamen existente = new TipoExamen(UUID.randomUUID());

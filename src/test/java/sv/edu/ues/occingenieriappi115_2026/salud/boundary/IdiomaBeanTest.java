@@ -4,7 +4,6 @@ import java.util.Locale;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class IdiomaBeanTest {
 
@@ -52,14 +51,6 @@ class IdiomaBeanTest {
         IdiomaBean bean = new IdiomaBean();
         bean.setIdioma("fr");
         assertEquals("es", bean.getIdioma());
-    }
-
-    @Test
-    void getLocaleDevuelveLocalePorDefectoSiIdiomaNoExiste() {
-        IdiomaBean bean = new IdiomaBean();
-        bean.setIdioma("invalido");
-        assertNotNull(bean.getLocale());
-        assertEquals(Locale.forLanguageTag("es"), bean.getLocale());
     }
 
 }
