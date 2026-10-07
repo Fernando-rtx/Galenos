@@ -1,4 +1,5 @@
 target/
+/docs/
 .DS_Store
 nb-configuration.xml
 nbactions.xml
