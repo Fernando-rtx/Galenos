@@ -7,6 +7,7 @@
     xmlns:f="jakarta.faces.core"
     xmlns:h="jakarta.faces.html"
     xmlns:p="primefaces"
+    xmlns:pt="jakarta.faces.passthrough"
     xmlns:ui="jakarta.faces.facelets"
     template="/WEB-INF/plantillas/general.xhtml">
 
@@ -56,8 +57,8 @@
                         </h:panelGroup>
                     </div>
 
-                    <h:panelGroup rendered="#{not consultaModel.clinicaSeleccionada}" layout="block" role="status">
-                        <h:outputText value="#{msg['clinicaActual.requerida']}" styleClass="form-helper" />
+                    <h:panelGroup rendered="#{not consultaModel.clinicaSeleccionada}" layout="block" styleClass="form-helper" pt:role="status">
+                        <h:outputText value="#{msg['clinicaActual.requerida']}" />
                     </h:panelGroup>
                     <div class="section-divider"></div>
 
