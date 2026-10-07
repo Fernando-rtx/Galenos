@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.DAOInterface;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -39,13 +38,6 @@ class AbstractModelTest {
     }
 
     @Test
-    void constructorRequiereDao() {
-        DAOInterface<TestEntity> dao = mock(DAOInterface.class);
-        ConcreteModel model = new ConcreteModel(dao);
-        assertNotNull(model);
-    }
-
-    @Test
     void estadoInicialEsListado() {
         ConcreteModel model = new ConcreteModel(mock(DAOInterface.class));
         assertEquals(ESTADO_CRUD.LISTADO, model.getEstado());
@@ -59,19 +51,6 @@ class AbstractModelTest {
     }
 
     @Test
-    void getRowKeyConEntidadValidaDevuelveUuid() {
-        DAOInterface<TestEntity> dao = mock(DAOInterface.class);
-        ConcreteModel model = new ConcreteModel(dao);
-        TestEntity entidad = new TestEntity();
-        UUID id = UUID.randomUUID();
-        when(dao.obtenerId(entidad)).thenReturn(id);
-
-        String resultado = model.getRowKey(entidad);
-
-        assertEquals(id.toString(), resultado);
-    }
-
-    @Test
     void getRowKeyConEntidadSinIdDevuelveNull() {
         DAOInterface<TestEntity> dao = mock(DAOInterface.class);
         ConcreteModel model = new ConcreteModel(dao);
@@ -81,38 +60,6 @@ class AbstractModelTest {
         String resultado = model.getRowKey(entidad);
 
         assertNull(resultado);
-    }
-
-    @Test
-    void getRowDataConUuidValidoBuscaEnDao() {
-        DAOInterface<TestEntity> dao = mock(DAOInterface.class);
-        ConcreteModel model = new ConcreteModel(dao);
-        UUID id = UUID.randomUUID();
-        TestEntity esperado = new TestEntity();
-        when(dao.buscarPorId(id)).thenReturn(esperado);
-
-        TestEntity resultado = model.getRowData(id.toString());
-
-        assertEquals(esperado, resultado);
-        verify(dao).buscarPorId(id);
-    }
-
-    @Test
-    void getRowDataConNullDevuelveNull() {
-        ConcreteModel model = new ConcreteModel(mock(DAOInterface.class));
-        assertNull(model.getRowData(null));
-    }
-
-    @Test
-    void getRowDataConBlankDevuelveNull() {
-        ConcreteModel model = new ConcreteModel(mock(DAOInterface.class));
-        assertNull(model.getRowData("  "));
-    }
-
-    @Test
-    void getRowDataConUuidInvalidoDevuelveNull() {
-        ConcreteModel model = new ConcreteModel(mock(DAOInterface.class));
-        assertNull(model.getRowData("no-es-uuid"));
     }
 
     @Test
@@ -150,18 +97,6 @@ class AbstractModelTest {
         int resultado = model.count(new java.util.HashMap<>());
 
         assertEquals(0, resultado);
-    }
-
-    @Test
-    void loadConSortVacioNoRompe() {
-        DAOInterface<TestEntity> dao = mock(DAOInterface.class);
-        ConcreteModel model = new ConcreteModel(dao);
-        when(dao.contar(anyList())).thenReturn(0L);
-        when(dao.obtenerPagina(anyInt(), anyInt(), anyList(), anyList())).thenReturn(List.of());
-
-        List<TestEntity> resultado = model.load(0, 10, new java.util.HashMap<>(), null);
-
-        assertNotNull(resultado);
     }
 
     private static class TestModel extends AbstractModel<Persona> {

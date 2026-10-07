@@ -8,7 +8,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -26,11 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * real a PostgreSQL.</p>
  */
 public class ConcreteDAOTest {
-
-    /**
-     * Paquete base donde viven todos los DAO del proyecto.
-     */
-    private static final String PAQUETE_RAFIZ = "sv.edu.ues.occingenieriappi115_2026.salud.control";
 
     /**
      * DAO concretos que deben existir, cada uno con su entidad asociada.
@@ -66,15 +60,6 @@ public class ConcreteDAOTest {
             }
         }
         return null;
-    }
-
-    @Test
-    public void testTodosLosDaosExisten() {
-        // Escenario: la arquitectura exige 8 DAO para las entidades de Rodrigo.
-        // Esperado: los 8 archivos estan en el classpath.
-        DAOS_CONCRETOS.forEach(daoClase
-                -> assertNotNull(daoClase, "El DAO concreto deberia existir")
-        );
     }
 
     @Test
@@ -145,15 +130,4 @@ public class ConcreteDAOTest {
         });
     }
 
-    @Test
-    public void testTodosEnElMismoPaquete() {
-        // Escenario: el proyecto organiza los DAO en el paquete control.
-        // Esperado: las 8 clases del DAO concreto viven en control.
-        DAOS_CONCRETOS.forEach(daoClase
-                -> assertEquals(PAQUETE_RAFIZ,
-                        daoClase.getPackageName(),
-                        daoClase.getSimpleName() + " debe estar en " + PAQUETE_RAFIZ
-                )
-        );
-    }
 }

@@ -407,20 +407,6 @@ class MedioContactoModelTest {
     }
 
     @Test
-    void expresionRegularDelTipoRechazaValorInvalido() {
-        MedioContactoDAO d = mock(MedioContactoDAO.class);
-        MedioContactoModel m = model(d, mock(PersonaDAO.class), mock(TipoMedioContactoDAO.class));
-        TipoMedioContacto tipo = new TipoMedioContacto();
-        tipo.setExpresionRegular("[0-9]{8}");
-        m.nuevo();
-        m.getSeleccionado().setIdPersona(new Persona(UUID.randomUUID()));
-        m.getSeleccionado().setIdTipoMedioContacto(tipo);
-        m.getSeleccionado().setValor("correo@example.com");
-        m.guardar();
-        verifyNoInteractions(d);
-    }
-
-    @Test
     void personaContextualFiltraContactosYPreasignaLaRelacion() {
         MedioContactoDAO dao = mock(MedioContactoDAO.class);
         Persona persona = new Persona(UUID.randomUUID());

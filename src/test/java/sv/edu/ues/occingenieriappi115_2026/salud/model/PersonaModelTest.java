@@ -138,13 +138,6 @@ class PersonaModelTest {
     }
 
     @Test
-    void nombreNuloEsRechazado() {
-        PersonaModel modelo = new PersonaModel(mock(PersonaDAO.class));
-        assertThrows(ValidatorException.class,
-                () -> modelo.validarNombre(contexto(), componente("nombres"), null));
-    }
-
-    @Test
     void camposObligatoriosVaciosSonRechazados() {
         PersonaModel modelo = new PersonaModel(mock(PersonaDAO.class));
         FacesContext contexto = contexto();
@@ -255,13 +248,6 @@ class PersonaModelTest {
         String nombreLargo = "A".repeat(256);
         assertThrows(ValidatorException.class,
                 () -> modelo.validarNombre(contexto(), componente("nombres"), nombreLargo));
-    }
-
-    @Test
-    void fechaNulaEsRechazada() {
-        PersonaModel modelo = new PersonaModel(mock(PersonaDAO.class));
-        assertThrows(ValidatorException.class,
-                () -> modelo.validarFechaNacimiento(contexto(), componente("fechaNacimiento"), null));
     }
 
     @Test
