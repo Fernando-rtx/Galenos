@@ -56,6 +56,18 @@ orden en `nuevo()`; los resultados se registran en `ExamenResultado`.
 
 ## Comandos
 
+Para la integración del nuevo frontend con **datos ficticios**:
+
+```sh
+./demo start
+```
+
+Requiere JDK 21, Maven, Python 3.11+ y Docker. Prepara su propio PostgreSQL y
+Liberty y muestra la URL de conexión. `./demo verify` ejecuta las pruebas;
+`./demo stop` detiene ese entorno. Instrucciones y configuración en
+[`docs/demo-setup.md`](docs/demo-setup.md), contrato en
+[`docs/api-contract.md`](docs/api-contract.md).
+
 - `mvn test`: compila y ejecuta las pruebas unitarias.
 - `mvn clean package`: limpia, prueba y genera `target/GalenosSV.war`.
 - `mvn liberty:run`: prepara Liberty y despliega la aplicación.

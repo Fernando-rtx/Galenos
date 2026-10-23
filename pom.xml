@@ -187,4 +187,32 @@
         </plugins>
     </build>
 
+    <profiles>
+        <!-- Runtime y bibliotecas de la demo aislados de la instalación habitual. -->
+        <profile>
+            <id>demo</id>
+            <properties>
+                <liberty.install.dir>${project.basedir}/.galenos-demo/runtime/wlp</liberty.install.dir>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.openliberty.tools</groupId>
+                        <artifactId>liberty-maven-plugin</artifactId>
+                        <configuration combine.self="override">
+                            <runtimeArtifact>
+                                <groupId>io.openliberty</groupId>
+                                <artifactId>openliberty-runtime</artifactId>
+                                <version>${openliberty.version}</version>
+                                <type>zip</type>
+                            </runtimeArtifact>
+                            <assemblyInstallDirectory>${project.basedir}/.galenos-demo/runtime</assemblyInstallDirectory>
+                            <userDirectory>${project.basedir}/.galenos-demo/usr</userDirectory>
+                            <serverName>GalenosSVDemo</serverName>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
