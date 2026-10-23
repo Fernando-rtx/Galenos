@@ -23,6 +23,30 @@ y se contrastó SHA-256 con el checksum publicado. Archivo Linux x64:
 Checksum: `d7f5d5cf865a2902b70ff549b97586a7d3f234e016f041ab447ea740c7d66d1c`.
 No es necesario que los compañeros usen esa misma ruta local.
 
+## Validación observada — 2026-10-23
+
+`./demo verify --browser` completó con Temurin **21.0.13+9** y Maven 3.9.16:
+
+| Comprobación | Resultado |
+|---|---|
+| Compilación limpia `mvn clean package` | 103 fuentes y 65 fuentes de prueba compiladas con javac/release 21 |
+| Suite Java | 739 pruebas, cero fallos/errores/omitidas |
+| Protecciones del orquestador | 7 pruebas aprobadas |
+| HTTP real contra PostgreSQL 12.22 | 12 pruebas de TipoDocumento + 9 de Consulta aprobadas |
+| Chromium desde otro origen | Clínicas, consultas, conteos, detalle y 404 legibles |
+| Recursos ajenos | `postgres-local` rechazado por propiedad; sigue funcionando |
+| JDK incorrecto | Se rechazó explícitamente Java 25 antes del arranque |
+| Reinicio rápido | TIME_WAIT no bloquea un puerto libre; un listener activo sí se rechaza |
+| Copia limpia del repositorio | `./demo start` preparó su propia base/runtime y pasó las 21 pruebas HTTP más Chromium |
+
+Runtime usado: Open Liberty 26.0.0.8. El reporte reproducible queda en
+`.galenos-demo/verification.json`; no contiene claves. Los detalles históricos
+del ensayo inicial con Java 25 se conservan en las guías anteriores.
+Una copia del reporte observado se conserva en
+`test/evidence/java21-verification.json`. La prueba desde copia limpia empezó
+sin `target/`, `demo.env` ni `.galenos-demo/`; usó otros puertos/contenedor para
+comprobar aislamiento y se detuvo con `./demo stop`.
+
 ## Un comando para iniciar
 
 Desde una copia del backend:

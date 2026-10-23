@@ -1,0 +1,19 @@
+{
+  "utc": "2026-10-23T21:25:57.198531+00:00",
+  "java": "openjdk version \"21.0.13\" 2026-10-20 LTS",
+  "liberty": "26.0.0.8",
+  "postgresql": "12.22 (Debian 12.22-1.pgdg120+1)",
+  "javaTests": {
+    "tests": 739,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "http": {
+    "tipoDocumento": "passed",
+    "consulta": "passed"
+  },
+  "browser": true,
+  "fixtureSha256": "b83692af0510933844c7573f29b920d8362f8cf09e47bf1938f1ea72192438a1",
+  "warSha256": "d44f2e1e051b923efc89e19c8fe4b1a9df5e541c98616372818bc02f017f764b"
+}
