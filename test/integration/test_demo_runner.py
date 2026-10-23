@@ -14,6 +14,41 @@ spec.loader.exec_module(runner)
 
 
 class DemoRunnerTest(unittest.TestCase):
+    def test_version_liberty_no_depende_de_etiquetas_del_idioma(self):
+        with tempfile.TemporaryDirectory() as folder:
+            runtime = Path(folder)
+            metadata = runtime / "lib/versions/openliberty.properties"
+            metadata.parent.mkdir(parents=True)
+            metadata.write_text("# Metadatos en español\ncom.ibm.websphere.productName=Open Liberty\n"
+                                "com.ibm.websphere.productVersion=26.0.0.8\n", encoding="utf-8")
+            with patch.object(runner.subprocess, "run", side_effect=AssertionError("No ejecutar productInfo")):
+                self.assertEqual("26.0.0.8", runner.liberty_version(runtime))
+
+    def test_runtime_con_otra_version_se_rechaza_antes_de_compilar(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(runner, "STATE", Path(folder)):
+            demo = runner.Demo(dict(runner.DEFAULTS))
+            server = demo.runtime / "bin/server"
+            server.parent.mkdir(parents=True)
+            server.touch()
+            metadata = demo.runtime / "lib/versions/openliberty.properties"
+            metadata.parent.mkdir(parents=True)
+            metadata.write_text("com.ibm.websphere.productVersion=26.0.0.9\n")
+            with patch.object(demo, "logged") as logged:
+                with self.assertRaises(runner.DemoError):
+                    demo.build(False)
+                logged.assert_not_called()
+
+    def test_metadatos_liberty_ausentes_o_incompletos_no_se_aceptan(self):
+        with tempfile.TemporaryDirectory() as folder:
+            runtime = Path(folder)
+            with self.assertRaises(runner.DemoError):
+                runner.liberty_version(runtime)
+            metadata = runtime / "lib/versions/openliberty.properties"
+            metadata.parent.mkdir(parents=True)
+            metadata.write_text("com.ibm.websphere.productName=Open Liberty\n")
+            with self.assertRaises(runner.DemoError):
+                runner.liberty_version(runtime)
+
     def test_listener_activo_no_se_confunde_con_puerto_disponible(self):
         with socket.socket() as server:
             server.bind(("127.0.0.1", 0))

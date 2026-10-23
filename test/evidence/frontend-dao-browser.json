@@ -1,0 +1,37 @@
+{
+  "frontendOrigin": "http://localhost:3000",
+  "mocha": {
+    "status": "Pruebas configuradas completadas.",
+    "passes": 7,
+    "failures": 0
+  },
+  "daoChecks": {
+    "baseUrl": "http://localhost:19081/GalenosSV/resources/",
+    "responseClass": true,
+    "clinicsTotal": 2,
+    "total": 5,
+    "count": 1,
+    "exposedTotal": "5",
+    "emptyCount": 0,
+    "emptyTotal": 5,
+    "filteredTotal": 2,
+    "wrongClinic": {
+      "type": "http",
+      "status": 404
+    },
+    "invalidMax": {
+      "type": "http",
+      "status": 422
+    },
+    "preflightTotal": 5
+  },
+  "preflightStatuses": [
+    204
+  ],
+  "deniedOriginError": {
+    "type": "connection",
+    "code": "NETWORK_ERROR",
+    "status": null
+  },
+  "syntheticDataOnly": true
+}

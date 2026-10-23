@@ -49,6 +49,20 @@ def available_port(port):
             raise DemoError("Puerto ocupado: " + str(port)) from error
 
 
+def liberty_version(runtime):
+    """Metadato de la distribución; productInfo traduce sus etiquetas según el idioma."""
+    path = runtime / "lib/versions/openliberty.properties"
+    if not path.is_file():
+        raise DemoError("El runtime no incluye los metadatos de Open Liberty")
+    for line in path.read_text(encoding="utf-8").splitlines():
+        key, separator, value = line.partition("=")
+        if separator and key.strip() == "com.ibm.websphere.productVersion":
+            version = value.strip()
+            if re.fullmatch(r"\d+(?:\.\d+){3}", version):
+                return version
+    raise DemoError("No se encontró una versión válida en los metadatos de Open Liberty")
+
+
 def configuration():
     values = dict(DEFAULTS)
     path = ROOT / "demo.env"
@@ -245,8 +259,7 @@ class Demo:
         self.versions = {child.tag.split("}")[-1]: child.text for child in pom.find("m:properties", namespace)}
         if not (self.runtime / "bin/server").exists():
             self.logged(self.maven("liberty:install-server"), "install-liberty")
-        version = self.capture([str(self.runtime / "bin/productInfo"), "version"]).stdout
-        if "Product version: " + self.versions["openliberty.version"] not in version:
+        if liberty_version(self.runtime) != self.versions["openliberty.version"]:
             raise DemoError("La versión del runtime local no coincide con pom.xml")
         goals = ["clean", "package"] if verify else ["package", "-DskipTests"]
         self.logged(self.maven(*goals), "verify-java" if verify else "build")

@@ -7,6 +7,7 @@ target/
 !/docs/rest-validation.md
 !/docs/consulta-demo.md
 !/docs/demo-setup.md
+!/docs/integracion-dao-navegador.md
 .DS_Store
 nb-configuration.xml
 nbactions.xml
