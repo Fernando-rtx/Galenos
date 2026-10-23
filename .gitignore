@@ -3,6 +3,7 @@ target/
 !/docs/api-contract.md
 !/docs/backend-audit.md
 !/docs/rest-validation.md
+!/docs/consulta-demo.md
 .DS_Store
 nb-configuration.xml
 nbactions.xml

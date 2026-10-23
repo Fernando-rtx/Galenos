@@ -8,6 +8,35 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ApiSettingsTest {
     @Test
+    void demoDesactivadaPorDefecto() {
+        assertEquals(404, assertThrows(ApiException.class,
+                () -> new ApiSettings(Map.of()).requireDemo()).getStatus());
+    }
+
+    @Test
+    void demoSoloSeHabilitaConNombreDeBaseAislada() {
+        assertDoesNotThrow(() -> new ApiSettings(Map.of("GALENOS_DEMO_MODE", "true",
+                "POSTGRESQL_DB_NAME", "galenos_demo_unit")).requireDemo());
+        assertDoesNotThrow(() -> new ApiSettings(Map.of("GALENOS_DEMO_MODE", "true",
+                "POSTGRESQL_DB_NAME", "galenos_rest_test_unit")).requireDemo());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"clinica", "universidad", "", "galenos_demo_", "otra_galenos_demo_prueba"})
+    void demoRechazaBaseNoIdentificadaComoPrueba(String database) {
+        assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of(
+                "GALENOS_DEMO_MODE", "true", "POSTGRESQL_DB_NAME", database)));
+    }
+
+    @Test
+    void demoRechazaBooleanoYZonaHorariaInvalidos() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new ApiSettings(Map.of("GALENOS_DEMO_MODE", "yes")));
+        assertThrows(java.time.DateTimeException.class,
+                () -> new ApiSettings(Map.of("GALENOS_CLINIC_TIME_ZONE", "Zona/NoExiste")));
+    }
+
+    @Test
     void sinConfiguracionNoPermiteOrigenesCruzados() {
         var settings = new ApiSettings(Map.of());
         assertFalse(settings.allowsOrigin("http://localhost:3000"));
