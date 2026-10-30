@@ -411,16 +411,12 @@ class MedioContactoModelTest {
         MedioContactoDAO dao = mock(MedioContactoDAO.class);
         Persona persona = new Persona(UUID.randomUUID());
         List<MedioContacto> esperados = List.of(new MedioContacto(UUID.randomUUID()));
-        when(dao.obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList()))
-                .thenReturn(esperados);
+        when(dao.buscarPorPersona(persona.getIdPersona())).thenReturn(esperados);
         MedioContactoModel modelo = model(dao, mock(PersonaDAO.class),
                 mock(TipoMedioContactoDAO.class));
 
         assertSame(esperados, modelo.getContactosPorPersona(persona));
-        verify(dao).obtenerPagina(eq(0), eq(Integer.MAX_VALUE),
-                eq(List.of(new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL,
-                        persona.getIdPersona()))),
-                eq(List.of()));
+        verify(dao).buscarPorPersona(persona.getIdPersona());
 
         modelo.nuevoParaPersona(persona);
 
@@ -460,4 +456,66 @@ class MedioContactoModelTest {
         verify(dao, never()).eliminar(any());
         assertSame(contacto, modelo.getSeleccionado());
     }
+    @Test
+    void personaNoPersistidaNoConsultaYFalloDeListaSePropaga() {
+        var dao = mock(MedioContactoDAO.class);
+        var modelo = model(dao, mock(PersonaDAO.class), mock(TipoMedioContactoDAO.class));
+        assertEquals(List.of(), modelo.getContactosPorPersona(null));
+        assertEquals(List.of(), modelo.getContactosPorPersona(new Persona()));
+        verifyNoInteractions(dao);
+        var persona = new Persona(UUID.randomUUID());
+        var fallo = new jakarta.persistence.PersistenceException("Conexion sintetica");
+        when(dao.buscarPorPersona(persona.getIdPersona())).thenThrow(fallo);
+        assertSame(fallo, assertThrows(jakarta.persistence.PersistenceException.class,
+                () -> modelo.getContactosPorPersona(persona)));
+    }
+
+    @Test
+    void uuidMalFormadoNoOcultaUnErrorDelDaoDePersonas() {
+        var personas = mock(PersonaDAO.class);
+        var modelo = model(mock(MedioContactoDAO.class), personas, mock(TipoMedioContactoDAO.class));
+        modelo.setIdPersonaContexto("uuid-invalido");
+        assertNull(modelo.getPersonaContexto());
+        verifyNoInteractions(personas);
+        UUID id = UUID.randomUUID();
+        var fallo = new IllegalArgumentException("Fallo sintetico JPA");
+        when(personas.buscarPorId(id)).thenThrow(fallo);
+        assertSame(fallo, assertThrows(IllegalArgumentException.class,
+                () -> modelo.setIdPersonaContexto(id.toString())));
+    }
+
+    @Test
+    void falloDeDuplicadosMuestraMensajeSeguroSinPersistirNiPerderFormulario() throws Exception {
+        var dao = mock(MedioContactoDAO.class);
+        var tipos = mock(TipoMedioContactoDAO.class);
+        var modelo = model(dao, mock(PersonaDAO.class), tipos);
+        modelo.nuevo();
+        var contacto = modelo.getSeleccionado();
+        contacto.setIdPersona(new Persona(UUID.randomUUID()));
+        contacto.setIdTipoMedioContacto(tipoActivo(tipos));
+        contacto.setValor("contacto sintetico");
+        var contexto = mock(jakarta.faces.context.FacesContext.class);
+        var aplicacion = mock(jakarta.faces.application.Application.class);
+        when(contexto.getApplication()).thenReturn(aplicacion);
+        var mensajes = new java.util.ListResourceBundle() {
+            protected Object[][] getContents() {
+                return new Object[][]{{"medioContacto.errorGuardar", "No se pudo guardar el contacto"}};
+            }
+        };
+        when(aplicacion.getResourceBundle(contexto, "msg")).thenReturn(mensajes);
+        var field = MedioContactoModel.class.getDeclaredField("facesContext");
+        field.setAccessible(true);
+        field.set(modelo, contexto);
+        when(dao.existeContacto(any(), any(), anyString(), any()))
+                .thenThrow(new jakarta.ejb.EJBException(new jakarta.persistence.PersistenceException("SQL sintetico interno")));
+        modelo.guardar();
+        var mensaje = org.mockito.ArgumentCaptor.forClass(jakarta.faces.application.FacesMessage.class);
+        verify(contexto).addMessage(isNull(), mensaje.capture());
+        assertEquals("No se pudo guardar el contacto", mensaje.getValue().getSummary());
+        verify(contexto).validationFailed();
+        verify(dao, never()).guardar(any());
+        assertSame(contacto, modelo.getSeleccionado());
+        assertEquals(ESTADO_CRUD.CREACION, modelo.getEstado());
+    }
+
 }

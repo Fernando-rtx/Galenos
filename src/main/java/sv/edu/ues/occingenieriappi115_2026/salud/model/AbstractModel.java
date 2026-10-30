@@ -84,11 +84,13 @@ public abstract class AbstractModel<T> extends LazyDataModel<T> {
         if (rowKey == null || rowKey.isBlank()) {
             return null;
         }
+        UUID id;
         try {
-            return getDao().buscarPorId(UUID.fromString(rowKey));
+            id = UUID.fromString(rowKey);
         } catch (IllegalArgumentException ex) {
             return null;
         }
+        return getDao().buscarPorId(id);
     }
 
     /** Extensión local para filtros de contexto sin duplicar el adaptador lazy. */

@@ -1,6 +1,10 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import jakarta.ejb.EJBException;
+import jakarta.persistence.PersistenceException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.component.UIInput;
@@ -17,8 +21,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import org.primefaces.event.SelectEvent;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.MedioContactoDAO;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoMedioContactoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.MedioContacto;
@@ -29,6 +31,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoMedioContacto;
 @ViewScoped
 public class MedioContactoModel extends AbstractModel<MedioContacto> implements Serializable {
     private static final long serialVersionUID = 1L;
+    private static final Logger LOG = Logger.getLogger(MedioContactoModel.class.getName());
     @EJB
     private MedioContactoDAO medioContactoDAO;
     @EJB
@@ -173,10 +176,7 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
         if (persona == null || persona.getIdPersona() == null) {
             return List.of();
         }
-        return getDao().obtenerPagina(0, Integer.MAX_VALUE,
-                List.of(new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL,
-                        persona.getIdPersona())),
-                List.of());
+        return medioContactoDAO.buscarPorPersona(persona.getIdPersona());
     }
 
     /**
@@ -239,17 +239,23 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
         if (seleccionado == null) {
             return;
         }
-        seleccionado.setValor(normalizar(seleccionado.getValor()));
-        if (!validarAntesDeGuardar()) {
-            return;
+        try {
+            seleccionado.setValor(normalizar(seleccionado.getValor()));
+            if (!validarAntesDeGuardar()) {
+                return;
+            }
+            switch (getEstado()) {
+                case CREACION -> getDao().guardar(seleccionado);
+                case EDICION -> seleccionado = getDao().actualizar(seleccionado);
+                case LISTADO -> { return; }
+            }
+            agregarMensaje("medioContacto.guardado", FacesMessage.SEVERITY_INFO);
+            cancelar();
+        } catch (PersistenceException | EJBException ex) {
+            LOG.log(Level.SEVERE, "No se pudo guardar el medio de contacto", ex);
+            if (facesContext == null) throw ex;
+            agregarError(null, "medioContacto.errorGuardar");
         }
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> { }
-        }
-        agregarMensaje("medioContacto.guardado", FacesMessage.SEVERITY_INFO);
-        cancelar();
     }
 
     public void cancelar() {
@@ -281,21 +287,25 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
     }
 
     private Persona buscarPersona(String id) {
+        if (id == null || id.isBlank()) return null;
+        UUID uuid;
         try {
-            return id == null || id.isBlank()
-                    ? null : personaDAO.buscarPorId(UUID.fromString(id));
+            uuid = UUID.fromString(id);
         } catch (IllegalArgumentException ex) {
             return null;
         }
+        return personaDAO.buscarPorId(uuid);
     }
 
     private TipoMedioContacto buscarTipo(String id) {
+        if (id == null || id.isBlank()) return null;
+        UUID uuid;
         try {
-            return id == null || id.isBlank()
-                    ? null : tipoMedioContactoDAO.buscarPorId(UUID.fromString(id));
+            uuid = UUID.fromString(id);
         } catch (IllegalArgumentException ex) {
             return null;
         }
+        return tipoMedioContactoDAO.buscarPorId(uuid);
     }
 
     private boolean validarAntesDeGuardar() {

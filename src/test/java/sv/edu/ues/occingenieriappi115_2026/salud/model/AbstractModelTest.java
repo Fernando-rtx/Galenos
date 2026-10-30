@@ -1,6 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import java.util.List;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaDAO;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.DAOInterface;
@@ -148,4 +150,14 @@ class AbstractModelTest {
         assertNull(model.getRowData(null));
         assertNull(model.getRowData("  "));
     }
+    @Test
+    void rowDataNoOcultaErroresDeConsultaComoSiElUuidFueraInvalido() {
+        PersonaDAO dao = mock(PersonaDAO.class);
+        PersonaModel model = new PersonaModel(dao);
+        UUID id = UUID.randomUUID();
+        var fallo = new IllegalArgumentException("Fallo sintetico del proveedor JPA");
+        when(dao.buscarPorId(id)).thenThrow(fallo);
+        assertSame(fallo, assertThrows(IllegalArgumentException.class, () -> model.getRowData(id.toString())));
+    }
+
 }
