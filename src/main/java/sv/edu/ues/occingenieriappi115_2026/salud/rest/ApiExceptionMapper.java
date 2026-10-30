@@ -24,6 +24,17 @@ public class ApiExceptionMapper implements ExceptionMapper<Exception> {
             catch (java.util.MissingResourceException ex) { mensaje = "No se pudo completar la operación con los datos indicados"; }
             return Response.status(status).type(MediaType.APPLICATION_JSON_TYPE).entity(new ApiError(mensaje)).build();
         }
+        if (exception instanceof sv.edu.ues.occingenieriappi115_2026.salud.control.FlujoConsultaException flujo) {
+            int status = switch (flujo.getMessage()) {
+                case "clinicaActual.noDisponible", "consultaFlujo.contextoInvalido" -> 404;
+                case "consultaFlujo.relacionBloqueada", "consultaFlujo.sinResponsable" -> 409;
+                default -> 422;
+            };
+            String mensaje;
+            try { mensaje = java.util.ResourceBundle.getBundle("i18n.messages").getString(flujo.getMessage()); }
+            catch (java.util.MissingResourceException ex) { mensaje = "Datos de consulta no válidos"; }
+            return Response.status(status).type(MediaType.APPLICATION_JSON_TYPE).entity(new ApiError(mensaje)).build();
+        }
         if (exception instanceof ApiException expected) {
             return Response.status(expected.getStatus()).type(MediaType.APPLICATION_JSON_TYPE)
                     .entity(new ApiError(expected.getMessage())).build();

@@ -72,7 +72,7 @@ public class ConsultaResource {
         };
     }
 
-    private static LocalDate date(String raw, String parameter) {
+    static LocalDate date(String raw, String parameter) {
         if (raw == null) return null;
         try {
             if (!raw.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) throw new DateTimeParseException("Formato", raw, 0);

@@ -1,6 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaFlujoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.component.UIInput;
@@ -31,9 +33,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.Persona;
 public class PersonaModel extends AbstractModel<Persona> implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    private static final Pattern PATRON_NOMBRE
-            = Pattern.compile("^[\\p{L}][\\p{L}\\p{M}' -]*$");
+    @EJB private PersonaFlujoService personaService;
 
     @EJB
     private PersonaDAO personaDAO;
@@ -46,11 +46,13 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
 
     public PersonaModel(PersonaDAO personaDAO) {
         this.personaDAO = personaDAO;
+        this.personaService = new PersonaFlujoService(personaDAO, null);
     }
 
     public PersonaModel(PersonaDAO personaDAO, DocumentoDAO documentoDAO) {
         this(personaDAO);
         this.documentoDAO = documentoDAO;
+        this.personaService = new PersonaFlujoService(personaDAO, documentoDAO);
     }
 
     @Inject
@@ -190,46 +192,8 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
             FacesContext contexto,
             String idComponente,
             Object valor) {
-
-        String texto = valor == null
-                ? ""
-                : valor.toString().trim();
-
-        String prefijo;
-
-        if ("apellidos".equals(idComponente)) {
-            prefijo = "persona.apellidos";
-        } else {
-            prefijo = "persona.nombres";
-        }
-
-        if (texto.isEmpty()) {
-            lanzarValidacion(
-                    contexto,
-                    prefijo + "Requeridos"
-            );
-        }
-
-        if (texto.length() < 2) {
-            lanzarValidacion(
-                    contexto,
-                    prefijo + "Minimo"
-            );
-        }
-
-        if (texto.length() > 255) {
-            lanzarValidacion(
-                    contexto,
-                    prefijo + "Maximo"
-            );
-        }
-
-        if (!PATRON_NOMBRE.matcher(texto).matches()) {
-            lanzarValidacion(
-                    contexto,
-                    prefijo + "Formato"
-            );
-        }
+        try { PersonaFlujoService.validarNombre(valor == null ? null : valor.toString(), idComponente); }
+        catch (ReglaNegocioException ex) { lanzarValidacion(contexto, ex.getMessage()); }
     }
 
     // =========================================================
@@ -247,35 +211,8 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
     private void validarFechaNacimiento(
             FacesContext contexto,
             Object valor) {
-
-        if (!(valor instanceof Date fecha)) {
-
-            lanzarValidacion(
-                    contexto,
-                    "persona.fechaNacimientoRequerida"
-            );
-
-            return;
-        }
-
-        if (fecha.before(getFechaMinimaNacimiento())) {
-
-            lanzarValidacion(
-                    contexto,
-                    "persona.fechaNacimientoMinima"
-            );
-        }
-
-        LocalDate fechaNacimiento = Instant.ofEpochMilli(fecha.getTime())
-                .atZone(DocumentoModel.ZONA_CLINICA)
-                .toLocalDate();
-        if (fechaNacimiento.isAfter(LocalDate.now(DocumentoModel.ZONA_CLINICA))) {
-
-            lanzarValidacion(
-                    contexto,
-                    "persona.fechaNacimientoFutura"
-            );
-        }
+        try { PersonaFlujoService.validarNacimiento(valor instanceof Date date ? date : null); }
+        catch (ReglaNegocioException ex) { lanzarValidacion(contexto, ex.getMessage()); }
     }
 
     // =========================================================
@@ -283,52 +220,22 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
     // =========================================================
 
     public void guardar() {
-
-        if (seleccionado == null) {
-            return;
-        }
-
-        seleccionado.setNombres(
-                normalizar(seleccionado.getNombres())
-        );
-
-        seleccionado.setApellidos(
-                normalizar(seleccionado.getApellidos())
-        );
-
-        if (!validarAntesDeGuardar()) {
-            return;
-        }
-
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) return;
         try {
-            switch (getEstado()) {
-
-                case CREACION -> {
-                    getDao().guardar(seleccionado);
-                    agregarMensaje("persona.creadaCorrectamente");
-                    setEstado(ESTADO_CRUD.EDICION);
-                }
-
-                case EDICION -> {
-                    seleccionado = getDao().actualizar(seleccionado);
-                    agregarMensaje("persona.actualizadaCorrectamente");
-                    setEstado(ESTADO_CRUD.EDICION);
-                }
-
-                case LISTADO -> {
-                    return;
-                }
-            }
-            notificarGuardadoExitoso();
+            boolean edicion = getEstado() == ESTADO_CRUD.EDICION;
+            var guardado = personaService.guardarPersona(seleccionado, edicion);
+            if (edicion) seleccionado = guardado;
+            agregarMensaje(edicion ? "persona.actualizadaCorrectamente" : "persona.creadaCorrectamente");
+            setEstado(ESTADO_CRUD.EDICION);notificarGuardadoExitoso();
+        } catch (ReglaNegocioException ex) {
+            FacesContext contexto = obtenerFacesContext();
+            if (contexto == null) throw ex;
+            String texto = contexto.getApplication().getResourceBundle(contexto, "msg").getString(ex.getMessage());
+            agregarErrorCampo(ex.getCampo(), new FacesMessage(FacesMessage.SEVERITY_ERROR, texto, null));
         } catch (RuntimeException ex) {
-            if (facesContext == null) {
-                throw ex;
-            }
-            agregarMensaje("persona.errorGuardar", FacesMessage.SEVERITY_ERROR);
-            facesContext.validationFailed();
-            return;
+            if (facesContext == null) throw ex;
+            agregarMensaje("persona.errorGuardar", FacesMessage.SEVERITY_ERROR);facesContext.validationFailed();
         }
-
     }
 
     private void notificarGuardadoExitoso() {
@@ -370,56 +277,11 @@ public class PersonaModel extends AbstractModel<Persona> implements Serializable
     // UTILIDADES
     // =========================================================
 
-    private String normalizar(String valor) {
 
-        if (valor == null) {
-            return null;
-        }
 
-        return valor.trim();
-    }
 
-    private boolean validarAntesDeGuardar() {
-        if (!validarCampo("nombres", seleccionado.getNombres(), true)) {
-            return false;
-        }
-        if (!validarCampo("apellidos", seleccionado.getApellidos(), true)) {
-            return false;
-        }
-        if (!validarCampo("fechaNacimiento", seleccionado.getFechaNacimiento(), false)) {
-            return false;
-        }
-        if (getEstado() == ESTADO_CRUD.EDICION && seleccionado.getIdPersona() != null
-                && DocumentoModel.errorFechaParaDui(seleccionado.getFechaNacimiento(),
-                        LocalDate.now(DocumentoModel.ZONA_CLINICA)) != null) {
-            // Consultar los documentos guardados: la colección de la entidad puede estar desactualizada.
-            for (Documento documento : documentoDAO.obtenerPagina(0, Integer.MAX_VALUE,
-                    List.of(new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL,
-                            seleccionado.getIdPersona())), List.of())) {
-                if (DocumentoModel.esDui(documento.getIdTipoDocumento())) {
-                    agregarErrorCampo("fechaNacimiento", new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                            facesContext.getApplication().getResourceBundle(facesContext, "msg")
-                                    .getString("persona.fechaNacimientoIncompatibleDui"), null));
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
 
-    private boolean validarCampo(String idComponente, Object valor, boolean nombre) {
-        try {
-            if (nombre) {
-                validarNombre(facesContext, idComponente, valor);
-            } else {
-                validarFechaNacimiento(facesContext, valor);
-            }
-            return true;
-        } catch (ValidatorException ex) {
-            agregarErrorCampo(idComponente, ex.getFacesMessage());
-            return false;
-        }
-    }
+
 
     private void agregarErrorCampo(String idComponente, FacesMessage mensaje) {
         FacesContext contexto = obtenerFacesContext();

@@ -1,6 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaFlujoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.ejb.EJBException;
 import jakarta.persistence.PersistenceException;
 import java.util.logging.Level;
@@ -31,6 +33,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoMedioContacto;
 @ViewScoped
 public class MedioContactoModel extends AbstractModel<MedioContacto> implements Serializable {
     private static final long serialVersionUID = 1L;
+    @EJB private PersonaFlujoService personaService;
     private static final Logger LOG = Logger.getLogger(MedioContactoModel.class.getName());
     @EJB
     private MedioContactoDAO medioContactoDAO;
@@ -57,6 +60,7 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
         this.medioContactoDAO = medioContactoDAO;
         this.personaDAO = personaDAO;
         this.tipoMedioContactoDAO = tipoMedioContactoDAO;
+        this.personaService = new PersonaFlujoService(medioContactoDAO, personaDAO, tipoMedioContactoDAO);
     }
 
     @Override
@@ -236,21 +240,15 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
     }
 
     public void guardar() {
-        if (seleccionado == null) {
-            return;
-        }
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) return;
         try {
-            seleccionado.setValor(normalizar(seleccionado.getValor()));
-            if (!validarAntesDeGuardar()) {
-                return;
-            }
-            switch (getEstado()) {
-                case CREACION -> getDao().guardar(seleccionado);
-                case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-                case LISTADO -> { return; }
-            }
-            agregarMensaje("medioContacto.guardado", FacesMessage.SEVERITY_INFO);
-            cancelar();
+            boolean edicion = getEstado() == ESTADO_CRUD.EDICION;
+            var guardado = personaService.guardarContacto(seleccionado, edicion, personaOriginalId, tipoMedioContactoOriginal);
+            if (edicion) seleccionado = guardado;
+            agregarMensaje("medioContacto.guardado", FacesMessage.SEVERITY_INFO);cancelar();
+        } catch (ReglaNegocioException ex) {
+            if ("persona".equals(ex.getCampo())) seleccionado.setIdPersona(personaOriginal);
+            agregarError(ex.getCampo(), ex.getMessage());
         } catch (PersistenceException | EJBException ex) {
             LOG.log(Level.SEVERE, "No se pudo guardar el medio de contacto", ex);
             if (facesContext == null) throw ex;
@@ -308,121 +306,22 @@ public class MedioContactoModel extends AbstractModel<MedioContacto> implements 
         return tipoMedioContactoDAO.buscarPorId(uuid);
     }
 
-    private boolean validarAntesDeGuardar() {
-        if (getEstado() == ESTADO_CRUD.EDICION && (personaOriginalId == null
-                || seleccionado.getIdPersona() == null
-                || !personaOriginalId.equals(seleccionado.getIdPersona().getIdPersona()))) {
-            seleccionado.setIdPersona(personaOriginal);
-            agregarError("persona", "relaciones.noEditables");
-            return false;
-        }
-        if (seleccionado.getIdPersona() == null) {
-            agregarError(null, "medioContacto.personaRequerida");
-            return false;
-        }
-        if (seleccionado.getIdTipoMedioContacto() == null) {
-            agregarError("contactoTipo", "medioContacto.tipoRequerido");
-            return false;
-        }
-        if (getEstado() == ESTADO_CRUD.EDICION && !relacionTipoNoCambio()) {
-            agregarError("contactoTipo", "medioContacto.tipoNoEditable");
-            return false;
-        }
-        TipoMedioContacto tipoActual = obtenerTipoPersistido();
-        if (tipoActual == null) {
-            agregarError("contactoTipo", "medioContacto.tipoInactivo");
-            return false;
-        }
-        if (!Boolean.TRUE.equals(tipoActual.getActivo())
-                && (getEstado() != ESTADO_CRUD.EDICION
-                || !java.util.Objects.equals(tipoMedioContactoOriginalId,
-                        tipoActual.getIdTipoMedioContacto()))) {
-            agregarError("contactoTipo", "medioContacto.tipoInactivo");
-            return false;
-        }
-        if (seleccionado.getValor() == null || seleccionado.getValor().isBlank()) {
-            agregarError("contactoValor", "medioContacto.valorRequerido");
-            return false;
-        }
-        seleccionado.setIdTipoMedioContacto(tipoActual);
-        if (!expresionRegularValida(tipoActual)) {
-            agregarError("contactoValor", "medioContacto.regexInvalida");
-            return false;
-        }
-        if (!cumpleExpresionRegular(seleccionado.getValor(), tipoActual)) {
-            agregarError("contactoValor", "medioContacto.valorFormato");
-            return false;
-        }
-        if (medioContactoDAO.existeContacto(
-                        seleccionado.getIdPersona().getIdPersona(),
-                        tipoActual.getIdTipoMedioContacto(), seleccionado.getValor(),
-                        getEstado() == ESTADO_CRUD.EDICION
-                                ? seleccionado.getIdMedioContacto() : null)) {
-            agregarError(null, "medioContacto.duplicado");
-            return false;
-        }
-        return true;
-    }
 
-    private TipoMedioContacto obtenerTipoPersistido() {
-        UUID idTipo = seleccionado.getIdTipoMedioContacto().getIdTipoMedioContacto();
-        return idTipo == null ? null : tipoMedioContactoDAO.buscarPorId(idTipo);
-    }
 
-    private boolean relacionTipoNoCambio() {
-        if (seleccionado.getIdMedioContacto() == null) {
-            return false;
-        }
-        MedioContacto persistido = medioContactoDAO.buscarPorId(seleccionado.getIdMedioContacto());
-        UUID idOriginal = persistido == null || persistido.getIdTipoMedioContacto() == null
-                ? null : persistido.getIdTipoMedioContacto().getIdTipoMedioContacto();
-        UUID idActual = seleccionado.getIdTipoMedioContacto() == null
-                ? null : seleccionado.getIdTipoMedioContacto().getIdTipoMedioContacto();
-        boolean sinCambio = idOriginal != null && idOriginal.equals(idActual)
-                && idOriginal.equals(tipoMedioContactoOriginalId);
-        if (!sinCambio && persistido != null) {
-            seleccionado.setIdTipoMedioContacto(tipoMedioContactoOriginal);
-            tipoMedioContactoOriginalId = idOriginal;
-        }
-        return sinCambio;
-    }
+
+
+
 
     private boolean mismoTipo(TipoMedioContacto primero, TipoMedioContacto segundo) {
         return primero.getIdTipoMedioContacto() != null
                 && primero.getIdTipoMedioContacto().equals(segundo.getIdTipoMedioContacto());
     }
 
-    private boolean cumpleExpresionRegular(String valor, TipoMedioContacto tipo) {
-        String expresion = tipo.getExpresionRegular();
-        if (expresion == null || expresion.isBlank()) {
-            return true;
-        }
-        try {
-            // Los formatos antiguos pueden usar la clase POSIX de PostgreSQL;
-            // Java necesita su equivalente para evaluar el correo correctamente.
-            String expresionJava = expresion.replace("[:space:]", "\\s");
-            return Pattern.compile(expresionJava).matcher(valor).matches();
-        } catch (PatternSyntaxException ex) {
-            return false;
-        }
-    }
 
-    private boolean expresionRegularValida(TipoMedioContacto tipo) {
-        String expresion = tipo.getExpresionRegular();
-        if (expresion == null || expresion.isBlank()) {
-            return true;
-        }
-        try {
-            Pattern.compile(expresion.replace("[:space:]", "\\s"));
-            return true;
-        } catch (PatternSyntaxException ex) {
-            return false;
-        }
-    }
 
-    private String normalizar(String valor) {
-        return valor == null ? null : valor.trim();
-    }
+
+
+
 
     private boolean perteneceAPersona(MedioContacto contacto, Persona persona) {
         return contacto != null

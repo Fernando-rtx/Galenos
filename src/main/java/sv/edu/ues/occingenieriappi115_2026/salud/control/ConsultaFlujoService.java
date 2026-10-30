@@ -83,6 +83,11 @@ public class ConsultaFlujoService {
             throw new FlujoConsultaException("consultaFlujo.pacienteInvalido");
         }
         validarFechas(datos.getFechaInicio(), datos.getFechaFin());
+        datos.setReferenciaExterna(datos.getReferenciaExterna() == null ? null : datos.getReferenciaExterna().trim());
+        datos.setObservaciones(datos.getObservaciones() == null ? null : datos.getObservaciones().trim());
+        if (datos.getReferenciaExterna() != null && datos.getReferenciaExterna().length() > 255) {
+            throw new FlujoConsultaException("consultaFlujo.referenciaExtensa");
+        }
         if (!edicion) {
             datos.setIdPersonaRol(paciente);
             return consultaDAO.guardar(datos);
@@ -167,6 +172,67 @@ public class ConsultaFlujoService {
         persistido.setFechaFin(datos.getFechaFin());
         persistido.setEstado(datos.getEstado());
         return pasoDAO.actualizar(persistido);
+    }
+
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<Clinica> clinicasDisponibles(java.util.Set<UUID> ids, int primero, int tamano) {
+        return clinicaDAO.buscarDisponibles(ids, primero, tamano);
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarClinicasDisponibles(java.util.Set<UUID> ids) { return clinicaDAO.contarDisponibles(ids); }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<PersonaRol> buscarPacientes(UUID clinica, String criterio) {
+        validarClinica(clinica);
+        return personaRolDAO.buscarPacientesPorClinica(clinica, criterio, 15);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<Procedimiento> procedimientosDisponibles(int primero, int tamano) {
+        return procedimientoDAO.obtenerPagina(primero, tamano,
+                List.of(new FiltroDAO("activo", OperadorFiltro.IGUAL, true)),
+                List.of(new OrdenDAO("idProcedimiento", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarProcedimientosDisponibles() {
+        return procedimientoDAO.contar(List.of(new FiltroDAO("activo", OperadorFiltro.IGUAL, true)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<ConsultaProcedimiento> procedimientosConsulta(UUID clinica, UUID consulta, int primero, int tamano) {
+        consultaEnClinica(consulta, clinica);
+        return consultaProcedimientoDAO.obtenerPagina(primero, tamano,
+                List.of(new FiltroDAO("idConsulta.idConsulta", OperadorFiltro.IGUAL, consulta)),
+                List.of(new OrdenDAO("idConsultaProcedimiento", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarProcedimientosConsulta(UUID clinica, UUID consulta) {
+        consultaEnClinica(consulta, clinica);
+        return consultaProcedimientoDAO.contar(List.of(new FiltroDAO("idConsulta.idConsulta", OperadorFiltro.IGUAL, consulta)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public ConsultaProcedimiento buscarProcedimientoConsulta(UUID clinica, UUID id) {
+        var value = consultaProcedimientoDAO.buscarPorId(id);
+        if (value != null) consultaEnClinica(idConsulta(value), clinica);
+        return value;
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<ConsultaProcedimientoPaso> pasosConsulta(UUID clinica, UUID consulta, int primero, int tamano) {
+        consultaEnClinica(consulta, clinica);
+        return pasoDAO.obtenerPagina(primero, tamano,
+                List.of(new FiltroDAO("idConsultaProcedimiento.idConsulta.idConsulta", OperadorFiltro.IGUAL, consulta)),
+                List.of(new OrdenDAO("idConsultaProcedimientoPaso", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarPasosConsulta(UUID clinica, UUID consulta) {
+        consultaEnClinica(consulta, clinica);
+        return pasoDAO.contar(List.of(new FiltroDAO("idConsultaProcedimiento.idConsulta.idConsulta", OperadorFiltro.IGUAL, consulta)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public ConsultaProcedimientoPaso buscarPasoConsulta(UUID clinica, UUID id) {
+        var value = pasoDAO.buscarPorId(id);
+        if (value != null) consultaEnClinica(idConsulta(value.getIdConsultaProcedimiento()), clinica);
+        return value;
     }
 
     private void validarClinica(UUID id) {
