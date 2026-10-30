@@ -32,6 +32,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 /**
  * Pruebas unitarias del DAO generico.
@@ -635,4 +639,116 @@ public class DefaultDAOTest {
             when(idAttribute.getName()).thenReturn("id");
         }
     }
+    /** Verifica conversión y rechazo antes de ejecutar consultas; no usa PostgreSQL. */
+    @Nested
+    class ContratoCriteria {
+        private final EntityManager em = mock(EntityManager.class);
+        private final CriteriaBuilder cb = mock(CriteriaBuilder.class);
+        private final CriteriaQuery<TestEntity> criteria = mock(CriteriaQuery.class);
+        private final Root<TestEntity> root = mock(Root.class);
+        private final TypedQuery<TestEntity> query = mock(TypedQuery.class);
+        private final TestDAO dao = new TestDAO(em);
+
+        private Path campo(Class<?> tipo) {
+            when(em.getCriteriaBuilder()).thenReturn(cb);
+            when(cb.createQuery(TestEntity.class)).thenReturn(criteria);
+            when(criteria.from(TestEntity.class)).thenReturn(root);
+            when(em.createQuery(criteria)).thenReturn(query);
+            when(query.setFirstResult(0)).thenReturn(query);
+            when(query.setMaxResults(5)).thenReturn(query);
+            var metamodel = mock(Metamodel.class);
+            var managed = mock(ManagedType.class);
+            when(em.getMetamodel()).thenReturn(metamodel);
+            doReturn(TestEntity.class).when(root).getJavaType();
+            doReturn(managed).when(metamodel).managedType(TestEntity.class);
+            doReturn(mock(Attribute.class)).when(managed).getAttribute("campo");
+            var path = mock(Path.class);
+            doReturn(path).when(root).get("campo");
+            doReturn(tipo).when(path).getJavaType();
+            return path;
+        }
+
+        private void filtrar(OperadorFiltro operador, Object valor) {
+            dao.obtenerPagina(0, 5, List.of(new FiltroDAO("campo", operador, valor)), null);
+        }
+
+        @Test void paginacionInvalidaNoTocaEntityManager() {
+            for (int[] pagina : new int[][]{{-1, 1}, {0, 0}, {0, -1}}) {
+                assertThrows(IllegalArgumentException.class,
+                        () -> dao.obtenerPagina(pagina[0], pagina[1], null, null));
+            }
+            verifyNoInteractions(em);
+        }
+
+        @Test void filtrosYOrdenNullPermitenUnaPaginaVacia() {
+            campo(String.class);
+            when(query.getResultList()).thenReturn(List.of());
+            assertEquals(List.of(), dao.obtenerPagina(0, 5, null, null));
+            verify(query).setFirstResult(0);
+            verify(query).setMaxResults(5);
+        }
+
+        @Test void booleanoInvalidoNoSeConvierteEnFalse() {
+            campo(Boolean.class);
+            assertThrows(IllegalArgumentException.class, () -> filtrar(OperadorFiltro.IGUAL, "si"));
+            verify(query, never()).getResultList();
+            verify(cb, never()).equal(any(), any());
+        }
+
+        @Test void convierteUuidEnumNumeroYFechaSinPerderElTipo() {
+            var id = UUID.randomUUID();
+            var fecha = java.time.Instant.parse("2026-10-22T06:00:00Z");
+            Object[][] valores = {{UUID.class, id.toString(), id},
+                {OperadorFiltro.class, "IGUAL", OperadorFiltro.IGUAL},
+                {Integer.class, "25", 25}, {Long.class, "26", 26L},
+                {Boolean.class, "TRUE", true},
+                {java.util.Date.class, fecha.toString(), java.util.Date.from(fecha)}};
+            for (Object[] valor : valores) {
+                Path path = campo((Class<?>) valor[0]);
+                filtrar(OperadorFiltro.IGUAL, valor[1]);
+                verify(cb).equal(path, valor[2]);
+            }
+        }
+
+        @Test void rechazaConversionesInvalidasYConservaCausaDeFecha() {
+            for (Object[] valor : new Object[][]{{UUID.class, "sin-uuid"},
+                    {Integer.class, "1.5"}, {OperadorFiltro.class, "inexistente"}}) {
+                campo((Class<?>) valor[0]);
+                assertThrows(IllegalArgumentException.class, () -> filtrar(OperadorFiltro.IGUAL, valor[1]));
+            }
+            campo(java.util.Date.class);
+            var fallo = assertThrows(IllegalArgumentException.class,
+                    () -> filtrar(OperadorFiltro.IGUAL, "2026-02-30"));
+            assertInstanceOf(java.time.format.DateTimeParseException.class, fallo.getCause());
+            verify(query, never()).getResultList();
+        }
+
+        @Test void rechazaOperadoresIncompatiblesConElTipo() {
+            campo(UUID.class);
+            assertThrows(IllegalArgumentException.class, () -> filtrar(OperadorFiltro.CONTIENE, "abc"));
+            campo(Boolean.class);
+            assertThrows(IllegalArgumentException.class, () -> filtrar(OperadorFiltro.MAYOR_QUE, true));
+            verify(query, never()).getResultList();
+        }
+
+        @Test void campoInexistenteYFallosDePersistenciaSePropagan() {
+            campo(String.class);
+            var falloCampo = new IllegalArgumentException("Atributo sintetico inexistente");
+            when(root.get("campo")).thenThrow(falloCampo);
+            assertSame(falloCampo, assertThrows(IllegalArgumentException.class,
+                    () -> filtrar(OperadorFiltro.IGUAL, "x")));
+            var falloJpa = new jakarta.persistence.PersistenceException("Conexion sintetica");
+            when(query.getResultList()).thenThrow(falloJpa);
+            assertSame(falloJpa, assertThrows(jakarta.persistence.PersistenceException.class,
+                    () -> dao.obtenerPagina(0, 5, null, null)));
+        }
+
+        @Test void consultaNulidadDeRelacionSinCrearUnInnerJoin() {
+            Path path = campo(sv.edu.ues.occingenieriappi115_2026.salud.entity.Persona.class);
+            filtrar(OperadorFiltro.ES_NULO, null);
+            verify(cb).isNull(path);
+            verify(root, never()).join(anyString());
+        }
+    }
+
 }
