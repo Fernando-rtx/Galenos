@@ -13,6 +13,17 @@ public class ApiExceptionMapper implements ExceptionMapper<Exception> {
 
     @Override
     public Response toResponse(Exception exception) {
+        if (exception instanceof sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException regla) {
+            int status = switch (regla.getMotivo()) {
+                case VALIDACION -> 422;
+                case DUPLICADO, REFERENCIADO -> 409;
+                case AUSENTE -> 404;
+            };
+            String mensaje;
+            try { mensaje = java.util.ResourceBundle.getBundle("i18n.messages").getString(regla.getMessage()); }
+            catch (java.util.MissingResourceException ex) { mensaje = "No se pudo completar la operación con los datos indicados"; }
+            return Response.status(status).type(MediaType.APPLICATION_JSON_TYPE).entity(new ApiError(mensaje)).build();
+        }
         if (exception instanceof ApiException expected) {
             return Response.status(expected.getStatus()).type(MediaType.APPLICATION_JSON_TYPE)
                     .entity(new ApiError(expected.getMessage())).build();

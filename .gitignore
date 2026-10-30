@@ -2,6 +2,8 @@ target/
 /.galenos-demo/
 /demo.env
 /docs/*
+!/docs/api-gestion-v2.md
+!/docs/implementacion-crud.md
 !/docs/api-contract.md
 !/docs/backend-audit.md
 !/docs/rest-validation.md

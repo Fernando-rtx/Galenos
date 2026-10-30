@@ -129,6 +129,61 @@ public class CatalogoService {
         if (!rolDAO.eliminar(id)) throw new ReglaNegocioException(AUSENTE, null, "rol.errorEliminar");
     }
 
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<TipoDocumento> listarTipoDocumento(int primero, int tamano, String nombre) {
+        return tipoDocumentoDAO.obtenerPagina(primero, tamano, filtroNombre(nombre),
+                List.of(new OrdenDAO("idTipoDocumento", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarTipoDocumento(String nombre) { return tipoDocumentoDAO.contar(filtroNombre(nombre)); }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public TipoDocumento buscarTipoDocumento(UUID id) { return tipoDocumentoDAO.buscarPorId(id); }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<TipoMedioContacto> listarTipoMedioContacto(int primero, int tamano, String nombre) {
+        return tipoMedioContactoDAO.obtenerPagina(primero, tamano, filtroNombre(nombre),
+                List.of(new OrdenDAO("idTipoMedioContacto", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarTipoMedioContacto(String nombre) { return tipoMedioContactoDAO.contar(filtroNombre(nombre)); }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public TipoMedioContacto buscarTipoMedioContacto(UUID id) { return tipoMedioContactoDAO.buscarPorId(id); }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<TipoExamen> listarTipoExamen(int primero, int tamano, String nombre) {
+        return tipoExamenDAO.obtenerPagina(primero, tamano, filtroNombre(nombre),
+                List.of(new OrdenDAO("idTipoExamen", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarTipoExamen(String nombre) { return tipoExamenDAO.contar(filtroNombre(nombre)); }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public TipoExamen buscarTipoExamen(UUID id) { return tipoExamenDAO.buscarPorId(id); }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<Clinica> listarClinica(int primero, int tamano, String nombre) {
+        return clinicaDAO.obtenerPagina(primero, tamano, filtroNombre(nombre),
+                List.of(new OrdenDAO("idClinica", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarClinica(String nombre) { return clinicaDAO.contar(filtroNombre(nombre)); }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public Clinica buscarClinica(UUID id) { return clinicaDAO.buscarPorId(id); }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<Rol> listarRol(int primero, int tamano, String nombre) {
+        return rolDAO.obtenerPagina(primero, tamano, filtroNombre(nombre),
+                List.of(new OrdenDAO("idRol", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarRol(String nombre) { return rolDAO.contar(filtroNombre(nombre)); }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public Rol buscarRol(UUID id) { return rolDAO.buscarPorId(id); }
+
+    private static List<FiltroDAO> filtroNombre(String nombre) {
+        return nombre == null || nombre.isBlank() ? List.of()
+                : List.of(new FiltroDAO("nombre", OperadorFiltro.CONTIENE, nombre.strip()));
+    }
+
     private static String normalizar(String valor) { return valor == null ? null : valor.strip(); }
 
     private static String nombre(String valor, int minimo, int maximo, String modulo) {

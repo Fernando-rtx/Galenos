@@ -77,4 +77,25 @@ class ApiSettingsTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new ApiSettings(Map.of("GALENOS_API_MAX_PAGE_SIZE", "10")));
     }
+
+    @Test
+    void crudDesactivadoPorDefectoYRestringidoALaBaseExacta() {
+        assertEquals(404, assertThrows(ApiException.class, () -> new ApiSettings(Map.of()).requireCrudDemo()).getStatus());
+        for (String database : java.util.List.of("clinica", "galenos_demo_local", "galenos_rest_test_unit")) {
+            assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of(
+                    "GALENOS_CRUD_DEMO", "true", "GALENOS_DEMO_MODE", "true", "POSTGRESQL_DB_NAME", database)));
+        }
+        assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of(
+                "GALENOS_CRUD_DEMO", "true", "POSTGRESQL_DB_NAME", "galenos_demo_crud")));
+    }
+
+    @Test
+    void permisosClinicaSeDerivanDeIdentidadYFaltantesRechazan() {
+        String clinic = "00000000-0000-4000-8000-000000000011";
+        var settings = new ApiSettings(Map.of("GALENOS_CRUD_DEMO", "true", "GALENOS_DEMO_MODE", "true",
+                "POSTGRESQL_DB_NAME", "galenos_demo_crud", "GALENOS_CRUD_ACTOR_CLINICS", "sintetico=" + clinic));
+        assertDoesNotThrow(() -> settings.requireClinic("sintetico", java.util.UUID.fromString(clinic)));
+        assertEquals(403, assertThrows(ApiException.class, () -> settings.requireClinic("otro", java.util.UUID.fromString(clinic))).getStatus());
+        assertEquals(403, assertThrows(ApiException.class, () -> settings.requireClinic("sintetico", java.util.UUID.randomUUID())).getStatus());
+    }
 }
