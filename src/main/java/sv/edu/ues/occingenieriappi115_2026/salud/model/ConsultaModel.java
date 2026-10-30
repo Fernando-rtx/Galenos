@@ -16,7 +16,6 @@ import java.io.Serializable;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Date;
 import java.util.List;
@@ -104,17 +103,8 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
 
     @Override
     protected List<FiltroDAO> filtrosAdicionales() {
-        List<FiltroDAO> filtros = new ArrayList<>();
-        filtros.add(new FiltroDAO("idPersonaRol.idClinica.idClinica", OperadorFiltro.IGUAL, clinicaActual()));
-        if (desdeAplicado != null) {
-            filtros.add(new FiltroDAO("fechaInicio", OperadorFiltro.MAYOR_O_IGUAL,
-                    Date.from(desdeAplicado.atStartOfDay(ZONA_CLINICA).toInstant())));
-        }
-        if (hastaAplicado != null) {
-            filtros.add(new FiltroDAO("fechaInicio", OperadorFiltro.MENOR_QUE,
-                    Date.from(hastaAplicado.plusDays(1).atStartOfDay(ZONA_CLINICA).toInstant())));
-        }
-        return filtros;
+        return ConsultaFlujoService.filtrosConsulta(clinicaActual(), desdeAplicado,
+                hastaAplicado, ZONA_CLINICA, null);
     }
 
     public LocalDate getFechaDesde() { return fechaDesde; }
@@ -123,8 +113,11 @@ public class ConsultaModel extends AbstractModel<Consulta> implements Serializab
     public void setFechaHasta(LocalDate fecha) { fechaHasta = fecha; }
 
     public void aplicarFiltroFechas() {
-        if (fechaDesde != null && fechaHasta != null && fechaDesde.isAfter(fechaHasta)) {
-            registrarError("consulta.rangoInvalido");
+        if (!isClinicaSeleccionada()) { return; }
+        try {
+            ConsultaFlujoService.filtrosConsulta(clinicaActual(), fechaDesde, fechaHasta, ZONA_CLINICA, null);
+        } catch (FlujoConsultaException ex) {
+            registrarError(ex.getMessage());
             return;
         }
         desdeAplicado = fechaDesde;

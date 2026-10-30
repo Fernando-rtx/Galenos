@@ -6,11 +6,15 @@ import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Objects;
 import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.*;
 
-/** Un límite transaccional para las escrituras del flujo de Consulta. */
+/** Casos de uso de Consulta: lecturas acotadas por clínica y escrituras atómicas. */
 @Stateless
 @LocalBean
 @TransactionAttribute(TransactionAttributeType.REQUIRED)
@@ -24,6 +28,51 @@ public class ConsultaFlujoService {
     @EJB private ConsultaProcedimientoPasoDAO pasoDAO;
 
     public ConsultaFlujoService() { }
+
+    /** Criterio compartido por el listado JSF y la lectura REST. */
+    public static List<FiltroDAO> filtrosConsulta(UUID clinica, LocalDate desde,
+            LocalDate hasta, ZoneId zona, UUID personaRol) {
+        if (clinica == null || zona == null) {
+            throw new IllegalArgumentException("Clinica y zona son requeridas");
+        }
+        if (desde != null && hasta != null && desde.isAfter(hasta)) {
+            throw new FlujoConsultaException("consulta.rangoInvalido");
+        }
+        List<FiltroDAO> filtros = new ArrayList<>();
+        filtros.add(new FiltroDAO("idPersonaRol.idClinica.idClinica", OperadorFiltro.IGUAL, clinica));
+        if (desde != null) filtros.add(new FiltroDAO("fechaInicio", OperadorFiltro.MAYOR_O_IGUAL,
+                Date.from(desde.atStartOfDay(zona).toInstant())));
+        if (hasta != null) filtros.add(new FiltroDAO("fechaInicio", OperadorFiltro.MENOR_QUE,
+                Date.from(hasta.plusDays(1).atStartOfDay(zona).toInstant())));
+        if (personaRol != null) filtros.add(new FiltroDAO("idPersonaRol.idPersonaRol", OperadorFiltro.IGUAL, personaRol));
+        return filtros;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<Consulta> buscarConsultas(UUID clinica, LocalDate desde, LocalDate hasta,
+            ZoneId zona, UUID personaRol, int primero, int tamano) {
+        validarClinica(clinica);
+        return consultaDAO.obtenerPagina(primero, tamano,
+                filtrosConsulta(clinica, desde, hasta, zona, personaRol),
+                List.of(new OrdenDAO("idConsulta", DireccionOrden.ASCENDENTE)));
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarConsultas(UUID clinica, LocalDate desde, LocalDate hasta, ZoneId zona, UUID personaRol) {
+        validarClinica(clinica);
+        return consultaDAO.contar(filtrosConsulta(clinica, desde, hasta, zona, personaRol));
+    }
+
+    /** El detalle solo puede resolverse dentro de la clínica activa recibida. */
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public Consulta buscarConsulta(UUID id, UUID clinica) {
+        Objects.requireNonNull(id, "El UUID de consulta es requerido");
+        validarClinica(clinica);
+        List<FiltroDAO> filtros = filtrosConsulta(clinica, null, null, ZoneId.of("UTC"), null);
+        filtros.add(new FiltroDAO("idConsulta", OperadorFiltro.IGUAL, id));
+        List<Consulta> resultado = consultaDAO.obtenerPagina(0, 1, filtros, List.of());
+        return resultado.isEmpty() ? null : resultado.getFirst();
+    }
 
     public Consulta guardarConsulta(Consulta datos, UUID clinica, boolean edicion) {
         validarClinica(clinica);
