@@ -1,6 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.CatalogoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.component.UIInput;
@@ -10,9 +12,6 @@ import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoDocumentoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoDocumento;
 
@@ -28,6 +27,8 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoDocumento;
 public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    @EJB
+    private CatalogoService catalogoService;
 
     @EJB
     private TipoDocumentoDAO tipoDocumentoDAO;
@@ -41,6 +42,7 @@ public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements 
 
     public TipoDocumentoModel(TipoDocumentoDAO tipoDocumentoDAO) {
         this.tipoDocumentoDAO = tipoDocumentoDAO;
+        this.catalogoService = new CatalogoService(tipoDocumentoDAO);
     }
 
     @Override
@@ -91,35 +93,14 @@ public class TipoDocumentoModel extends AbstractModel<TipoDocumento> implements 
     }
 
     public void guardar() {
-        // El estado decide entre guardar con persist o actualizar con merge.
-        if (seleccionado == null) {
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) return;
+        boolean edicion = getEstado() == ESTADO_CRUD.EDICION;
+        try {
+            var guardado = catalogoService.guardarTipoDocumento(seleccionado, edicion);
+            if (edicion) seleccionado = guardado;
+        } catch (ReglaNegocioException ex) {
+            marcarError(ex.getCampo(), ex.getMessage());
             return;
-        }
-        if (seleccionado.getNombre() == null || seleccionado.getNombre().isBlank()) {
-            marcarError("nombre", "tipoDocumento.nombreRequerido");
-            return;
-        }
-        UUID idTipoDocumentoExcluir = getEstado() == ESTADO_CRUD.EDICION
-                ? seleccionado.getIdTipoDocumento() : null;
-        if (tipoDocumentoDAO.existeNombreNormalizado(seleccionado.getNombre(), idTipoDocumentoExcluir)) {
-            marcarError("nombre", "tipoDocumento.nombreDuplicado");
-            return;
-        }
-        String expresion = seleccionado.getExpresionRegular();
-        if (expresion != null && !expresion.isBlank()) {
-            try {
-                Pattern.compile(expresion);
-            } catch (PatternSyntaxException ex) {
-                marcarError("expresionRegular", "tipoDocumento.expresionRegularInvalida");
-                return;
-            }
-        }
-        seleccionado.setNombre(seleccionado.getNombre().strip());
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> {
-            }
         }
         setEstado(ESTADO_CRUD.LISTADO);
         agregarMensaje(FacesMessage.SEVERITY_INFO, "mensajes.guardado");

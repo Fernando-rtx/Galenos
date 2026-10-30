@@ -1,6 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.CatalogoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.component.UIInput;
@@ -10,8 +12,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.List;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoMedioContactoDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoMedioContacto;
 
@@ -27,6 +27,8 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoMedioContacto;
 public class TipoMedioContactoModel extends AbstractModel<TipoMedioContacto> implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    @EJB
+    private CatalogoService catalogoService;
 
     @EJB
     private TipoMedioContactoDAO tipoMedioContactoDAO;
@@ -68,6 +70,7 @@ public class TipoMedioContactoModel extends AbstractModel<TipoMedioContacto> imp
 
     public TipoMedioContactoModel(TipoMedioContactoDAO tipoMedioContactoDAO) {
         this.tipoMedioContactoDAO = tipoMedioContactoDAO;
+        this.catalogoService = new CatalogoService(tipoMedioContactoDAO);
     }
 
     @Override
@@ -98,34 +101,14 @@ public class TipoMedioContactoModel extends AbstractModel<TipoMedioContacto> imp
     }
 
     public void guardar() {
-        // Delega en el DAO común según CREACION o EDICION.
-        if (seleccionado == null) {
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) return;
+        boolean edicion = getEstado() == ESTADO_CRUD.EDICION;
+        try {
+            var guardado = catalogoService.guardarTipoMedioContacto(seleccionado, edicion);
+            if (edicion) seleccionado = guardado;
+        } catch (ReglaNegocioException ex) {
+            errorCampo(ex.getCampo(), ex.getMessage());
             return;
-        }
-        if (seleccionado.getNombre() == null || seleccionado.getNombre().isBlank()) {
-            errorCampo("nombre", "tipoMedioContacto.nombreRequerido");
-            return;
-        }
-        if (seleccionado.getIndicaciones() == null || seleccionado.getIndicaciones().isBlank()) {
-            errorCampo("indicaciones", "tipoMedioContacto.indicacionesRequeridas");
-            return;
-        }
-        String expresion = seleccionado.getExpresionRegular();
-        if (expresion != null && !expresion.isBlank()) {
-            try {
-                Pattern.compile(expresion);
-            } catch (PatternSyntaxException ex) {
-                errorCampo("expresionRegular", "tipoMedioContacto.expresionRegularInvalida");
-                return;
-            }
-        }
-        seleccionado.setNombre(seleccionado.getNombre().strip());
-        seleccionado.setIndicaciones(seleccionado.getIndicaciones().strip());
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> {
-            }
         }
         setEstado(ESTADO_CRUD.LISTADO);
         agregarMensaje(FacesMessage.SEVERITY_INFO, "mensajes.guardado");

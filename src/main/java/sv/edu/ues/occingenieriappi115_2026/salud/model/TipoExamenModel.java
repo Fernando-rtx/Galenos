@@ -1,6 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.CatalogoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.component.UIInput;
@@ -9,11 +11,8 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import java.io.Serializable;
 import java.util.List;
-import java.util.UUID;
 import org.primefaces.PrimeFaces;
 import org.primefaces.event.SelectEvent;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.TipoExamenDAO;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoExamen;
 
@@ -31,6 +30,8 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
 
     /** Versión necesaria para serializar el bean de ámbito de vista. */
     private static final long serialVersionUID = 1L;
+    @EJB
+    private CatalogoService catalogoService;
 
     @EJB
     private TipoExamenDAO tipoExamenDAO;
@@ -43,6 +44,7 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
 
     public TipoExamenModel(TipoExamenDAO tipoExamenDAO) {
         this.tipoExamenDAO = tipoExamenDAO;
+        this.catalogoService = new CatalogoService(tipoExamenDAO);
     }
 
     @Override
@@ -78,26 +80,18 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
     }
 
     public void guardar() {
-        if (seleccionado == null) {
-            return;
-        }
-        String nombre = normalizar(seleccionado.getNombre());
-        if (nombre == null || nombre.isEmpty()) {
-            marcarNombreRequerido();
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) return;
+        boolean edicion = getEstado() == ESTADO_CRUD.EDICION;
+        try {
+            var guardado = catalogoService.guardarTipoExamen(seleccionado, edicion);
+            if (edicion) seleccionado = guardado;
+        } catch (ReglaNegocioException ex) {
+            marcarNombreError(ex.getMessage());
             agregarCallbackGuardado(false);
             return;
         }
-        seleccionado.setNombre(nombre);
-        seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> {
-            }
-        }
         setEstado(ESTADO_CRUD.LISTADO);
-        agregarMensaje(FacesMessage.SEVERITY_INFO, "mensajes.guardado");
-        agregarCallbackGuardado(true);
+        agregarMensaje(FacesMessage.SEVERITY_INFO, "mensajes.guardado"); agregarCallbackGuardado(true);
     }
 
     public void cancelar() {
@@ -115,50 +109,24 @@ public class TipoExamenModel extends AbstractModel<TipoExamen> implements Serial
      * @param valor nombre ingresado
      */
     public void validarNombre(FacesContext contexto, UIComponent componente, Object valor) {
-        String nombre = normalizar(valor == null ? null : valor.toString());
-        if (nombre == null || nombre.isEmpty()) {
-            lanzarValidacion(contexto, "tipoExamen.nombreRequerido");
-        }
-        // Permite editar otros campos de registros antiguos cuyo nombre no
-        // cumple las reglas actuales, siempre que el nombre no cambie.
-        if (getEstado() == ESTADO_CRUD.EDICION && seleccionado != null
-                && nombre.equals(normalizar(seleccionado.getNombre()))) {
-            return;
-        }
-        if (nombre.length() < 2) {
-            lanzarValidacion(contexto, "tipoExamen.nombreMinimo");
-        }
-        if (nombre.length() > 255) {
-            lanzarValidacion(contexto, "tipoExamen.nombreMaximo");
-        }
-        if (nombreDuplicado(nombre)) {
-            lanzarValidacion(contexto, "tipoExamen.nombreDuplicado");
+        try {
+            catalogoService.validarNombreTipoExamen(valor == null ? null : valor.toString(),
+                    getEstado() == ESTADO_CRUD.EDICION && seleccionado != null ? seleccionado.getIdTipoExamen() : null,
+                    getEstado() == ESTADO_CRUD.EDICION && seleccionado != null ? seleccionado.getNombre() : null);
+        } catch (ReglaNegocioException ex) {
+            lanzarValidacion(contexto, ex.getMessage());
         }
     }
 
-    private boolean nombreDuplicado(String nombre) {
-        List<TipoExamen> existentes = getDao().obtenerPagina(0, Integer.MAX_VALUE,
-                List.of(new FiltroDAO("nombre", OperadorFiltro.IGUAL, nombre)), List.of());
-        if (existentes == null || existentes.isEmpty()) {
-            return false;
-        }
-        UUID idActual = seleccionado == null ? null : seleccionado.getIdTipoExamen();
-        return existentes.stream().anyMatch(tipo -> tipo.getIdTipoExamen() == null
-                || !tipo.getIdTipoExamen().equals(idActual));
-    }
 
-    private String normalizar(String valor) {
-        return valor == null ? null : valor.trim();
-    }
-
-    private void marcarNombreRequerido() {
+    private void marcarNombreError(String clave) {
         FacesContext contexto = contextoActual();
         if (contexto == null) {
             return;
         }
         contexto.validationFailed();
         String mensaje = contexto.getApplication().getResourceBundle(contexto, "msg")
-                .getString("tipoExamen.nombreRequerido");
+                .getString(clave);
         UIComponent componente = buscarComponente(contexto.getViewRoot(), "nombre");
         if (componente instanceof UIInput entrada) {
             entrada.setValid(false);

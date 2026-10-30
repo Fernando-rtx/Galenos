@@ -68,6 +68,7 @@ class TipoExamenModelTest {
         TipoExamen tipoExamen = new TipoExamen(UUID.randomUUID());
         tipoExamen.setNombre("a");
         tipoExamen.setActivo(true);
+        when(dao.buscarPorId(tipoExamen.getIdTipoExamen())).thenReturn(tipoExamen);
         model.seleccionar(tipoExamen);
 
         assertDoesNotThrow(() -> model.validarNombre(null, null, "a"));
