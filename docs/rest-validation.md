@@ -107,16 +107,26 @@ El ensayo local usó Playwright Python 1.63.0 y Chromium existente en el equipo.
 
 ## Fallo de persistencia
 
-Solo en la base sintética, renombrar temporalmente `tipo_documento` a
-`tipo_documento_synthetic_unavailable`, ejecutar:
+Para la revisión de 2026-10-30 se usa **otro servidor Liberty temporal**, con
+el mismo WAR verificado y la configuración privada de la demo, pero con su
+datasource dirigido a un puerto loopback libre y cerrado. Asignar puertos HTTP
+y HTTPS exclusivos, comprobar que no haya otro listener y conservar el datasource
+del demo operativo. Reutilizar las credenciales locales existentes sin publicarlas.
+No renombrar tablas ni detener la base de datos para provocar el fallo.
 
 ```sh
+GALENOS_API_BASE_URL=http://127.0.0.1:19183/GalenosSV/resources \
+GALENOS_TEST_ORIGIN=http://localhost:3000 \
 python3 test/integration/tipo_documento_storage_failure_http.py
 ```
 
-Restaurar el nombre original **incluso si la prueba falla** y repetir la suite
-HTTP normal. La comprobación espera 500, mensaje genérico, ausencia del conteo
-y conservación de CORS. No aplicar esta simulación a una base clínica.
+El script ahora comprueba los tres recursos de lectura: TipoDocumento, Clínica
+y Consulta. Cada uno debe responder 500, mensaje genérico, ausencia del conteo
+y conservación de CORS. Después se detiene únicamente ese Liberty temporal.
+La revisión mantuvo el demo PostgreSQL en 15433 y ejecutó las suites normales
+en otro Liberty exclusivo en 19184. Ver docs/backend-audit.md para el hash del
+WAR, resultados actuales y límites. La tabla de resultados inicial de este
+documento es histórica y no sustituye la verificación de la revisión actual.
 
 ## Alcance de la evidencia
 
