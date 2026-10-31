@@ -2,6 +2,8 @@ package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.CatalogoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.component.UIInput;
 import jakarta.faces.application.FacesMessage;
@@ -28,6 +30,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoExamen;
 public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    @EJB private CatalogoService catalogoService;
 
     private ExamenTipoExamen seleccionado;
     private ExamenTipoExamen filaSeleccionada;
@@ -56,6 +59,7 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
         this.examenTipoExamenDAO = examenTipoExamenDAO;
         this.examenDAO = examenDAO;
         this.tipoExamenDAO = tipoExamenDAO;
+        this.catalogoService = new CatalogoService(examenTipoExamenDAO,examenDAO,tipoExamenDAO);
         inicializar();
     }
 
@@ -171,88 +175,17 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
     }
 
     public void guardarAsociacion() {
-        if (seleccionado == null
-                || seleccionado.getIdExamen() == null
-                || seleccionado.getIdExamen().getIdExamen() == null) {
-            agregarError("examen.seleccioneExamen");
-            return;
-        }
-
-        ExamenTipoExamen persistida = null;
-        if (getEstado() == ESTADO_CRUD.EDICION) {
-            persistida = seleccionado.getIdExamenTipoExamen() == null ? null
-                    : getDao().buscarPorId(seleccionado.getIdExamenTipoExamen());
-            if (persistida == null || persistida.getIdExamen() == null
-                    || examenPadre == null || examenPadre.getIdExamen() == null
-                    || !examenPadre.getIdExamen().equals(persistida.getIdExamen().getIdExamen())
-                    || !examenPadre.getIdExamen().equals(seleccionado.getIdExamen().getIdExamen())) {
-                agregarError("examen.seleccioneExamen");
-                return;
-            }
-        } else if (getEstado() != ESTADO_CRUD.CREACION) {
-            return;
-        }
-
-        UUID idTipoElegido = obtenerIdTipoElegido();
-        if (getEstado() == ESTADO_CRUD.EDICION) {
-            UUID idPersistido = persistida.getIdTipoExamen() == null
-                    ? null : persistida.getIdTipoExamen().getIdTipoExamen();
-            UUID idEnSeleccionado = seleccionado.getIdTipoExamen() == null
-                    ? null : seleccionado.getIdTipoExamen().getIdTipoExamen();
-            if (!Objects.equals(idPersistido, idTipoElegido)
-                    || !Objects.equals(idPersistido, idEnSeleccionado)) {
-                seleccionado.setIdTipoExamen(persistida.getIdTipoExamen());
-                idTipoExamenSeleccionado = idPersistido == null ? null : idPersistido.toString();
-                agregarError("tipoExamen", "examen.tipoNoEditable");
-                return;
-            }
-        }
-        if (idTipoElegido == null) {
-            agregarError("tipoExamen", "examen.seleccioneTipo");
-            return;
-        }
-
-        TipoExamen tipoPersistido = tipoExamenDAO.buscarPorId(idTipoElegido);
-        if (tipoPersistido == null) {
-            agregarError("tipoExamen", "examen.seleccioneTipo");
-            return;
-        }
-        if (getEstado() == ESTADO_CRUD.CREACION && !Boolean.TRUE.equals(tipoPersistido.getActivo())) {
-            agregarError("tipoExamen", "examen.tipoInactivo");
-            return;
-        }
-        seleccionado.setIdTipoExamen(tipoPersistido);
-
-        long coincidenciasPropias = 0;
-        if (getEstado() == ESTADO_CRUD.EDICION) {
-            if (persistida.getIdTipoExamen() != null
-                    && seleccionado.getIdTipoExamen().getIdTipoExamen()
-                            .equals(persistida.getIdTipoExamen().getIdTipoExamen())) {
-                coincidenciasPropias = 1;
-            }
-        }
-        long existentes = examenTipoExamenDAO.countByIdExamenAndIdTipoExamen(
-                seleccionado.getIdExamen().getIdExamen(),
-                seleccionado.getIdTipoExamen().getIdTipoExamen());
-        if (existentes > coincidenciasPropias) {
-            agregarError("tipoExamen", "examen.tipoDuplicado");
-            return;
-        }
-
-        seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
-        if (getEstado() == ESTADO_CRUD.EDICION) {
-            getDao().actualizar(seleccionado);
-        } else {
-            getDao().guardar(seleccionado);
-        }
-        examenPadre = seleccionado.getIdExamen();
-        seleccionado = null;
-        filaSeleccionada = null;
-        idTipoExamenSeleccionado = null;
-        tipoExamenOriginalId = null;
-        setEstado(ESTADO_CRUD.LISTADO);
-        recargarAsociaciones();
-        agregarMensaje("examen.asociacionGuardada", FacesMessage.SEVERITY_INFO);
+        if(seleccionado==null||seleccionado.getIdExamen()==null||seleccionado.getIdExamen().getIdExamen()==null){agregarError("examen.seleccioneExamen");return;}
+        boolean edicion=getEstado()==ESTADO_CRUD.EDICION;
+        if(!edicion&&getEstado()!=ESTADO_CRUD.CREACION)return;
+        var old=edicion&&seleccionado.getIdExamenTipoExamen()!=null?getDao().buscarPorId(seleccionado.getIdExamenTipoExamen()):null;
+        if(edicion&&(old==null||old.getIdExamen()==null||examenPadre==null||!Objects.equals(examenPadre.getIdExamen(),old.getIdExamen().getIdExamen())||!Objects.equals(examenPadre.getIdExamen(),seleccionado.getIdExamen().getIdExamen()))){agregarError("examen.seleccioneExamen");return;}
+        UUID tipo=obtenerIdTipoElegido();UUID actual=seleccionado.getIdTipoExamen()==null?null:seleccionado.getIdTipoExamen().getIdTipoExamen();
+        if(edicion&&(!Objects.equals(tipo,tipoExamenOriginalId)||!Objects.equals(tipo,actual))){seleccionado.setIdTipoExamen(old.getIdTipoExamen());idTipoExamenSeleccionado=tipoExamenOriginalId==null?null:tipoExamenOriginalId.toString();agregarError("tipoExamen","examen.tipoNoEditable");return;}
+        seleccionado.setIdTipoExamen(tipo==null?null:new TipoExamen(tipo));
+        try {catalogoService.guardarRelacionExamen(seleccionado,edicion,examenPadre==null?null:examenPadre.getIdExamen(),tipoExamenOriginalId);}
+        catch(ReglaNegocioException ex){agregarError("tipoExamen",ex.getMessage());return;}
+        examenPadre=seleccionado.getIdExamen();seleccionado=null;filaSeleccionada=null;idTipoExamenSeleccionado=null;tipoExamenOriginalId=null;setEstado(ESTADO_CRUD.LISTADO);recargarAsociaciones();agregarMensaje("examen.asociacionGuardada",FacesMessage.SEVERITY_INFO);
     }
 
     public void cancelarAsociacion() {
@@ -316,20 +249,10 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
     }
 
     public void guardar() {
-        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
-            return;
-        }
-        if (!resolverTipoParaCrudGenerico()) {
-            return;
-        }
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> {
-            }
-        }
-        setEstado(ESTADO_CRUD.LISTADO);
-        agregarMensaje("examen.asociacionGuardada", FacesMessage.SEVERITY_INFO);
+        if(seleccionado==null||getEstado()==ESTADO_CRUD.LISTADO)return;
+        try {var saved=catalogoService.guardarRelacionExamen(seleccionado,getEstado()==ESTADO_CRUD.EDICION,examenOriginalId,tipoExamenOriginalId);if(getEstado()==ESTADO_CRUD.EDICION)seleccionado=saved;}
+        catch(ReglaNegocioException ex){agregarError(ex.getCampo(),ex.getMessage());return;}
+        setEstado(ESTADO_CRUD.LISTADO);agregarMensaje("examen.asociacionGuardada",FacesMessage.SEVERITY_INFO);
     }
 
     public void cancelar() {
@@ -369,59 +292,7 @@ public class ExamenTipoExamenModel extends AbstractModel<ExamenTipoExamen> imple
         }
     }
 
-    private boolean resolverTipoParaCrudGenerico() {
-        UUID idExamen = seleccionado.getIdExamen() == null
-                ? null : seleccionado.getIdExamen().getIdExamen();
-        if (idExamen == null) {
-            agregarError("idExamen", "examen.seleccioneExamen");
-            return false;
-        }
-        UUID idTipoElegido = seleccionado.getIdTipoExamen() == null
-                ? null : seleccionado.getIdTipoExamen().getIdTipoExamen();
-        ExamenTipoExamen persistida = null;
-        if (getEstado() == ESTADO_CRUD.EDICION) {
-            persistida = seleccionado.getIdExamenTipoExamen() == null
-                    ? null : getDao().buscarPorId(seleccionado.getIdExamenTipoExamen());
-            if (persistida == null || persistida.getIdExamen() == null
-                    || !Objects.equals(examenOriginalId, idExamen)
-                    || !Objects.equals(examenOriginalId, persistida.getIdExamen().getIdExamen())) {
-                agregarError("idExamen", "relaciones.noEditables");
-                return false;
-            }
-            UUID idOriginal = persistida == null || persistida.getIdTipoExamen() == null
-                    ? null : persistida.getIdTipoExamen().getIdTipoExamen();
-            if (persistida == null || !Objects.equals(idOriginal, idTipoElegido)
-                    || !Objects.equals(tipoExamenOriginalId, idTipoElegido)) {
-                if (persistida != null) {
-                    seleccionado.setIdTipoExamen(persistida.getIdTipoExamen());
-                }
-                agregarError("idTipoExamen", "examen.tipoNoEditable");
-                return false;
-            }
-        } else if (getEstado() != ESTADO_CRUD.CREACION) {
-            return false;
-        }
-        if (idTipoElegido == null) {
-            agregarError("examen.seleccioneTipo");
-            return false;
-        }
-        TipoExamen tipoPersistido = tipoExamenDAO.buscarPorId(idTipoElegido);
-        if (tipoPersistido == null) {
-            agregarError("idTipoExamen", "examen.seleccioneTipo");
-            return false;
-        }
-        if (getEstado() == ESTADO_CRUD.CREACION && !Boolean.TRUE.equals(tipoPersistido.getActivo())) {
-            agregarError("idTipoExamen", "examen.tipoInactivo");
-            return false;
-        }
-        seleccionado.setIdTipoExamen(tipoPersistido);
-        long propias = getEstado() == ESTADO_CRUD.EDICION ? 1 : 0;
-        if (getDao().countByIdExamenAndIdTipoExamen(idExamen, idTipoElegido) > propias) {
-            agregarError("idTipoExamen", "examen.tipoDuplicado");
-            return false;
-        }
-        return true;
-    }
+
 
     private void recargarTiposExamen() {
         tipoExamenes = tipoExamenDAO == null ? List.of() : tipoExamenDAO.obtenerTodos();

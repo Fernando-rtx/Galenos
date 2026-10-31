@@ -69,6 +69,7 @@ class ExamenModelTest {
         ExamenModel modelo = new ExamenModel(dao);
         modelo.nuevo();
         Examen examen = modelo.getSeleccionado();
+        examen.setNombre("Prueba de persistencia");
         doThrow(new IllegalStateException("Error de persistencia")).when(dao).guardar(examen);
 
         assertThrows(IllegalStateException.class, modelo::guardar);
@@ -143,12 +144,14 @@ class ExamenModelTest {
         ExamenModel modelo = new ExamenModel(dao);
         modelo.nuevo();
         Examen creado = modelo.getSeleccionado();
+        creado.setNombre("Examen nuevo");
         creado.setActivo(false);
 
         modelo.guardar();
 
         verify(dao).guardar(argThat(examen -> Boolean.FALSE.equals(examen.getActivo())));
         Examen editado = new Examen(UUID.randomUUID());
+        editado.setNombre("Examen editado");
         editado.setActivo(true);
         when(dao.actualizar(editado)).thenReturn(editado);
         modelo.seleccionar(editado);
@@ -161,7 +164,7 @@ class ExamenModelTest {
     }
     @Test void seleccionarEdita() { ExamenModel m = new ExamenModel(mock(ExamenDAO.class)); Examen e = new Examen(); m.seleccionar(e); assertSame(e, m.getSeleccionado()); assertEquals(ESTADO_CRUD.EDICION, m.getEstado()); }
     @Test void dobleClicSeleccionaExamenDelEvento() { ExamenModel m = new ExamenModel(mock(ExamenDAO.class)); Examen e = new Examen(); SelectEvent<Examen> evento = mock(SelectEvent.class); when(evento.getObject()).thenReturn(e); m.seleccionarFila(evento); assertSame(e, m.getSeleccionado()); assertEquals(ESTADO_CRUD.EDICION, m.getEstado()); }
-    @Test void guardarCreacionDelegaYDaoAsignaUuid() { ExamenDAO d = mock(ExamenDAO.class); doAnswer(i -> { Examen e=i.getArgument(0); e.setIdExamen(UUID.randomUUID()); return e; }).when(d).guardar(any()); ExamenModel m=new ExamenModel(d); m.nuevo(); m.guardar(); assertNotNull(m.getSeleccionado().getIdExamen()); verify(d).guardar(m.getSeleccionado()); }
-    @Test void guardarEdicionUsaResultado() { ExamenDAO d=mock(ExamenDAO.class); Examen a=new Examen(), b=new Examen(); when(d.actualizar(a)).thenReturn(b); ExamenModel m=new ExamenModel(d); m.seleccionar(a); m.guardar(); assertSame(b,m.getSeleccionado()); assertEquals(ESTADO_CRUD.LISTADO,m.getEstado()); }
+    @Test void guardarCreacionDelegaYDaoAsignaUuid() { ExamenDAO d = mock(ExamenDAO.class); doAnswer(i -> { Examen e=i.getArgument(0); e.setIdExamen(UUID.randomUUID()); return e; }).when(d).guardar(any()); ExamenModel m=new ExamenModel(d); m.nuevo(); m.getSeleccionado().setNombre("Examen válido"); m.guardar(); assertNotNull(m.getSeleccionado().getIdExamen()); verify(d).guardar(m.getSeleccionado()); }
+    @Test void guardarEdicionUsaResultado() { ExamenDAO d=mock(ExamenDAO.class); Examen a=new Examen(), b=new Examen(); a.setNombre("Examen válido"); when(d.actualizar(a)).thenReturn(b); ExamenModel m=new ExamenModel(d); m.seleccionar(a); m.guardar(); assertSame(b,m.getSeleccionado()); assertEquals(ESTADO_CRUD.LISTADO,m.getEstado()); }
     @Test void cancelarLimpia() { ExamenModel m=new ExamenModel(mock(ExamenDAO.class)); m.nuevo(); m.cancelar(); assertNull(m.getSeleccionado()); assertEquals(ESTADO_CRUD.LISTADO,m.getEstado()); }
 }

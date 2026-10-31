@@ -32,6 +32,12 @@ final class RestInput {
         throw new ApiException(422, campo + " debe ser booleano o null");
     }
     UUID uuid(String campo) { return RestParameters.uuid(text(campo), campo); }
+    java.util.List<UUID> uuidList(String campo) {
+        JsonValue value=data.get(campo);
+        if(value==null || value==JsonValue.NULL)return java.util.List.of();
+        if(!(value instanceof jakarta.json.JsonArray array))throw new ApiException(422,campo+" debe ser un arreglo UUID");
+        return array.stream().map(item->{if(!(item instanceof JsonString text))throw new ApiException(422,campo+" contiene un valor inválido");return RestParameters.uuid(text.getString(),campo);}).toList();
+    }
     Date date(String campo) {
         String value = text(campo);
         if (value == null) return null;

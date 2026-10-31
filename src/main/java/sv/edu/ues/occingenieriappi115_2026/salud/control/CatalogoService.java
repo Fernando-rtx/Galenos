@@ -25,6 +25,10 @@ public class CatalogoService {
     @EJB private RolDAO rolDAO;
     @EJB private PersonaRolDAO personaRolDAO;
     @EJB private ProcedimientoPasoDAO pasoDAO;
+    @EJB private ExamenDAO examenDAO;
+    @EJB private ExamenTipoExamenDAO examenTipoDAO;
+    @EJB private ProcedimientoDAO procedimientoDAO;
+    @EJB private ConsultaProcedimientoDAO consultaProcedimientoDAO;
 
     public CatalogoService() { }
     public CatalogoService(TipoDocumentoDAO dao) { tipoDocumentoDAO = dao; }
@@ -34,6 +38,90 @@ public class CatalogoService {
     public CatalogoService(RolDAO dao, PersonaRolDAO personas, ProcedimientoPasoDAO pasos) {
         rolDAO = dao; personaRolDAO = personas; pasoDAO = pasos;
     }
+
+    public CatalogoService(ExamenDAO dao) { examenDAO = dao; }
+    public CatalogoService(ProcedimientoDAO dao, ProcedimientoPasoDAO pasos, ConsultaProcedimientoDAO consultas) {
+        procedimientoDAO = dao; pasoDAO = pasos; consultaProcedimientoDAO = consultas;
+    }
+    public CatalogoService(ExamenTipoExamenDAO relaciones, ExamenDAO examenes, TipoExamenDAO tipos) {
+        examenTipoDAO=relaciones;examenDAO=examenes;tipoExamenDAO=tipos;
+    }
+    public ExamenTipoExamen guardarRelacionExamen(ExamenTipoExamen value, boolean edicion, UUID examenOriginal, UUID tipoOriginal) {
+        UUID examen=value.getIdExamen()==null?null:value.getIdExamen().getIdExamen();
+        UUID tipo=value.getIdTipoExamen()==null?null:value.getIdTipoExamen().getIdTipoExamen();
+        if(examen==null)throw new ReglaNegocioException(VALIDACION,"idExamen","examen.seleccioneExamen");
+        var anterior=edicion&&value.getIdExamenTipoExamen()!=null?examenTipoDAO.buscarPorId(value.getIdExamenTipoExamen()):null;
+        if(edicion&&(anterior==null||anterior.getIdExamen()==null||!Objects.equals(examenOriginal,examen)||!Objects.equals(examenOriginal,anterior.getIdExamen().getIdExamen())))
+            throw new ReglaNegocioException(VALIDACION,"idExamen","relaciones.noEditables");
+        if(edicion&&(anterior.getIdTipoExamen()==null||!Objects.equals(tipoOriginal,tipo)||!Objects.equals(tipo,anterior.getIdTipoExamen().getIdTipoExamen()))) {
+            value.setIdTipoExamen(anterior.getIdTipoExamen());throw new ReglaNegocioException(VALIDACION,"idTipoExamen","examen.tipoNoEditable");
+        }
+        var persistido=tipo==null?null:tipoExamenDAO.buscarPorId(tipo);
+        if(persistido==null)throw new ReglaNegocioException(VALIDACION,"idTipoExamen","examen.seleccioneTipo");
+        value.setIdTipoExamen(persistido);
+        if(!edicion&&!Boolean.TRUE.equals(persistido.getActivo()))throw new ReglaNegocioException(VALIDACION,"idTipoExamen","examen.tipoInactivo");
+        if(examenTipoDAO.countByIdExamenAndIdTipoExamen(examen,tipo)>(edicion?1:0))throw new ReglaNegocioException(DUPLICADO,"idTipoExamen","examen.tipoDuplicado");
+        value.setIdTipoExamen(persistido);value.setObservaciones(normalizar(value.getObservaciones()));
+        return edicion?examenTipoDAO.actualizar(value):examenTipoDAO.guardar(value);
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<ExamenTipoExamen> relacionesExamen(UUID id,int first,int max) {return examenTipoDAO.obtenerPagina(first,max,List.of(new FiltroDAO("idExamen.idExamen",OperadorFiltro.IGUAL,id)),List.of(new OrdenDAO("idExamenTipoExamen",DireccionOrden.ASCENDENTE)));}
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarRelacionesExamen(UUID id) {return examenTipoDAO.contar(List.of(new FiltroDAO("idExamen.idExamen",OperadorFiltro.IGUAL,id)));}
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public ExamenTipoExamen buscarRelacionExamen(UUID id) {return examenTipoDAO.buscarPorId(id);}
+    public void eliminarRelacionExamen(UUID id) {if(!examenTipoDAO.eliminar(id))throw new ReglaNegocioException(AUSENTE,null,"examen.errorQuitarAsociacion");}
+
+    public void validarNombreExamen(String valor, UUID id) {
+        String nombre = nombre(valor, 2, 255, "examen");
+        if (examenDAO.obtenerPagina(0, 2, List.of(new FiltroDAO("nombre", OperadorFiltro.IGUAL, nombre)), List.of()).stream()
+                .anyMatch(e -> e.getIdExamen() == null || !e.getIdExamen().equals(id))) {
+            throw new ReglaNegocioException(DUPLICADO, "nombre", "examen.nombreDuplicado");
+        }
+    }
+    public Examen guardarExamen(Examen datos, boolean edicion) {
+        validarNombreExamen(datos.getNombre(), edicion ? datos.getIdExamen() : null);
+        datos.setNombre(normalizar(datos.getNombre()));datos.setObservaciones(normalizar(datos.getObservaciones()));
+        return edicion ? examenDAO.actualizar(datos) : examenDAO.guardar(datos);
+    }
+    public Procedimiento guardarProcedimiento(Procedimiento datos, boolean edicion) {
+        String nombre = nombre(datos.getNombre(), 2, 155, "procedimiento");
+        UUID id = edicion ? datos.getIdProcedimiento() : null;
+        if (procedimientoDAO.obtenerTodos().stream().filter(Objects::nonNull)
+                .filter(p -> id == null || !id.equals(p.getIdProcedimiento()))
+                .anyMatch(p -> nombre.equalsIgnoreCase(normalizar(p.getNombre())))) {
+            throw new ReglaNegocioException(DUPLICADO, "nombre", "procedimiento.nombreDuplicado");
+        }
+        datos.setNombre(nombre);datos.setObservaciones(normalizar(datos.getObservaciones()));
+        return edicion ? procedimientoDAO.actualizar(datos) : procedimientoDAO.guardar(datos);
+    }
+    public void eliminarProcedimiento(UUID id) {
+        if (pasoDAO.contar(List.of(new FiltroDAO("idProcedimiento.idProcedimiento", OperadorFiltro.IGUAL, id))) > 0
+                || consultaProcedimientoDAO.contar(List.of(new FiltroDAO("idProcedimiento", OperadorFiltro.IGUAL, id))) > 0) {
+            throw new ReglaNegocioException(REFERENCIADO, null, "procedimiento.eliminacionBloqueada");
+        }
+        if (!procedimientoDAO.eliminar(id)) throw new ReglaNegocioException(AUSENTE, null, "procedimiento.errorEliminar");
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<Examen> listarExamen(int primero, int tamano, String nombre) {
+        return examenDAO.obtenerPagina(primero, tamano, filtroNombre(nombre), List.of(new OrdenDAO("idExamen", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarExamen(String nombre) { return examenDAO.contar(filtroNombre(nombre)); }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public Examen buscarExamen(UUID id) { return examenDAO.buscarPorId(id); }
+    private static List<FiltroDAO> filtroProcedimiento(String nombre, Boolean activo) {
+        var filtros = new java.util.ArrayList<>(filtroNombre(nombre));
+        if (activo != null) filtros.add(new FiltroDAO("activo", OperadorFiltro.IGUAL, activo));return filtros;
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<Procedimiento> listarProcedimiento(int primero, int tamano, String nombre, Boolean activo) {
+        return procedimientoDAO.obtenerPagina(primero, tamano, filtroProcedimiento(nombre, activo), List.of(new OrdenDAO("idProcedimiento", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarProcedimiento(String nombre, Boolean activo) { return procedimientoDAO.contar(filtroProcedimiento(nombre, activo)); }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public Procedimiento buscarProcedimiento(UUID id) { return procedimientoDAO.buscarPorId(id); }
 
     public TipoDocumento guardarTipoDocumento(TipoDocumento datos, boolean edicion) {
         Objects.requireNonNull(datos, "El tipo documental es requerido");

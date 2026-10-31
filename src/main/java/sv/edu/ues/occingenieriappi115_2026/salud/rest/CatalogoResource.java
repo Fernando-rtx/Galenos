@@ -245,4 +245,99 @@ public class CatalogoResource {
         service.eliminarRol(RestParameters.uuid(id,"id"));
         return Response.noContent().build();
     }
+    @jakarta.json.bind.annotation.JsonbNillable
+    public record ExamenDatos(String idExamen, String nombre, String observaciones, Boolean activo) {
+        static ExamenDatos from(Examen e) { return new ExamenDatos(e.getIdExamen().toString(), e.getNombre(), e.getObservaciones(), e.getActivo()); }
+    }
+    @GET @Path("examen")
+    public List<ExamenDatos> listarExamen(@QueryParam("first") String first, @QueryParam("max") String max,
+            @QueryParam("nombre") String nombre) {
+        settings.requireManagement();
+        var page = RestParameters.page(first, max, settings);
+        var result = service.listarExamen(page.first(), page.max(), nombre).stream().map(ExamenDatos::from).toList();
+        response.setHeader("Total-registros", Long.toString(service.contarExamen(nombre)));
+        return result;
+    }
+    @GET @Path("examen/{id}")
+    public ExamenDatos detalleExamen(@PathParam("id") String id) {
+        settings.requireManagement();
+        var value = service.buscarExamen(RestParameters.uuid(id,"id"));
+        if (value == null) throw new ApiException(404,"Registro no encontrado");
+        return ExamenDatos.from(value);
+    }
+    @POST @Path("examen") @Consumes(MediaType.APPLICATION_JSON)
+    public Response crearExamen(JsonObject body) {
+        settings.requireManagement();
+        var value = leerExamen(body, new Examen());
+        value = service.guardarExamen(value, false);
+        return Response.created(uri.getAbsolutePathBuilder().path(value.getIdExamen().toString()).build())
+                .entity(ExamenDatos.from(value)).build();
+    }
+    @PUT @Path("examen/{id}") @Consumes(MediaType.APPLICATION_JSON)
+    public ExamenDatos actualizarExamen(@PathParam("id") String id, JsonObject body) {
+        settings.requireManagement();
+        var value = service.buscarExamen(RestParameters.uuid(id,"id"));
+        if (value == null) throw new ApiException(404,"Registro no encontrado");
+        return ExamenDatos.from(service.guardarExamen(leerExamen(body, value), true));
+    }
+    private static Examen leerExamen(JsonObject body, Examen value) {
+        var input = new RestInput(body, "nombre", "observaciones", "activo");
+        value.setNombre(input.text("nombre"));
+        value.setObservaciones(input.text("observaciones"));
+        value.setActivo(input.bool("activo"));
+        return value;
+    }
+    @jakarta.json.bind.annotation.JsonbNillable
+    public record ProcedimientoDatos(String idProcedimiento, String nombre, String observaciones, Boolean activo) {
+        static ProcedimientoDatos from(Procedimiento e) { return new ProcedimientoDatos(e.getIdProcedimiento().toString(), e.getNombre(), e.getObservaciones(), e.getActivo()); }
+    }
+    @GET @Path("procedimiento")
+    public List<ProcedimientoDatos> listarProcedimiento(@QueryParam("first") String first, @QueryParam("max") String max,
+            @QueryParam("nombre") String nombre, @QueryParam("activo") String activo) {
+        settings.requireManagement();
+        var page = RestParameters.page(first, max, settings);
+        var result = service.listarProcedimiento(page.first(), page.max(), nombre, booleano(activo)).stream().map(ProcedimientoDatos::from).toList();
+        response.setHeader("Total-registros", Long.toString(service.contarProcedimiento(nombre, booleano(activo))));
+        return result;
+    }
+    @GET @Path("procedimiento/{id}")
+    public ProcedimientoDatos detalleProcedimiento(@PathParam("id") String id) {
+        settings.requireManagement();
+        var value = service.buscarProcedimiento(RestParameters.uuid(id,"id"));
+        if (value == null) throw new ApiException(404,"Registro no encontrado");
+        return ProcedimientoDatos.from(value);
+    }
+    @POST @Path("procedimiento") @Consumes(MediaType.APPLICATION_JSON)
+    public Response crearProcedimiento(JsonObject body) {
+        settings.requireManagement();
+        var value = leerProcedimiento(body, new Procedimiento());
+        value = service.guardarProcedimiento(value, false);
+        return Response.created(uri.getAbsolutePathBuilder().path(value.getIdProcedimiento().toString()).build())
+                .entity(ProcedimientoDatos.from(value)).build();
+    }
+    @PUT @Path("procedimiento/{id}") @Consumes(MediaType.APPLICATION_JSON)
+    public ProcedimientoDatos actualizarProcedimiento(@PathParam("id") String id, JsonObject body) {
+        settings.requireManagement();
+        var value = service.buscarProcedimiento(RestParameters.uuid(id,"id"));
+        if (value == null) throw new ApiException(404,"Registro no encontrado");
+        return ProcedimientoDatos.from(service.guardarProcedimiento(leerProcedimiento(body, value), true));
+    }
+    private static Procedimiento leerProcedimiento(JsonObject body, Procedimiento value) {
+        var input = new RestInput(body, "nombre", "observaciones", "activo");
+        value.setNombre(input.text("nombre"));
+        value.setObservaciones(input.text("observaciones"));
+        value.setActivo(input.bool("activo"));
+        return value;
+    }
+    @DELETE @Path("procedimiento/{id}")
+    public Response eliminarProcedimiento(@PathParam("id") String id) {
+        settings.requireManagement();
+        service.eliminarProcedimiento(RestParameters.uuid(id,"id"));
+        return Response.noContent().build();
+    }
+    private static Boolean booleano(String value) {
+        if (value == null) return null;
+        if (!value.equals("true") && !value.equals("false")) throw new ApiException(422, "activo debe ser true o false");
+        return Boolean.valueOf(value);
+    }
 }

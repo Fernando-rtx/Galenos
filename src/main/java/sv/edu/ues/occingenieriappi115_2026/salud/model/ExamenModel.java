@@ -1,6 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.CatalogoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
@@ -20,6 +22,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.Examen;
 @ViewScoped
 public class ExamenModel extends AbstractModel<Examen> implements Serializable {
     private static final long serialVersionUID = 1L;
+    @EJB private CatalogoService catalogoService;
     @EJB
     private ExamenDAO examenDAO;
     private Examen seleccionado;
@@ -29,6 +32,7 @@ public class ExamenModel extends AbstractModel<Examen> implements Serializable {
 
     public ExamenModel(ExamenDAO examenDAO) {
         this.examenDAO = examenDAO;
+        this.catalogoService = new CatalogoService(examenDAO);
     }
 
     @Override
@@ -60,45 +64,20 @@ public class ExamenModel extends AbstractModel<Examen> implements Serializable {
     }
 
     public void validarNombre(FacesContext contexto, UIComponent componente, Object valor) {
-        String nombre = valor == null ? "" : valor.toString().trim();
-        if (nombre.isEmpty()) {
-            lanzarValidacion(contexto, "examen.nombreRequerido");
-        }
-        if (nombre.length() < 2) {
-            lanzarValidacion(contexto, "examen.nombreMinimo");
-        }
-        if (nombre.length() > 255) {
-            lanzarValidacion(contexto, "examen.nombreMaximo");
-        }
-        if (nombreDuplicado(nombre)) {
-            lanzarValidacion(contexto, "examen.nombreDuplicado");
-        }
+        try { catalogoService.validarNombreExamen(valor == null ? null : valor.toString(), seleccionado == null ? null : seleccionado.getIdExamen()); }
+        catch (ReglaNegocioException ex) { lanzarValidacion(contexto, ex.getMessage()); }
     }
 
-    private boolean nombreDuplicado(String nombre) {
-        List<Examen> existentes = getDao().obtenerPagina(0, Integer.MAX_VALUE,
-                List.of(new FiltroDAO("nombre", OperadorFiltro.IGUAL, nombre)), List.of());
-        if (existentes == null || existentes.isEmpty()) {
-            return false;
-        }
-        UUID idActual = seleccionado == null ? null : seleccionado.getIdExamen();
-        return existentes.stream().anyMatch(examen -> examen.getIdExamen() == null
-                || !examen.getIdExamen().equals(idActual));
-    }
+
 
     public void guardar() {
-        if (seleccionado == null) {
-            return;
-        }
-        seleccionado.setNombre(normalizar(seleccionado.getNombre()));
-        seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> { }
-        }
-        setEstado(ESTADO_CRUD.LISTADO);
-        agregarMensaje(FacesMessage.SEVERITY_INFO, "examen.guardado");
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) return;
+        try {
+            boolean edicion = getEstado() == ESTADO_CRUD.EDICION;
+            var guardado = catalogoService.guardarExamen(seleccionado, edicion);
+            if (edicion) seleccionado = guardado;
+        } catch (ReglaNegocioException ex) { registrarError(ex.getMessage());return; }
+        setEstado(ESTADO_CRUD.LISTADO);agregarMensaje(FacesMessage.SEVERITY_INFO, "examen.guardado");
     }
 
     public void cancelar() {

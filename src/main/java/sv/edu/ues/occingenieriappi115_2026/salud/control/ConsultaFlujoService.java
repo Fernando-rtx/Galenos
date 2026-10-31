@@ -26,6 +26,8 @@ public class ConsultaFlujoService {
     @EJB private ProcedimientoPasoDAO procedimientoPasoDAO;
     @EJB private ConsultaProcedimientoDAO consultaProcedimientoDAO;
     @EJB private ConsultaProcedimientoPasoDAO pasoDAO;
+    @EJB private OrdenExamenDAO ordenDAO;
+    @EJB private ExamenResultadoDAO resultadoDAO;
 
     public ConsultaFlujoService() { }
 
@@ -235,6 +237,60 @@ public class ConsultaFlujoService {
         return value;
     }
 
+    private ConsultaProcedimientoPaso pasoEnClinica(UUID id, UUID clinica) {
+        var paso = id == null ? null : buscarPasoConsulta(clinica, id);
+        if (paso == null) throw new FlujoConsultaException("consultaFlujo.contextoInvalido");
+        return paso;
+    }
+    private OrdenExamen ordenEnClinica(UUID id, UUID clinica) {
+        var orden = id == null ? null : buscarOrden(id, clinica);
+        if (orden == null) throw new FlujoConsultaException("consultaFlujo.contextoInvalido");
+        return orden;
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public OrdenExamen buscarOrden(UUID id, UUID clinica) {
+        var value = ordenDAO.buscarPorId(id);
+        if (value != null) pasoEnClinica(value.getIdConsultaProcedimientoPaso().getIdConsultaProcedimientoPaso(), clinica);
+        return value;
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<OrdenExamen> listarOrden(UUID parent, UUID clinica, int first, int max) {
+        pasoEnClinica(parent, clinica);
+        return ordenDAO.obtenerPagina(first, max, List.of(new FiltroDAO("idConsultaProcedimientoPaso.idConsultaProcedimientoPaso", OperadorFiltro.IGUAL, parent)), List.of(new OrdenDAO("idOrdenExamen", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarOrden(UUID parent, UUID clinica) {
+        pasoEnClinica(parent, clinica);
+        return ordenDAO.contar(List.of(new FiltroDAO("idConsultaProcedimientoPaso.idConsultaProcedimientoPaso", OperadorFiltro.IGUAL, parent)));
+    }
+    public OrdenExamen guardarOrden(OrdenExamen datos, UUID clinica, boolean edicion) {
+        var parent = pasoEnClinica(datos.getIdConsultaProcedimientoPaso() == null ? null : datos.getIdConsultaProcedimientoPaso().getIdConsultaProcedimientoPaso(), clinica);
+        if (edicion && buscarOrden(datos.getIdOrdenExamen(), clinica) == null) throw new FlujoConsultaException("consultaFlujo.contextoInvalido");
+        datos.setIdConsultaProcedimientoPaso(parent);
+        return edicion ? ordenDAO.actualizar(datos) : ordenDAO.guardar(datos);
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public ExamenResultado buscarResultado(UUID id, UUID clinica) {
+        var value = resultadoDAO.buscarPorId(id);
+        if (value != null) ordenEnClinica(value.getIdOrdenExamen().getIdOrdenExamen(), clinica);
+        return value;
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<ExamenResultado> listarResultado(UUID parent, UUID clinica, int first, int max) {
+        ordenEnClinica(parent, clinica);
+        return resultadoDAO.obtenerPagina(first, max, List.of(new FiltroDAO("idOrdenExamen.idOrdenExamen", OperadorFiltro.IGUAL, parent)), List.of(new OrdenDAO("idExamenResultado", DireccionOrden.ASCENDENTE)));
+    }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarResultado(UUID parent, UUID clinica) {
+        ordenEnClinica(parent, clinica);
+        return resultadoDAO.contar(List.of(new FiltroDAO("idOrdenExamen.idOrdenExamen", OperadorFiltro.IGUAL, parent)));
+    }
+    public ExamenResultado guardarResultado(ExamenResultado datos, UUID clinica, boolean edicion) {
+        var parent = ordenEnClinica(datos.getIdOrdenExamen() == null ? null : datos.getIdOrdenExamen().getIdOrdenExamen(), clinica);
+        if (edicion && buscarResultado(datos.getIdExamenResultado(), clinica) == null) throw new FlujoConsultaException("consultaFlujo.contextoInvalido");
+        datos.setIdOrdenExamen(parent);
+        return edicion ? resultadoDAO.actualizar(datos) : resultadoDAO.guardar(datos);
+    }
     private void validarClinica(UUID id) {
         Clinica clinica = id == null ? null : clinicaDAO.buscarPorId(id);
         if (clinica == null || !Boolean.TRUE.equals(clinica.getActivo())) {

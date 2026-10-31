@@ -22,4 +22,15 @@ class DemoAccessFilterTest {
         when(request.getUriInfo()).thenReturn(uri);when(uri.getPath()).thenReturn(path);when(request.getMethod()).thenReturn("POST");
         assertEquals(403, assertThrows(ApiException.class, () -> filter.filter(request)).getStatus());
     }
+
+    @ParameterizedTest @ValueSource(strings={"/v2/persona", "/v2/documento", "/v2/medio_contacto", "/v2/persona_rol"})
+    void lecturaPersonalRequiereAdministradorEnClinica(String path) {
+        var filter=new DemoAccessFilter();
+        filter.settings=new ApiSettings(Map.of("GALENOS_API_MODE","development","POSTGRESQL_DB_NAME","clinica"));
+        filter.servlet=mock(HttpServletRequest.class);
+        when(filter.servlet.getUserPrincipal()).thenReturn(()->"lector");when(filter.servlet.getHeader("Authorization")).thenReturn("Basic prueba-unitaria");
+        var request=mock(ContainerRequestContext.class);var uri=mock(UriInfo.class);
+        when(request.getUriInfo()).thenReturn(uri);when(uri.getPath()).thenReturn(path);when(request.getMethod()).thenReturn("GET");
+        assertEquals(403,assertThrows(ApiException.class,()->filter.filter(request)).getStatus());
+    }
 }

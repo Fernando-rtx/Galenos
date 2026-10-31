@@ -89,15 +89,6 @@ public class ConsultaGestionResource {
     public List<PacienteDatos> pacientes(@QueryParam("idClinica") String c,@QueryParam("buscar") String buscar) {
         return service.buscarPacientes(clinic(c),buscar).stream().map(PacienteDatos::from).toList();
     }
-    @JsonbNillable public record ProcedimientoDatos(String idProcedimiento,String nombre,String observaciones,Boolean activo) {
-        static ProcedimientoDatos from(Procedimiento value) { return new ProcedimientoDatos(value.getIdProcedimiento().toString(),value.getNombre(),value.getObservaciones(),value.getActivo()); }
-    }
-    @GET @Path("procedimiento")
-    public List<ProcedimientoDatos> procedimientos(@QueryParam("first") String first,@QueryParam("max") String max) {
-        settings.requireManagement();var page = RestParameters.page(first,max,settings);
-        response.setHeader("Total-registros",Long.toString(service.contarProcedimientosDisponibles()));
-        return service.procedimientosDisponibles(page.first(),page.max()).stream().map(ProcedimientoDatos::from).toList();
-    }
     @JsonbNillable public record AsociacionDatos(String idConsultaProcedimiento,String idConsulta,String idProcedimiento,String fechaInicio,String fechaFin,String observaciones) {
         static AsociacionDatos from(ConsultaProcedimiento value) {
             return new AsociacionDatos(value.getIdConsultaProcedimiento().toString(),value.getIdConsulta().getIdConsulta().toString(),

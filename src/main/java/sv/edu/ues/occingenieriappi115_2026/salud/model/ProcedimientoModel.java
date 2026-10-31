@@ -1,6 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.CatalogoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
@@ -26,6 +28,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.Procedimiento;
 public class ProcedimientoModel extends AbstractModel<Procedimiento> implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    @EJB private CatalogoService catalogoService;
 
     @EJB
     private ProcedimientoDAO procedimientoDAO;
@@ -47,6 +50,7 @@ public class ProcedimientoModel extends AbstractModel<Procedimiento> implements 
         this.procedimientoDAO = procedimientoDAO;
         this.procedimientoPasoDAO = procedimientoPasoDAO;
         this.consultaProcedimientoDAO = consultaProcedimientoDAO;
+        this.catalogoService = new CatalogoService(procedimientoDAO, procedimientoPasoDAO, consultaProcedimientoDAO);
     }
 
     @Override
@@ -90,23 +94,20 @@ public class ProcedimientoModel extends AbstractModel<Procedimiento> implements 
         if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
             return;
         }
-        seleccionado.setNombre(normalizar(seleccionado.getNombre()));
-        seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
-        if (!validarAntesDeGuardar()) {
-            return;
-        }
         try {
             switch (getEstado()) {
                 case CREACION -> {
-                    getDao().guardar(seleccionado);
+                    catalogoService.guardarProcedimiento(seleccionado, false);
                     agregarMensaje("procedimiento.creadoCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
                 case EDICION -> {
-                    seleccionado = getDao().actualizar(seleccionado);
+                    seleccionado = catalogoService.guardarProcedimiento(seleccionado, true);
                     agregarMensaje("procedimiento.actualizadoCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
                 case LISTADO -> { }
             }
+        } catch (ReglaNegocioException ex) {
+            agregarError(ex.getMessage());return;
         } catch (RuntimeException ex) {
             if (facesContext == null) {
                 throw ex;
@@ -165,47 +166,13 @@ public class ProcedimientoModel extends AbstractModel<Procedimiento> implements 
                 .anyMatch(consulta -> id.equals(consulta.getIdProcedimiento()));
     }
 
-    private boolean validarAntesDeGuardar() {
-        String nombre = seleccionado.getNombre();
-        if (nombre == null || nombre.isEmpty()) {
-            agregarError("procedimiento.nombreRequerido");
-            return false;
-        }
-        if (nombre.length() < 2) {
-            agregarError("procedimiento.nombreMinimo");
-            return false;
-        }
-        if (nombre.length() > 155) {
-            agregarError("procedimiento.nombreMaximo");
-            return false;
-        }
-        if (tieneNombreDuplicado()) {
-            agregarError("procedimiento.nombreDuplicado");
-            return false;
-        }
-        return true;
-    }
 
-    private boolean tieneNombreDuplicado() {
-        UUID idPropio = seleccionado.getIdProcedimiento();
-        return getDao().obtenerTodos().stream()
-                .filter(existente -> existente != null && existente != seleccionado)
-                .filter(existente -> idPropio == null
-                        || !idPropio.equals(existente.getIdProcedimiento()))
-                .anyMatch(existente -> nombreEquals(existente));
-    }
 
-    private boolean nombreEquals(Procedimiento existente) {
-        return seleccionado.getNombre() != null
-                && existente != null
-                && existente.getNombre() != null
-                && seleccionado.getNombre().trim()
-                        .equalsIgnoreCase(existente.getNombre().trim());
-    }
 
-    private String normalizar(String valor) {
-        return valor == null ? null : valor.trim();
-    }
+
+
+
+
 
     private void agregarError(String clave) {
         agregarMensaje(clave, FacesMessage.SEVERITY_ERROR);
