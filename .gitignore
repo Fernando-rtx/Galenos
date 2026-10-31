@@ -1,10 +1,20 @@
 target/
-/docs/
+/.galenos-demo/
+/demo.env
+/docs/*
+!/docs/api-contract.md
+!/docs/backend-audit.md
+!/docs/rest-validation.md
+!/docs/consulta-demo.md
+!/docs/demo-setup.md
+!/docs/integracion-dao-navegador.md
 .DS_Store
 nb-configuration.xml
 nbactions.xml
 faces-config.NavData
 *.log
+__pycache__/
+*.pyc
 
 # Open Liberty local configuration and generated state
 src/main/liberty/config/server.env
