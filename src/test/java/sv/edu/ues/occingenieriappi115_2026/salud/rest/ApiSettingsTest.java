@@ -98,4 +98,15 @@ class ApiSettingsTest {
         assertEquals(403, assertThrows(ApiException.class, () -> settings.requireClinic("otro", java.util.UUID.fromString(clinic))).getStatus());
         assertEquals(403, assertThrows(ApiException.class, () -> settings.requireClinic("sintetico", java.util.UUID.randomUUID())).getStatus());
     }
+
+    @Test
+    void desarrolloRequiereClinicaSinModoDemoYNoOtorgaClinicasPorDefecto() {
+        var settings = new ApiSettings(Map.of("GALENOS_API_MODE", "development", "POSTGRESQL_DB_NAME", "clinica"));
+        assertTrue(settings.isManagementEnabled());
+        assertDoesNotThrow(settings::requireManagement);
+        assertThrows(ApiException.class, settings::requireDemo);
+        assertTrue(settings.clinicsFor("sin-asignacion").isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of("GALENOS_API_MODE", "development", "POSTGRESQL_DB_NAME", "galenos_demo_crud")));
+        assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of("GALENOS_API_MODE", "development", "POSTGRESQL_DB_NAME", "clinica", "GALENOS_DEMO_MODE", "true")));
+    }
 }

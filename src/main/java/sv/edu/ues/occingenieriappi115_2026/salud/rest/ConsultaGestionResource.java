@@ -24,7 +24,7 @@ public class ConsultaGestionResource {
     @Context HttpServletResponse response;
     @Context UriInfo uri;
     private UUID clinic(String raw) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         UUID id = RestParameters.uuid(raw, "idClinica");
         settings.requireClinic(request.getUserPrincipal().getName(), id);
         return id;
@@ -32,7 +32,7 @@ public class ConsultaGestionResource {
     private static String instant(Date date) { return date == null ? null : date.toInstant().toString(); }
     @GET @Path("clinica_disponible")
     public List<ClinicaDto> clinicas(@QueryParam("first") String first, @QueryParam("max") String max) {
-        settings.requireCrudDemo();var page=RestParameters.page(first,max,settings);
+        settings.requireManagement();var page=RestParameters.page(first,max,settings);
         var ids=settings.clinicsFor(request.getUserPrincipal().getName());
         response.setHeader("Total-registros",Long.toString(service.contarClinicasDisponibles(ids)));
         return service.clinicasDisponibles(ids,page.first(),page.max()).stream().map(ClinicaDto::new).toList();
@@ -94,7 +94,7 @@ public class ConsultaGestionResource {
     }
     @GET @Path("procedimiento")
     public List<ProcedimientoDatos> procedimientos(@QueryParam("first") String first,@QueryParam("max") String max) {
-        settings.requireCrudDemo();var page = RestParameters.page(first,max,settings);
+        settings.requireManagement();var page = RestParameters.page(first,max,settings);
         response.setHeader("Total-registros",Long.toString(service.contarProcedimientosDisponibles()));
         return service.procedimientosDisponibles(page.first(),page.max()).stream().map(ProcedimientoDatos::from).toList();
     }

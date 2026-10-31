@@ -35,7 +35,7 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
             return;
         }
         request.setProperty(APPROVED_ORIGIN, origin);
-        boolean crud = settings.isCrudDemo() && request.getUriInfo().getPath().replaceFirst("^/+", "").startsWith("v2/");
+        boolean crud = settings.isManagementEnabled() && request.getUriInfo().getPath().replaceFirst("^/+", "").startsWith("v2/");
         Set<String> methods = crud ? Set.of("GET", "HEAD", "POST", "PUT", "DELETE") : METHODS;
         Set<String> headers = crud ? Set.of("accept", "content-type", "authorization") : HEADERS;
         String requestedMethod = request.getHeaderString("Access-Control-Request-Method");

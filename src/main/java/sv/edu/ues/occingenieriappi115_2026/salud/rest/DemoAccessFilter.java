@@ -21,15 +21,23 @@ public class DemoAccessFilter implements ContainerRequestFilter {
     @Override public void filter(ContainerRequestContext request) {
         String path = request.getUriInfo().getPath().replaceFirst("^/+", "");
         if (!path.equals("v2") && !path.startsWith("v2/")) return;
-        settings.requireCrudDemo();
+        settings.requireManagement();
         if (servlet.getUserPrincipal() == null || servlet.getHeader("Authorization") == null) {
             request.abortWith(Response.status(401).header("WWW-Authenticate", "Basic realm=\"GalenosDemo\"")
                     .type(MediaType.APPLICATION_JSON).entity(new ApiError("Autenticación requerida")).build());
             return;
         }
+        boolean write = !Set.of("GET", "HEAD", "OPTIONS").contains(request.getMethod());
+        String resource = path.substring(3).split("/", 2)[0];
+        boolean personal = Set.of("persona", "documento", "medio_contacto", "persona_rol").contains(resource)
+                && !path.equals("v2/persona_rol/pacientes");
+        boolean clinical = Set.of("consulta", "consulta_procedimiento", "consulta_procedimiento_paso", "orden_examen", "examen_resultado").contains(resource);
+        if (settings.isDevelopment() && (personal || (write && !clinical)) && !servlet.isUserInRole("galenos-api-admin")) {
+            throw new ApiException(403, "Se requiere permiso de administración");
+        }
         if (!Set.of("GET", "HEAD", "OPTIONS").contains(request.getMethod())
-                && !servlet.isUserInRole("galenos-demo-write")) {
-            throw new ApiException(403, "No tiene permiso de escritura en la demostración");
+                && !settings.canWrite(servlet)) {
+            throw new ApiException(403, "No tiene permiso de escritura");
         }
     }
 }

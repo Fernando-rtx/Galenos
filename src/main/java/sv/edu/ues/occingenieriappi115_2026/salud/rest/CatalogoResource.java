@@ -27,7 +27,7 @@ public class CatalogoResource {
     @GET @Path("tipo_documento")
     public List<TipoDocumentoDatos> listarTipoDocumento(@QueryParam("first") String first, @QueryParam("max") String max,
             @QueryParam("nombre") String nombre) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var page = RestParameters.page(first, max, settings);
         var result = service.listarTipoDocumento(page.first(), page.max(), nombre).stream().map(TipoDocumentoDatos::from).toList();
         response.setHeader("Total-registros", Long.toString(service.contarTipoDocumento(nombre)));
@@ -35,14 +35,14 @@ public class CatalogoResource {
     }
     @GET @Path("tipo_documento/{id}")
     public TipoDocumentoDatos detalleTipoDocumento(@PathParam("id") String id) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = service.buscarTipoDocumento(RestParameters.uuid(id,"id"));
         if (value == null) throw new ApiException(404,"Registro no encontrado");
         return TipoDocumentoDatos.from(value);
     }
     @POST @Path("tipo_documento") @Consumes(MediaType.APPLICATION_JSON)
     public Response crearTipoDocumento(JsonObject body) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = leerTipoDocumento(body, new TipoDocumento());
         value = service.guardarTipoDocumento(value, false);
         return Response.created(uri.getAbsolutePathBuilder().path(value.getIdTipoDocumento().toString()).build())
@@ -50,7 +50,7 @@ public class CatalogoResource {
     }
     @PUT @Path("tipo_documento/{id}") @Consumes(MediaType.APPLICATION_JSON)
     public TipoDocumentoDatos actualizarTipoDocumento(@PathParam("id") String id, JsonObject body) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = service.buscarTipoDocumento(RestParameters.uuid(id,"id"));
         if (value == null) throw new ApiException(404,"Registro no encontrado");
         return TipoDocumentoDatos.from(service.guardarTipoDocumento(leerTipoDocumento(body, value), true));
@@ -70,7 +70,7 @@ public class CatalogoResource {
     @GET @Path("tipo_medio_contacto")
     public List<TipoMedioContactoDatos> listarTipoMedioContacto(@QueryParam("first") String first, @QueryParam("max") String max,
             @QueryParam("nombre") String nombre) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var page = RestParameters.page(first, max, settings);
         var result = service.listarTipoMedioContacto(page.first(), page.max(), nombre).stream().map(TipoMedioContactoDatos::from).toList();
         response.setHeader("Total-registros", Long.toString(service.contarTipoMedioContacto(nombre)));
@@ -78,14 +78,14 @@ public class CatalogoResource {
     }
     @GET @Path("tipo_medio_contacto/{id}")
     public TipoMedioContactoDatos detalleTipoMedioContacto(@PathParam("id") String id) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = service.buscarTipoMedioContacto(RestParameters.uuid(id,"id"));
         if (value == null) throw new ApiException(404,"Registro no encontrado");
         return TipoMedioContactoDatos.from(value);
     }
     @POST @Path("tipo_medio_contacto") @Consumes(MediaType.APPLICATION_JSON)
     public Response crearTipoMedioContacto(JsonObject body) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = leerTipoMedioContacto(body, new TipoMedioContacto());
         value = service.guardarTipoMedioContacto(value, false);
         return Response.created(uri.getAbsolutePathBuilder().path(value.getIdTipoMedioContacto().toString()).build())
@@ -93,7 +93,7 @@ public class CatalogoResource {
     }
     @PUT @Path("tipo_medio_contacto/{id}") @Consumes(MediaType.APPLICATION_JSON)
     public TipoMedioContactoDatos actualizarTipoMedioContacto(@PathParam("id") String id, JsonObject body) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = service.buscarTipoMedioContacto(RestParameters.uuid(id,"id"));
         if (value == null) throw new ApiException(404,"Registro no encontrado");
         return TipoMedioContactoDatos.from(service.guardarTipoMedioContacto(leerTipoMedioContacto(body, value), true));
@@ -113,7 +113,7 @@ public class CatalogoResource {
     @GET @Path("tipo_examen")
     public List<TipoExamenDatos> listarTipoExamen(@QueryParam("first") String first, @QueryParam("max") String max,
             @QueryParam("nombre") String nombre) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var page = RestParameters.page(first, max, settings);
         var result = service.listarTipoExamen(page.first(), page.max(), nombre).stream().map(TipoExamenDatos::from).toList();
         response.setHeader("Total-registros", Long.toString(service.contarTipoExamen(nombre)));
@@ -121,14 +121,14 @@ public class CatalogoResource {
     }
     @GET @Path("tipo_examen/{id}")
     public TipoExamenDatos detalleTipoExamen(@PathParam("id") String id) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = service.buscarTipoExamen(RestParameters.uuid(id,"id"));
         if (value == null) throw new ApiException(404,"Registro no encontrado");
         return TipoExamenDatos.from(value);
     }
     @POST @Path("tipo_examen") @Consumes(MediaType.APPLICATION_JSON)
     public Response crearTipoExamen(JsonObject body) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = leerTipoExamen(body, new TipoExamen());
         value = service.guardarTipoExamen(value, false);
         return Response.created(uri.getAbsolutePathBuilder().path(value.getIdTipoExamen().toString()).build())
@@ -136,7 +136,7 @@ public class CatalogoResource {
     }
     @PUT @Path("tipo_examen/{id}") @Consumes(MediaType.APPLICATION_JSON)
     public TipoExamenDatos actualizarTipoExamen(@PathParam("id") String id, JsonObject body) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = service.buscarTipoExamen(RestParameters.uuid(id,"id"));
         if (value == null) throw new ApiException(404,"Registro no encontrado");
         return TipoExamenDatos.from(service.guardarTipoExamen(leerTipoExamen(body, value), true));
@@ -155,7 +155,7 @@ public class CatalogoResource {
     @GET @Path("clinica")
     public List<ClinicaDatos> listarClinica(@QueryParam("first") String first, @QueryParam("max") String max,
             @QueryParam("nombre") String nombre) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var page = RestParameters.page(first, max, settings);
         var result = service.listarClinica(page.first(), page.max(), nombre).stream().map(ClinicaDatos::from).toList();
         response.setHeader("Total-registros", Long.toString(service.contarClinica(nombre)));
@@ -163,14 +163,14 @@ public class CatalogoResource {
     }
     @GET @Path("clinica/{id}")
     public ClinicaDatos detalleClinica(@PathParam("id") String id) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = service.buscarClinica(RestParameters.uuid(id,"id"));
         if (value == null) throw new ApiException(404,"Registro no encontrado");
         return ClinicaDatos.from(value);
     }
     @POST @Path("clinica") @Consumes(MediaType.APPLICATION_JSON)
     public Response crearClinica(JsonObject body) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = leerClinica(body, new Clinica());
         value = service.guardarClinica(value, false);
         return Response.created(uri.getAbsolutePathBuilder().path(value.getIdClinica().toString()).build())
@@ -178,7 +178,7 @@ public class CatalogoResource {
     }
     @PUT @Path("clinica/{id}") @Consumes(MediaType.APPLICATION_JSON)
     public ClinicaDatos actualizarClinica(@PathParam("id") String id, JsonObject body) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = service.buscarClinica(RestParameters.uuid(id,"id"));
         if (value == null) throw new ApiException(404,"Registro no encontrado");
         return ClinicaDatos.from(service.guardarClinica(leerClinica(body, value), true));
@@ -193,7 +193,7 @@ public class CatalogoResource {
     }
     @DELETE @Path("clinica/{id}")
     public Response eliminarClinica(@PathParam("id") String id) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         service.eliminarClinica(RestParameters.uuid(id,"id"));
         return Response.noContent().build();
     }
@@ -204,7 +204,7 @@ public class CatalogoResource {
     @GET @Path("rol")
     public List<RolDatos> listarRol(@QueryParam("first") String first, @QueryParam("max") String max,
             @QueryParam("nombre") String nombre) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var page = RestParameters.page(first, max, settings);
         var result = service.listarRol(page.first(), page.max(), nombre).stream().map(RolDatos::from).toList();
         response.setHeader("Total-registros", Long.toString(service.contarRol(nombre)));
@@ -212,14 +212,14 @@ public class CatalogoResource {
     }
     @GET @Path("rol/{id}")
     public RolDatos detalleRol(@PathParam("id") String id) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = service.buscarRol(RestParameters.uuid(id,"id"));
         if (value == null) throw new ApiException(404,"Registro no encontrado");
         return RolDatos.from(value);
     }
     @POST @Path("rol") @Consumes(MediaType.APPLICATION_JSON)
     public Response crearRol(JsonObject body) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = leerRol(body, new Rol());
         value = service.guardarRol(value, false);
         return Response.created(uri.getAbsolutePathBuilder().path(value.getIdRol().toString()).build())
@@ -227,7 +227,7 @@ public class CatalogoResource {
     }
     @PUT @Path("rol/{id}") @Consumes(MediaType.APPLICATION_JSON)
     public RolDatos actualizarRol(@PathParam("id") String id, JsonObject body) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         var value = service.buscarRol(RestParameters.uuid(id,"id"));
         if (value == null) throw new ApiException(404,"Registro no encontrado");
         return RolDatos.from(service.guardarRol(leerRol(body, value), true));
@@ -241,7 +241,7 @@ public class CatalogoResource {
     }
     @DELETE @Path("rol/{id}")
     public Response eliminarRol(@PathParam("id") String id) {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         service.eliminarRol(RestParameters.uuid(id,"id"));
         return Response.noContent().build();
     }

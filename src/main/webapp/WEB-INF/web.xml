@@ -35,9 +35,12 @@
             <http-method>GET</http-method><http-method>HEAD</http-method>
             <http-method>POST</http-method><http-method>PUT</http-method><http-method>DELETE</http-method>
         </web-resource-collection>
-        <auth-constraint><role-name>galenos-demo-read</role-name><role-name>galenos-demo-write</role-name></auth-constraint>
+        <auth-constraint><role-name>galenos-demo-read</role-name><role-name>galenos-demo-write</role-name><role-name>galenos-api-read</role-name><role-name>galenos-api-write</role-name></auth-constraint>
     </security-constraint>
     <login-config><auth-method>BASIC</auth-method><realm-name>GalenosDemo</realm-name></login-config>
     <security-role><role-name>galenos-demo-read</role-name></security-role>
     <security-role><role-name>galenos-demo-write</role-name></security-role>
+    <security-role><role-name>galenos-api-read</role-name></security-role>
+    <security-role><role-name>galenos-api-write</role-name></security-role>
+    <security-role><role-name>galenos-api-admin</role-name></security-role>
 </web-app>

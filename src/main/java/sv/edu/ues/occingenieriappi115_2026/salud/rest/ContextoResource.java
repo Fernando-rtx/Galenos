@@ -18,9 +18,9 @@ public class ContextoResource {
     @Inject ApiSettings settings;
     @Context HttpServletRequest request;
     @GET public Map<String, Object> get() {
-        settings.requireCrudDemo();
+        settings.requireManagement();
         String actor = request.getUserPrincipal().getName();
-        return Map.of("actor", actor, "puedeEscribir", request.isUserInRole("galenos-demo-write"),
+        return Map.of("actor", actor, "puedeEscribir", settings.canWrite(request),
                 "clinicas", settings.clinicsFor(actor).stream().map(Object::toString).sorted().toList());
     }
 }

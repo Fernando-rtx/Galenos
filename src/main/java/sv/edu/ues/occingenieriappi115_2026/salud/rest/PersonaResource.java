@@ -20,7 +20,7 @@ public class PersonaResource {
  @Context HttpServletResponse response;
  @Context HttpServletRequest request;
  @Context UriInfo uri;
- private void enabled(){settings.requireCrudDemo();}
+ private void enabled(){settings.requireManagement();}
  private Persona persona(UUID id){var p=service.buscarPersona(id);if(p==null)throw new ApiException(404,"Persona no encontrada");return p;}
  private void clinic(UUID id){settings.requireClinic(request.getUserPrincipal().getName(),id);}
  private static String instant(Date value){return value==null?null:Instant.ofEpochMilli(value.getTime()).toString();}

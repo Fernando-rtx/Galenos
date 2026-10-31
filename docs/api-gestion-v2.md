@@ -72,3 +72,15 @@ las asignaciones referenciadas por Consulta/Paso responden409. Documentos/contac
 Reglas de nombres, nacimiento, DUI/edad, regex, tipos activos y duplicados compartidas con JSF en PersonaFlujoService.
 Los registros de Persona y sus documentos/contactos se administran globalmente como en JSF, únicamente en la base sintética autenticada.
 Esto NO define permisos sobre personas reales: la correspondencia actor/PersonaRol y autorización de producción sigue pendiente del equipo.
+
+## Modo autenticado de desarrollo sobre clinica
+
+GALENOS_API_MODE=development habilita v2 exclusivamente con POSTGRESQL_DB_NAME=clinica y ambos flags demo desactivados.
+Los usuarios se autentican con BASIC de Liberty. Para uso local, limitar httpEndpoint a loopback; fuera del equipo se requiere TLS.
+No reutilizar cuentas PostgreSQL. Registry y contraseñas permanecen en configuración privada de Liberty.
+Roles de aplicación: galenos-api-read (lectura), galenos-api-write (escritura), galenos-api-admin (administración global).
+Personas/documentos/contactos/asignaciones requieren administrador; escritura de catálogos también. El selector PersonaRol no autentica.
+Consultas y ejecución de procedimientos exigen además el UUID autorizado en GALENOS_API_ACTOR_CLINICS (usuario=uuid;usuario2=uuid).
+Una identidad sin alcance no obtiene clínicas ni puede ejecutar operaciones clínicas. Las asignaciones de negocio no conceden roles del contenedor.
+El modo sintético anterior se conserva como perfil distinto; sus roles de escritura no conceden permisos de desarrollo.
+El dashboard no realiza lecturas anónimas si environment.local.js declara authenticatedOnly=true; después del login utiliza solamente v2.
