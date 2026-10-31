@@ -137,4 +137,16 @@ class ConsultaFlujoServiceTest {
         verify(asociaciones).actualizar(persistido); verifyNoInteractions(pasos);
         assertEquals("nota",persistido.getObservaciones());
     }
+
+    @Test void referenciaExtensaNoPersisteYCuentaConMensajeEnTodosLosIdiomas() {
+        var paciente=consulta.getIdPersonaRol();when(personas.buscarPorId(paciente.getIdPersonaRol())).thenReturn(paciente);
+        consulta.setFechaInicio(new Date());consulta.setReferenciaExterna("X".repeat(256));
+        var ex=assertThrows(FlujoConsultaException.class,()->service.guardarConsulta(consulta,clinica.getIdClinica(),false));
+        assertEquals("consultaFlujo.referenciaExtensa",ex.getMessage());
+        assertTrue(java.util.ResourceBundle.getBundle("i18n.messages",java.util.Locale.forLanguageTag("es")).getString(ex.getMessage()).contains("máximo"));
+        verify(consultas,never()).guardar(any());verify(consultas,never()).actualizar(any());
+        for(var locale:List.of(java.util.Locale.ROOT,java.util.Locale.forLanguageTag("es"),java.util.Locale.ENGLISH,java.util.Locale.GERMAN,java.util.Locale.SIMPLIFIED_CHINESE)) {
+            assertFalse(java.util.ResourceBundle.getBundle("i18n.messages",locale).getString(ex.getMessage()).isBlank());
+        }
+    }
 }
