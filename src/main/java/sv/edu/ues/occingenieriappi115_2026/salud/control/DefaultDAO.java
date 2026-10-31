@@ -5,7 +5,6 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.From;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
@@ -20,6 +19,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.Locale;
+import java.util.Date;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 
 /**
  * Implementación base y genérica de la capa de acceso a datos.
@@ -221,13 +224,28 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
         // Predicate Criteria equivalente (LIKE, igualdad, comparación o null).
         List<Predicate> predicados = new ArrayList<>();
         for (FiltroDAO filtro : filtros) {
+            if (filtro == null) throw new IllegalArgumentException("El filtro no puede ser null");
             PathInfo path = resolverPath(root, filtro.campo());
+            switch (filtro.operador()) {
+                case CONTIENE, INICIA_CON, TERMINA_CON -> {
+                    if (path.javaType() != String.class) {
+                        throw new IllegalArgumentException("El operador de texto requiere un campo String");
+                    }
+                }
+                case MENOR_QUE, MENOR_O_IGUAL, MAYOR_QUE, MAYOR_O_IGUAL -> {
+                    if (!Comparable.class.isAssignableFrom(path.javaType())
+                            || path.javaType() == Boolean.class) {
+                        throw new IllegalArgumentException("El campo no admite comparaciones de orden");
+                    }
+                }
+                default -> { }
+            }
             Expression<?> expresion = path.path();
             Object valor = convertirValor(filtro.valor(), path.javaType());
             switch (filtro.operador()) {
-                case CONTIENE -> predicados.add(builder.like(builder.lower(expresion.as(String.class)), "%" + valor.toString().toLowerCase() + "%"));
-                case INICIA_CON -> predicados.add(builder.like(builder.lower(expresion.as(String.class)), valor.toString().toLowerCase() + "%"));
-                case TERMINA_CON -> predicados.add(builder.like(builder.lower(expresion.as(String.class)), "%" + valor.toString().toLowerCase()));
+                case CONTIENE -> predicados.add(builder.like(builder.lower(expresion.as(String.class)), "%" + valor.toString().toLowerCase(Locale.ROOT) + "%"));
+                case INICIA_CON -> predicados.add(builder.like(builder.lower(expresion.as(String.class)), valor.toString().toLowerCase(Locale.ROOT) + "%"));
+                case TERMINA_CON -> predicados.add(builder.like(builder.lower(expresion.as(String.class)), "%" + valor.toString().toLowerCase(Locale.ROOT)));
                 case IGUAL -> predicados.add(builder.equal(expresion, valor));
                 case DISTINTO -> predicados.add(builder.notEqual(expresion, valor));
                 case MENOR_QUE -> predicados.add(builder.lessThan(asComparable(expresion), (Comparable) valor));
@@ -248,6 +266,7 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
         List<Order> ordenes = new ArrayList<>();
         if (ordenamientos != null) {
             for (OrdenDAO ordenamiento : ordenamientos) {
+                if (ordenamiento == null) throw new IllegalArgumentException("El ordenamiento no puede ser null");
                 PathInfo path = resolverPath(root, ordenamiento.campo());
                 ordenes.add(ordenamiento.direccion() == DireccionOrden.ASCENDENTE
                         ? builder.asc(path.path()) : builder.desc(path.path()));
@@ -268,7 +287,20 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
         }
         if (tipo == String.class) return valor.toString();
         if (tipo == UUID.class) return UUID.fromString(valor.toString());
-        if (tipo == Boolean.class || tipo == boolean.class) return Boolean.valueOf(valor.toString());
+        if (tipo == Boolean.class || tipo == boolean.class) {
+            String texto = valor.toString();
+            if (!"true".equalsIgnoreCase(texto) && !"false".equalsIgnoreCase(texto)) {
+                throw new IllegalArgumentException("El booleano debe ser true o false");
+            }
+            return Boolean.valueOf(texto);
+        }
+        if (tipo == Date.class) {
+            try {
+                return Date.from(Instant.parse(valor.toString()));
+            } catch (DateTimeParseException ex) {
+                throw new IllegalArgumentException("La fecha debe ser un instante ISO-8601", ex);
+            }
+        }
         if (tipo.isEnum()) return Enum.valueOf((Class<? extends Enum>) tipo, valor.toString());
         if (Number.class.isAssignableFrom(tipo)) {
             String texto = valor.toString();
@@ -276,29 +308,21 @@ public abstract class DefaultDAO<T> implements DAOInterface<T> {
             if (tipo == Long.class) return Long.valueOf(texto);
             if (tipo == Double.class) return Double.valueOf(texto);
         }
-        return valor;
+        throw new IllegalArgumentException("Valor incompatible con el tipo " + tipo.getSimpleName());
     }
 
-    private PathInfo resolverPath(From<?, ?> origen, String nombre) {
-        String[] segmentos = nombre.split("\\.");
-        From<?, ?> actual = origen;
+    private PathInfo resolverPath(Root<T> origen, String nombre) {
         jakarta.persistence.criteria.Path<?> path = origen;
-        for (String segmento : segmentos) {
-            Attribute<?, ?> atributo = getEntityType(actual).getAttribute(segmento);
-            if (atributo instanceof jakarta.persistence.metamodel.SingularAttribute<?, ?> singular
-                    && singular.getPersistentAttributeType() == Attribute.PersistentAttributeType.MANY_TO_ONE) {
-                actual = actual.join(segmento);
-                path = actual;
-            } else {
-                path = path.get(segmento);
+        for (String segmento : nombre.split("\\.", -1)) {
+            if (segmento.isBlank()) throw new IllegalArgumentException("Ruta de atributo invalida");
+            Attribute<?, ?> atributo = getEntityManager().getMetamodel()
+                    .managedType(path.getJavaType()).getAttribute(segmento);
+            if (atributo.isCollection()) {
+                throw new IllegalArgumentException("Los filtros no admiten colecciones JPA");
             }
+            path = path.get(segmento);
         }
         return new PathInfo(path, path.getJavaType());
-    }
-
-    @SuppressWarnings("unchecked")
-    private jakarta.persistence.metamodel.ManagedType<?> getEntityType(From<?, ?> origen) {
-        return getEntityManager().getMetamodel().managedType(origen.getJavaType());
     }
 
     private record PathInfo(jakarta.persistence.criteria.Path<?> path, Class<?> javaType) {

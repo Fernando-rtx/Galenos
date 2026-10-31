@@ -1,6 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaFlujoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.component.UIInput;
@@ -33,6 +35,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.TipoDocumento;
 @ViewScoped
 public class DocumentoModel extends AbstractModel<Documento> implements Serializable {
     private static final long serialVersionUID = 1L;
+    @EJB private PersonaFlujoService personaService;
     static final ZoneId ZONA_CLINICA = ZoneId.of("America/El_Salvador");
     @EJB
     private DocumentoDAO documentoDAO;
@@ -58,6 +61,7 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         this.documentoDAO = documentoDAO;
         this.personaDAO = personaDAO;
         this.tipoDocumentoDAO = tipoDocumentoDAO;
+        this.personaService = new PersonaFlujoService(documentoDAO, personaDAO, tipoDocumentoDAO);
     }
 
     @Override
@@ -259,46 +263,21 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
     }
 
     public void guardar() {
-        if (seleccionado == null) {
-            return;
-        }
-        if (getEstado() == ESTADO_CRUD.EDICION && (personaOriginalId == null
-                || seleccionado.getIdPersona() == null
-                || !personaOriginalId.equals(seleccionado.getIdPersona().getIdPersona()))) {
-            seleccionado.setIdPersona(personaOriginal);
-            agregarError("persona", "relaciones.noEditables");
-            return;
-        }
+        if (seleccionado == null) return;
+        boolean edicion = getEstado() == ESTADO_CRUD.EDICION;
         Persona personaDocumento = seleccionado.getIdPersona();
-        if (!resolverYValidarTipoDocumento()) {
-            return;
+        try {
+            if (getEstado() == ESTADO_CRUD.LISTADO) return;
+            var guardado = personaService.guardarDocumento(seleccionado, edicion, personaOriginalId, tipoDocumentoOriginalId);
+            if (edicion) seleccionado = guardado;
+        } catch (ReglaNegocioException ex) {
+            if ("persona".equals(ex.getCampo())) seleccionado.setIdPersona(personaOriginal);
+            if ("documento.tipoNoEditable".equals(ex.getMessage())) seleccionado.setIdTipoDocumento(
+                    tipoDocumentoOriginalId == null ? null : tipoDocumentoDAO.buscarPorId(tipoDocumentoOriginalId));
+            agregarError(ex.getCampo(), ex.getMessage());return;
         }
-        if (esDui(seleccionado.getIdTipoDocumento())) {
-            // No confiar en una fecha modificada en el borrador o en una petición manipulada.
-            Persona personaRegistrada = personaDocumento == null || personaDocumento.getIdPersona() == null
-                    ? null : personaDAO.buscarPorId(personaDocumento.getIdPersona());
-            if (!validarEdadDui(personaRegistrada)) {
-                return;
-            }
-        }
-        seleccionado.setValor(normalizar(seleccionado.getValor()));
-        seleccionado.setRutaFisica(normalizar(seleccionado.getRutaFisica()));
-        if (!validarAntesDeGuardar()) {
-            return;
-        }
-        // Igual que el switch original, un estado nulo no es válido.
-        ESTADO_CRUD estadoActual = java.util.Objects.requireNonNull(getEstado());
-        if (estadoActual == ESTADO_CRUD.CREACION) {
-            getDao().guardar(seleccionado);
-        } else if (estadoActual == ESTADO_CRUD.EDICION) {
-            seleccionado = getDao().actualizar(seleccionado);
-        }
-        // En LISTADO se continúa sin guardar ni actualizar, igual que antes.
-        recargarDocumentosPorPersona(personaDocumento);
-        seleccionado = null;
-        tipoDocumentoOriginalId = null;
-        setEstado(ESTADO_CRUD.LISTADO);
-        agregarMensaje("documento.guardado", FacesMessage.SEVERITY_INFO);
+        recargarDocumentosPorPersona(personaDocumento);seleccionado = null;tipoDocumentoOriginalId = null;
+        setEstado(ESTADO_CRUD.LISTADO);agregarMensaje("documento.guardado", FacesMessage.SEVERITY_INFO);
     }
 
     public void cancelar() {
@@ -352,94 +331,17 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         }
     }
 
-    private boolean validarAntesDeGuardar() {
-        if (seleccionado.getIdPersona() == null) {
-            agregarError(null, "documento.personaRequerida");
-            return false;
-        }
-        if (seleccionado.getIdTipoDocumento() == null) {
-            agregarError("tipo", "documento.tipoRequerido");
-            return false;
-        }
-        if (seleccionado.getValor() == null || seleccionado.getValor().isBlank()) {
-            agregarError("valor", "documento.valorRequerido");
-            return false;
-        }
-        if (!cumpleExpresionRegular(seleccionado.getValor())) {
-            agregarError("valor", "documento.valorFormato");
-            return false;
-        }
-        UUID idDocumentoExcluir = null;
-        if (getEstado() == ESTADO_CRUD.EDICION) {
-            idDocumentoExcluir = seleccionado.getIdDocumento();
-        }
-        if (documentoDAO.existeTipoParaPersona(
-                seleccionado.getIdPersona().getIdPersona(),
-                seleccionado.getIdTipoDocumento().getIdTipoDocumento(), idDocumentoExcluir)) {
-            agregarError("tipo", "documento.tipoDuplicadoPersona");
-            return false;
-        }
-        if (documentoDAO.existeDocumento(
-                seleccionado.getIdTipoDocumento().getIdTipoDocumento(),
-                seleccionado.getValor(), idDocumentoExcluir)) {
-            agregarError("valor", "documento.duplicadoGlobal");
-            return false;
-        }
-        return true;
-    }
 
-    private boolean resolverYValidarTipoDocumento() {
-        TipoDocumento tipoRecibido = seleccionado.getIdTipoDocumento();
-        UUID idTipoRecibido = null;
-        if (tipoRecibido != null) {
-            idTipoRecibido = tipoRecibido.getIdTipoDocumento();
-        }
-        if (getEstado() == ESTADO_CRUD.EDICION
-                && !java.util.Objects.equals(tipoDocumentoOriginalId, idTipoRecibido)) {
-            if (tipoDocumentoOriginalId == null) {
-                seleccionado.setIdTipoDocumento(null);
-            } else {
-                seleccionado.setIdTipoDocumento(tipoDocumentoDAO.buscarPorId(tipoDocumentoOriginalId));
-            }
-            agregarError("tipo", "documento.tipoNoEditable");
-            return false;
-        }
-        if (idTipoRecibido == null) {
-            if (tipoRecibido != null) {
-                agregarError("tipo", "documento.tipoRequerido");
-                return false;
-            }
-            return true;
-        }
-        TipoDocumento tipoPersistido = tipoDocumentoDAO.buscarPorId(idTipoRecibido);
-        if (tipoPersistido == null) {
-            agregarError("tipo", "documento.tipoRequerido");
-            return false;
-        }
-        if (getEstado() == ESTADO_CRUD.CREACION && !Boolean.TRUE.equals(tipoPersistido.getActivo())) {
-            agregarError("tipo", "documento.tipoInactivo");
-            return false;
-        }
-        seleccionado.setIdTipoDocumento(tipoPersistido);
-        return true;
-    }
+
+
 
     static boolean esDui(TipoDocumento tipo) {
-        return tipo != null && tipo.getNombre() != null
-                && "DUI".equalsIgnoreCase(tipo.getNombre().strip());
+        return PersonaFlujoService.esDui(tipo);
     }
 
     /** Reutilizada al asignar DUI y al editar una persona que ya lo posee. */
     static String errorFechaParaDui(Date fechaNacimiento, LocalDate hoy) {
-        if (fechaNacimiento == null) {
-            return "documento.duiFechaNacimientoInvalida";
-        }
-        LocalDate nacimiento = Instant.ofEpochMilli(fechaNacimiento.getTime())
-                .atZone(ZONA_CLINICA).toLocalDate();
-        if (nacimiento.isBefore(LocalDate.of(1900, 1, 1)) || nacimiento.isAfter(hoy)) {
-            return "documento.duiFechaNacimientoInvalida";
-        }
-        return Period.between(nacimiento, hoy).getYears() < 18 ? "documento.duiMenorEdad" : null;
+        return PersonaFlujoService.errorFechaParaDui(fechaNacimiento, hoy);
     }
 
     private boolean validarEdadDui(Persona persona) {
@@ -452,27 +354,9 @@ public class DocumentoModel extends AbstractModel<Documento> implements Serializ
         return true;
     }
 
-    private boolean cumpleExpresionRegular(String valor) {
-        if (seleccionado.getIdTipoDocumento() == null) {
-            return true;
-        }
-        String expresion = seleccionado.getIdTipoDocumento().getExpresionRegular();
-        if (expresion == null || expresion.isBlank()) {
-            return true;
-        }
-        try {
-            return Pattern.compile(expresion).matcher(valor).matches();
-        } catch (PatternSyntaxException ex) {
-            return false;
-        }
-    }
 
-    private String normalizar(String valor) {
-        if (valor == null) {
-            return null;
-        }
-        return valor.trim();
-    }
+
+
 
     private boolean perteneceAPersona(Documento documento, Persona persona) {
         if (documento == null || documento.getIdPersona() == null

@@ -35,19 +35,22 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
             return;
         }
         request.setProperty(APPROVED_ORIGIN, origin);
+        boolean crud = settings.isManagementEnabled() && request.getUriInfo().getPath().replaceFirst("^/+", "").startsWith("v2/");
+        Set<String> methods = crud ? Set.of("GET", "HEAD", "POST", "PUT", "DELETE") : METHODS;
+        Set<String> headers = crud ? Set.of("accept", "content-type", "authorization") : HEADERS;
         String requestedMethod = request.getHeaderString("Access-Control-Request-Method");
         if ("OPTIONS".equals(request.getMethod()) && requestedMethod != null) {
             String requestedHeaders = request.getHeaderString("Access-Control-Request-Headers");
             boolean headersAllowed = requestedHeaders == null || Arrays.stream(requestedHeaders.split(","))
                     .map(String::strip).map(value -> value.toLowerCase(Locale.ROOT))
-                    .allMatch(HEADERS::contains);
-            if (!METHODS.contains(requestedMethod) || !headersAllowed) {
+                    .allMatch(headers::contains);
+            if (!methods.contains(requestedMethod) || !headersAllowed) {
                 reject(request);
                 return;
             }
             request.abortWith(Response.noContent()
-                    .header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
-                    .header("Access-Control-Allow-Headers", "Accept, Content-Type")
+                    .header("Access-Control-Allow-Methods", crud ? "GET, HEAD, POST, PUT, DELETE, OPTIONS" : "GET, HEAD, OPTIONS")
+                    .header("Access-Control-Allow-Headers", crud ? "Accept, Content-Type, Authorization" : "Accept, Content-Type")
                     .build());
         }
     }
@@ -62,7 +65,7 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
         Object origin = request.getProperty(APPROVED_ORIGIN);
         if (origin != null) {
             response.getHeaders().putSingle("Access-Control-Allow-Origin", origin);
-            response.getHeaders().putSingle("Access-Control-Expose-Headers", "Total-registros");
+            response.getHeaders().putSingle("Access-Control-Expose-Headers", "Total-registros, Location");
         }
     }
 

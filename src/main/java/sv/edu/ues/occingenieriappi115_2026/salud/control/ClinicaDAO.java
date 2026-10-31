@@ -18,4 +18,17 @@ public class ClinicaDAO extends DefaultDAO<Clinica> {
     public ClinicaDAO() {
         super(Clinica.class);
     }
+
+    @jakarta.ejb.TransactionAttribute(jakarta.ejb.TransactionAttributeType.SUPPORTS)
+    public java.util.List<Clinica> buscarDisponibles(java.util.Set<java.util.UUID> ids, int primero, int tamano) {
+        if (ids.isEmpty()) return java.util.List.of();
+        return getEntityManager().createQuery("SELECT c FROM Clinica c WHERE c.activo = TRUE AND c.idClinica IN :ids ORDER BY c.idClinica", Clinica.class)
+                .setParameter("ids", ids).setFirstResult(primero).setMaxResults(tamano).getResultList();
+    }
+    @jakarta.ejb.TransactionAttribute(jakarta.ejb.TransactionAttributeType.SUPPORTS)
+    public long contarDisponibles(java.util.Set<java.util.UUID> ids) {
+        if (ids.isEmpty()) return 0;
+        return getEntityManager().createQuery("SELECT COUNT(c) FROM Clinica c WHERE c.activo = TRUE AND c.idClinica IN :ids", Long.class)
+                .setParameter("ids", ids).getSingleResult();
+    }
 }

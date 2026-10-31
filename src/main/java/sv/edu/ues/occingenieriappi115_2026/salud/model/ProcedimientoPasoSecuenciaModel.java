@@ -2,6 +2,8 @@ package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ProcedimientoFlujoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
@@ -39,6 +41,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPasoSecuenc
 public class ProcedimientoPasoSecuenciaModel extends AbstractModel<ProcedimientoPasoSecuencia> implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    @EJB private ProcedimientoFlujoService flujoService;
 
     @EJB
     private ProcedimientoPasoSecuenciaDAO secuenciaDAO;
@@ -62,6 +65,7 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
     public ProcedimientoPasoSecuenciaModel(ProcedimientoPasoSecuenciaDAO secuenciaDAO,
             ProcedimientoPasoDAO procedimientoPasoDAO) {
         this.secuenciaDAO = secuenciaDAO;
+        this.flujoService = new ProcedimientoFlujoService(secuenciaDAO, procedimientoPasoDAO);
         this.procedimientoPasoDAO = procedimientoPasoDAO;
         inicializar();
     }
@@ -306,21 +310,24 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
         if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) {
             return;
         }
-        if (!validarAntesDeGuardar()) {
-            return;
+        if (getEstado()==ESTADO_CRUD.EDICION && pasoSiguienteSeleccionado!=null && !Objects.equals(pasoSiguienteSeleccionado.getIdProcedimientoPaso(),seleccionado.getIdProcedimientoPasoReferencia())) {
+            agregarError("relaciones.noEditables");return;
         }
+        if(pasoSiguienteSeleccionado!=null)seleccionado.setIdProcedimientoPasoReferencia(pasoSiguienteSeleccionado.getIdProcedimientoPaso());
         try {
             switch (getEstado()) {
                 case CREACION -> {
-                    getDao().guardar(seleccionado);
+                    flujoService.guardarSecuencia(seleccionado,false,origenOriginalId,destinoOriginalId,procedimientoSeleccionado==null?null:procedimientoSeleccionado.getIdProcedimiento());
                     agregarMensaje("secuencia.creadaCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
                 case EDICION -> {
-                    seleccionado = getDao().actualizar(seleccionado);
+                    seleccionado = flujoService.guardarSecuencia(seleccionado,true,origenOriginalId,destinoOriginalId,procedimientoSeleccionado==null?null:procedimientoSeleccionado.getIdProcedimiento());
                     agregarMensaje("secuencia.actualizadaCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
                 case LISTADO -> { }
             }
+        } catch (ReglaNegocioException ex) {
+            agregarError(ex.getMessage());return;
         } catch (RuntimeException ex) {
             if (facesContext == null) {
                 throw ex;
@@ -380,91 +387,7 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
      * @return {@code true} si la secuencia es válida; si no, agrega el error
      * faces y devuelve {@code false}
      */
-    private boolean validarAntesDeGuardar() {
-        UUID origenActual = seleccionado.getIdProcedimientoPaso() == null
-                ? null : seleccionado.getIdProcedimientoPaso().getIdProcedimientoPaso();
-        UUID destinoActual = pasoSiguienteSeleccionado == null
-                ? seleccionado.getIdProcedimientoPasoReferencia()
-                : pasoSiguienteSeleccionado.getIdProcedimientoPaso();
-        if (getEstado() == ESTADO_CRUD.EDICION
-                && (!Objects.equals(origenOriginalId, origenActual)
-                || !Objects.equals(destinoOriginalId, destinoActual)
-                || !Objects.equals(destinoOriginalId, seleccionado.getIdProcedimientoPasoReferencia()))) {
-            agregarError("relaciones.noEditables");
-            return false;
-        }
-        ProcedimientoPaso origen = seleccionado.getIdProcedimientoPaso();
-        if (origen == null || origen.getIdProcedimientoPaso() == null) {
-            agregarError("secuencia.pasoOrigenRequerido");
-            return false;
-        }
-        ProcedimientoPaso origenPersistido = procedimientoPasoDAO.buscarPorId(origen.getIdProcedimientoPaso());
-        if (origenPersistido == null) {
-            agregarError("secuencia.pasoOrigenNoExiste");
-            return false;
-        }
-        if (procedimientoSeleccionado != null
-                && (procedimientoSeleccionado.getIdProcedimiento() == null
-                || origenPersistido.getIdProcedimiento() == null
-                || !procedimientoSeleccionado.getIdProcedimiento().equals(
-                        origenPersistido.getIdProcedimiento().getIdProcedimiento()))) {
-            agregarError("secuencia.pasoFueraProcedimiento");
-            return false;
-        }
-        seleccionado.setIdProcedimientoPaso(origenPersistido);
-        seleccionado.setTipoSecuencia(normalizar(seleccionado.getTipoSecuencia()));
-        if (seleccionado.getTipoSecuencia() == null
-                || seleccionado.getTipoSecuencia().isEmpty()) {
-            agregarError("secuencia.tipoRequerido");
-            return false;
-        }
-        if (seleccionado.getTipoSecuencia().length() > 20) {
-            agregarError("secuencia.tipoMaximo");
-            return false;
-        }
 
-        UUID destino = pasoSiguienteSeleccionado == null
-                ? seleccionado.getIdProcedimientoPasoReferencia()
-                : pasoSiguienteSeleccionado.getIdProcedimientoPaso();
-        if (destino == null) {
-            agregarError("secuencia.pasoDestinoRequerido");
-            return false;
-        }
-        ProcedimientoPaso pasoDestino = procedimientoPasoDAO.buscarPorId(destino);
-        if (pasoDestino == null) {
-            agregarError("secuencia.pasoDestinoNoExiste");
-            return false;
-        }
-        if (!mismoProcedimiento(origenPersistido, pasoDestino)) {
-            agregarError("secuencia.pasosDeProcedimientosDistintos");
-            return false;
-        }
-        seleccionado.setIdProcedimientoPasoReferencia(destino);
-
-        UUID idOrigen = origen.getIdProcedimientoPaso();
-        for (ProcedimientoPasoSecuencia existente : obtenerSecuencias()) {
-            if (mismoRegistro(existente) || !esMismoOrigen(existente, idOrigen)) {
-                continue;
-            }
-            if (destino != null
-                    && destino.equals(existente.getIdProcedimientoPasoReferencia())) {
-                agregarError("secuencia.enlaceDuplicado");
-                return false;
-            }
-            String tipoExistente = normalizar(existente.getTipoSecuencia());
-            if (seleccionado.getTipoSecuencia() != null
-                    && seleccionado.getTipoSecuencia().equalsIgnoreCase(tipoExistente)) {
-                agregarError("secuencia.mismoOrden");
-                return false;
-            }
-        }
-
-        if (formaCiclo(idOrigen, destino)) {
-            agregarError("secuencia.cicloDetectado");
-            return false;
-        }
-        return true;
-    }
 
     private List<ProcedimientoPasoSecuencia> obtenerSecuencias() {
         if (secuenciasCache == null) {
@@ -474,25 +397,11 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
         return secuenciasCache;
     }
 
-    private boolean mismoRegistro(ProcedimientoPasoSecuencia existente) {
-        UUID idEditando = seleccionado.getIdProcedimientoPasoSecuencia();
-        return idEditando != null
-                && idEditando.equals(existente.getIdProcedimientoPasoSecuencia());
-    }
 
-    private boolean esMismoOrigen(ProcedimientoPasoSecuencia existente, UUID idOrigen) {
-        return existente.getIdProcedimientoPaso() != null
-                && idOrigen.equals(existente.getIdProcedimientoPaso().getIdProcedimientoPaso());
-    }
 
-    private boolean mismoProcedimiento(ProcedimientoPaso origen, ProcedimientoPaso destino) {
-        UUID procedimientoOrigen = origen.getIdProcedimiento() == null
-                ? null : origen.getIdProcedimiento().getIdProcedimiento();
-        UUID procedimientoDestino = destino.getIdProcedimiento() == null
-                ? null : destino.getIdProcedimiento().getIdProcedimiento();
-        return procedimientoOrigen != null && procedimientoDestino != null
-                && Objects.equals(procedimientoOrigen, procedimientoDestino);
-    }
+
+
+
 
     /**
      * Determina si el nuevo enlace origen→destino cerraría un ciclo en el
@@ -502,40 +411,7 @@ public class ProcedimientoPasoSecuenciaModel extends AbstractModel<Procedimiento
      * @param destino UUID del paso destino del enlace nuevo
      * @return {@code true} si destino vuelve a alcanzar origen
      */
-    private boolean formaCiclo(UUID origen, UUID destino) {
-        if (origen.equals(destino)) {
-            return true;
-        }
-        Map<UUID, List<UUID>> aristas = new HashMap<>();
-        for (ProcedimientoPasoSecuencia existente : obtenerSecuencias()) {
-            if (mismoRegistro(existente)
-                    || existente.getIdProcedimientoPaso() == null
-                    || existente.getIdProcedimientoPaso().getIdProcedimientoPaso() == null
-                    || existente.getIdProcedimientoPasoReferencia() == null) {
-                continue;
-            }
-            aristas.computeIfAbsent(
-                    existente.getIdProcedimientoPaso().getIdProcedimientoPaso(),
-                    clave -> new ArrayList<>())
-                    .add(existente.getIdProcedimientoPasoReferencia());
-        }
-        Deque<UUID> pendientes = new ArrayDeque<>();
-        Set<UUID> visitados = new HashSet<>();
-        pendientes.add(destino);
-        visitados.add(destino);
-        while (!pendientes.isEmpty()) {
-            UUID actual = pendientes.poll();
-            if (origen.equals(actual)) {
-                return true;
-            }
-            for (UUID siguiente : aristas.getOrDefault(actual, List.of())) {
-                if (visitados.add(siguiente)) {
-                    pendientes.add(siguiente);
-                }
-            }
-        }
-        return false;
-    }
+
 
     private String normalizar(String valor) {
         return valor == null ? null : valor.trim();

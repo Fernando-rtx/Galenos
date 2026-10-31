@@ -2,6 +2,8 @@ package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ProcedimientoFlujoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
@@ -31,6 +33,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.ProcedimientoPasoExamen;
 public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPasoExamen> implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    @EJB private ProcedimientoFlujoService flujoService;
 
     @EJB
     private ProcedimientoPasoExamenDAO procedimientoPasoExamenDAO;
@@ -57,6 +60,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
         this.procedimientoPasoExamenDAO = procedimientoPasoExamenDAO;
         this.procedimientoPasoDAO = procedimientoPasoDAO;
         this.examenDAO = examenDAO;
+        this.flujoService = new ProcedimientoFlujoService(procedimientoPasoExamenDAO, procedimientoPasoDAO, examenDAO);
         inicializar();
     }
 
@@ -219,21 +223,20 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
             return;
         }
         seleccionado.setObservaciones(normalizar(seleccionado.getObservaciones()));
-        if (!validarAntesDeGuardar()) {
-            return;
-        }
         try {
             switch (getEstado()) {
                 case CREACION -> {
-                    getDao().guardar(seleccionado);
+                    flujoService.guardarPasoExamen(seleccionado,false,pasoOriginalId,examenOriginalId,procedimientoSeleccionado==null?null:procedimientoSeleccionado.getIdProcedimiento());
                     agregarMensaje("ppe.creadaCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
                 case EDICION -> {
-                    seleccionado = getDao().actualizar(seleccionado);
+                    seleccionado = flujoService.guardarPasoExamen(seleccionado,true,pasoOriginalId,examenOriginalId,procedimientoSeleccionado==null?null:procedimientoSeleccionado.getIdProcedimiento());
                     agregarMensaje("ppe.actualizadaCorrectamente", FacesMessage.SEVERITY_INFO);
                 }
                 case LISTADO -> { }
             }
+        } catch (ReglaNegocioException ex) {
+            agregarError(ex.getMessage());return;
         } catch (RuntimeException ex) {
             if (facesContext == null) {
                 throw ex;
@@ -294,59 +297,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
      * @return {@code true} si la relación es válida; si no, agrega el error
      * faces y devuelve {@code false}
      */
-    private boolean validarAntesDeGuardar() {
-        ProcedimientoPaso paso = seleccionado.getIdProcedimientoPaso();
-        Examen examen = seleccionado.getIdExamen();
-        if (paso == null || paso.getIdProcedimientoPaso() == null) {
-            agregarError("ppe.pasoRequerido");
-            return false;
-        }
-        if (examen == null || examen.getIdExamen() == null) {
-            agregarError("ppe.examenRequerido");
-            return false;
-        }
-        if (getEstado() == ESTADO_CRUD.EDICION
-                && (!java.util.Objects.equals(pasoOriginalId, paso.getIdProcedimientoPaso())
-                || !java.util.Objects.equals(examenOriginalId, examen.getIdExamen()))) {
-            agregarError("relaciones.noEditables");
-            return false;
-        }
-        if (procedimientoPasoDAO.buscarPorId(paso.getIdProcedimientoPaso()) == null) {
-            agregarError("ppe.pasoNoExiste");
-            return false;
-        }
-        if (procedimientoSeleccionado != null
-                && (procedimientoSeleccionado.getIdProcedimiento() == null
-                || paso.getIdProcedimiento() == null
-                || !procedimientoSeleccionado.getIdProcedimiento().equals(
-                        paso.getIdProcedimiento().getIdProcedimiento()))) {
-            agregarError("ppe.pasoFueraProcedimiento");
-            return false;
-        }
-        Examen examenPersistido = examenDAO.buscarPorId(examen.getIdExamen());
-        if (examenPersistido == null) {
-            agregarError("ppe.examenNoExiste");
-            return false;
-        }
-        if (getEstado() == ESTADO_CRUD.CREACION && !Boolean.TRUE.equals(examenPersistido.getActivo())) {
-            agregarError("ppe.examenInactivo");
-            return false;
-        }
-        for (ProcedimientoPasoExamen existente : obtenerRelaciones()) {
-            if (mismoRegistro(existente)
-                    || existente.getIdProcedimientoPaso() == null
-                    || existente.getIdExamen() == null) {
-                continue;
-            }
-            if (paso.getIdProcedimientoPaso().equals(
-                    existente.getIdProcedimientoPaso().getIdProcedimientoPaso())
-                    && examen.getIdExamen().equals(existente.getIdExamen().getIdExamen())) {
-                agregarError("ppe.asociacionDuplicada");
-                return false;
-            }
-        }
-        return true;
-    }
+
 
     private List<ProcedimientoPasoExamen> obtenerRelaciones() {
         if (relacionesCache == null) {
@@ -356,11 +307,7 @@ public class ProcedimientoPasoExamenModel extends AbstractModel<ProcedimientoPas
         return relacionesCache;
     }
 
-    private boolean mismoRegistro(ProcedimientoPasoExamen existente) {
-        UUID idEditando = seleccionado.getIdProcedimientoPasoExamen();
-        return idEditando != null
-                && idEditando.equals(existente.getIdProcedimientoPasoExamen());
-    }
+
 
     private String normalizar(String valor) {
         return valor == null ? null : valor.trim();

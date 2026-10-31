@@ -13,24 +13,17 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.ClinicaDAO;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaDAO;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.DireccionOrden;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.FiltroDAO;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.OperadorFiltro;
-import sv.edu.ues.occingenieriappi115_2026.salud.control.OrdenDAO;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaFlujoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.FlujoConsultaException;
 
 /** Lectura exclusivamente académica sobre datos sintéticos, con clínica obligatoria. */
 @RequestScoped
 @Path("v1/consulta")
 @Produces(MediaType.APPLICATION_JSON)
 public class ConsultaResource {
-    @EJB ConsultaDAO dao;
-    @EJB ClinicaDAO clinicaDao;
+    @EJB ConsultaFlujoService flujoService;
     @Inject ApiSettings settings;
     @Context HttpServletResponse response;
 
@@ -41,23 +34,19 @@ public class ConsultaResource {
             @QueryParam("idPersonaRol") String idPersonaRol) {
         settings.requireDemo();
         var page = RestParameters.page(first, max, settings);
-        var filters = clinicFilters(RestParameters.uuid(idClinica, "idClinica"));
+        UUID clinica = RestParameters.uuid(idClinica, "idClinica");
         LocalDate from = date(fechaDesde, "fechaDesde");
         LocalDate until = date(fechaHasta, "fechaHasta");
-        if (from != null && until != null && from.isAfter(until)) {
-            throw new ApiException(422, "fechaDesde no puede ser posterior a fechaHasta");
+        UUID persona = idPersonaRol == null ? null : RestParameters.uuid(idPersonaRol, "idPersonaRol");
+        try {
+            var result = flujoService.buscarConsultas(clinica, from, until, settings.getClinicZone(),
+                    persona, page.first(), page.max()).stream().map(ConsultaDto::new).toList();
+            long total = flujoService.contarConsultas(clinica, from, until, settings.getClinicZone(), persona);
+            response.setHeader("Total-registros", Long.toString(total));
+            return result;
+        } catch (FlujoConsultaException ex) {
+            throw traducir(ex);
         }
-        if (from != null) filters.add(new FiltroDAO("fechaInicio", OperadorFiltro.MAYOR_O_IGUAL,
-                Date.from(from.atStartOfDay(settings.getClinicZone()).toInstant())));
-        if (until != null) filters.add(new FiltroDAO("fechaInicio", OperadorFiltro.MENOR_QUE,
-                Date.from(until.plusDays(1).atStartOfDay(settings.getClinicZone()).toInstant())));
-        if (idPersonaRol != null) filters.add(new FiltroDAO("idPersonaRol.idPersonaRol", OperadorFiltro.IGUAL,
-                RestParameters.uuid(idPersonaRol, "idPersonaRol")));
-        var result = dao.obtenerPagina(page.first(), page.max(), filters,
-                List.of(new OrdenDAO("idConsulta", DireccionOrden.ASCENDENTE)))
-                .stream().map(ConsultaDto::new).toList();
-        response.setHeader("Total-registros", Long.toString(dao.contar(filters)));
-        return result;
     }
 
     @GET
@@ -65,23 +54,25 @@ public class ConsultaResource {
     public ConsultaDto findById(@PathParam("id") String id, @QueryParam("idClinica") String idClinica) {
         settings.requireDemo();
         UUID uuid = RestParameters.uuid(id, "id");
-        var filters = clinicFilters(RestParameters.uuid(idClinica, "idClinica"));
-        filters.add(new FiltroDAO("idConsulta", OperadorFiltro.IGUAL, uuid));
-        var result = dao.obtenerPagina(0, 1, filters, List.of());
-        if (result.isEmpty()) throw new ApiException(404, "Consulta no encontrada en la clínica seleccionada");
-        return new ConsultaDto(result.getFirst());
-    }
-
-    private List<FiltroDAO> clinicFilters(UUID idClinica) {
-        var clinic = clinicaDao.buscarPorId(idClinica);
-        if (clinic == null || !Boolean.TRUE.equals(clinic.getActivo())) {
-            throw new ApiException(404, "Clínica no disponible");
+        UUID clinica = RestParameters.uuid(idClinica, "idClinica");
+        try {
+            var result = flujoService.buscarConsulta(uuid, clinica);
+            if (result == null) throw new ApiException(404, "Consulta no encontrada en la clínica seleccionada");
+            return new ConsultaDto(result);
+        } catch (FlujoConsultaException ex) {
+            throw traducir(ex);
         }
-        return new ArrayList<>(List.of(new FiltroDAO("idPersonaRol.idClinica.idClinica",
-                OperadorFiltro.IGUAL, idClinica)));
     }
 
-    private static LocalDate date(String raw, String parameter) {
+    private static RuntimeException traducir(FlujoConsultaException ex) {
+        return switch (ex.getMessage()) {
+            case "clinicaActual.noDisponible" -> new ApiException(404, "Clínica no disponible");
+            case "consulta.rangoInvalido" -> new ApiException(422, "fechaDesde no puede ser posterior a fechaHasta");
+            default -> ex;
+        };
+    }
+
+    static LocalDate date(String raw, String parameter) {
         if (raw == null) return null;
         try {
             if (!raw.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")) throw new DateTimeParseException("Formato", raw, 0);

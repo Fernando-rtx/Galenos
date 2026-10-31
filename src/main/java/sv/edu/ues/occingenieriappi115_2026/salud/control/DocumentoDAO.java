@@ -68,4 +68,11 @@ public class DocumentoDAO extends DefaultDAO<Documento> {
         }
         return !obtenerPagina(0, 1, filtros, List.of()).isEmpty();
     }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public boolean poseeDui(UUID persona) {
+        java.util.Objects.requireNonNull(persona, "La persona es requerida");
+        return getEntityManager().createQuery("SELECT COUNT(d) FROM Documento d WHERE d.idPersona.idPersona = :persona AND LOWER(TRIM(d.idTipoDocumento.nombre)) = 'dui'", Long.class)
+                .setParameter("persona", persona).getSingleResult() > 0;
+    }
 }

@@ -339,16 +339,13 @@ class DuiMayoriaEdadModelTest {
         persona.setFechaNacimiento(fecha(hoy().minusYears(17)));
         // La colección de la entidad puede no incluir el DUI recién agregado; manda el DAO.
         persona.setDocumentoCollection(List.of());
-        Documento dui = new Documento(UUID.randomUUID());
-        dui.setIdTipoDocumento(tipo(" dui "));
-        when(documentos.obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList())).thenReturn(List.of(dui));
+        when(documentos.poseeDui(persona.getIdPersona())).thenReturn(true);
         modelo.facesContext = contexto("fechaNacimiento");
 
         modelo.guardar();
 
         verify(personas, never()).actualizar(any());
-        verify(documentos).obtenerPagina(0, Integer.MAX_VALUE,
-                List.of(new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL, persona.getIdPersona())), List.of());
+        verify(documentos).poseeDui(persona.getIdPersona());
         unicoError(modelo.facesContext, "fechaNacimiento",
                 "La persona ya tiene un DUI. La fecha de nacimiento debe corresponder a una persona con 18 años cumplidos.");
         assertSame(persona, modelo.getSeleccionado());

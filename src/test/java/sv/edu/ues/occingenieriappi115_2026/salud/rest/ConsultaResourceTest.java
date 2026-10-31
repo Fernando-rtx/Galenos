@@ -23,12 +23,17 @@ class ConsultaResourceTest {
     private UUID clinicId;
 
     @BeforeEach
-    void setup() {
+    void setup() throws Exception {
         resource = new ConsultaResource();
         dao = mock(ConsultaDAO.class);
         clinics = mock(ClinicaDAO.class);
-        resource.dao = dao;
-        resource.clinicaDao = clinics;
+        resource.flujoService = new ConsultaFlujoService();
+        var consultaField = ConsultaFlujoService.class.getDeclaredField("consultaDAO");
+        consultaField.setAccessible(true);
+        consultaField.set(resource.flujoService, dao);
+        var clinicaField = ConsultaFlujoService.class.getDeclaredField("clinicaDAO");
+        clinicaField.setAccessible(true);
+        clinicaField.set(resource.flujoService, clinics);
         resource.response = mock(HttpServletResponse.class);
         resource.settings = new ApiSettings(Map.of("GALENOS_DEMO_MODE", "true",
                 "POSTGRESQL_DB_NAME", "galenos_demo_unit"));
@@ -153,4 +158,26 @@ class ConsultaResourceTest {
         assertNull(dto.getIdClinica());
         assertNull(dto.getClinicaNombre());
     }
+    @Test
+    void falloDePersistenciaNoSeTraduceEnListaVaciaNi404() {
+        var causa = new java.sql.SQLException("Conexion sintetica");
+        var fallo = new jakarta.persistence.PersistenceException("Fallo sintetico", causa);
+        when(dao.obtenerPagina(anyInt(), anyInt(), anyList(), anyList())).thenThrow(fallo);
+        assertSame(fallo, assertThrows(jakarta.persistence.PersistenceException.class,
+                () -> resource.findRange(null, null, clinicId.toString(), null, null, null)));
+        assertSame(fallo, assertThrows(jakarta.persistence.PersistenceException.class,
+                () -> resource.findById(UUID.randomUUID().toString(), clinicId.toString())));
+        assertSame(causa, fallo.getCause());
+        verifyNoInteractions(resource.response);
+    }
+
+    @Test
+    void falloDeConteoNoPublicaTotalNiRespuestaParcial() {
+        var fallo = new jakarta.persistence.PersistenceException("Conteo sintetico fallido");
+        when(dao.contar(anyList())).thenThrow(fallo);
+        assertSame(fallo, assertThrows(jakarta.persistence.PersistenceException.class,
+                () -> resource.findRange(null, null, clinicId.toString(), null, null, null)));
+        verifyNoInteractions(resource.response);
+    }
+
 }

@@ -1,6 +1,8 @@
 package sv.edu.ues.occingenieriappi115_2026.salud.model;
 
 import jakarta.ejb.EJB;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaFlujoService;
+import sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
@@ -20,6 +22,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.*;
 @ViewScoped
 public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serializable {
     private static final long serialVersionUID = 1L;
+    @EJB private PersonaFlujoService personaService;
     @EJB
     private PersonaRolDAO personaRolDAO;
     @EJB
@@ -51,6 +54,7 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
         this.personaDAO = personaDAO;
         this.rolDAO = rolDAO;
         this.clinicaDAO = clinicaDAO;
+        this.personaService = new PersonaFlujoService(personaRolDAO, personaDAO, rolDAO, clinicaDAO);
     }
 
     @Override
@@ -271,19 +275,21 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
     }
 
     public void guardar() {
-        if (seleccionado == null) {
-            return;
+        if (seleccionado == null || getEstado() == ESTADO_CRUD.LISTADO) return;
+        try {
+            boolean edicion = getEstado() == ESTADO_CRUD.EDICION;
+            if (personaContexto != null && (seleccionado.getIdPersona() == null ||
+                    !Objects.equals(personaContexto.getIdPersona(), seleccionado.getIdPersona().getIdPersona()))) {
+                agregarError("persona", "personaRol.personaRequerida");return;
+            }
+            var guardado = personaService.guardarAsignacion(seleccionado, edicion, personaOriginalId, clinicaOriginalId, rolOriginalId);
+            if (edicion) seleccionado = guardado;
+            agregarMensaje("personaRol.guardado", FacesMessage.SEVERITY_INFO);cancelar();
+        } catch (ReglaNegocioException ex) {
+            if ("relaciones.noEditables".equals(ex.getMessage())) seleccionado.setIdPersona(personaOriginal);
+            if ("personaRol.relacionNoEditable".equals(ex.getMessage())) { seleccionado.setIdClinica(clinicaOriginal);seleccionado.setIdRol(rolOriginal); }
+            agregarError(ex.getCampo(), ex.getMessage());
         }
-        if (!validarAntesDeGuardar()) {
-            return;
-        }
-        switch (getEstado()) {
-            case CREACION -> getDao().guardar(seleccionado);
-            case EDICION -> seleccionado = getDao().actualizar(seleccionado);
-            case LISTADO -> { }
-        }
-        agregarMensaje("personaRol.guardado", FacesMessage.SEVERITY_INFO);
-        cancelar();
     }
 
     public void cancelar() {
@@ -352,96 +358,9 @@ public class PersonaRolModel extends AbstractModel<PersonaRol> implements Serial
                 && personaRol.getIdPersona().getIdPersona().equals(persona.getIdPersona());
     }
 
-    private boolean validarAntesDeGuardar() {
-        if (getEstado() == ESTADO_CRUD.EDICION && (personaOriginalId == null
-                || seleccionado.getIdPersona() == null
-                || !personaOriginalId.equals(seleccionado.getIdPersona().getIdPersona()))) {
-            seleccionado.setIdPersona(personaOriginal);
-            agregarError("persona", "relaciones.noEditables");
-            return false;
-        }
-        if (seleccionado.getIdPersona() == null
-                || seleccionado.getIdPersona().getIdPersona() == null) {
-            agregarError("persona", "personaRol.personaRequerida");
-            return false;
-        }
-        Persona personaPersistida = personaDAO.buscarPorId(seleccionado.getIdPersona().getIdPersona());
-        if (personaPersistida == null || (personaContexto != null
-                && !Objects.equals(personaContexto.getIdPersona(), personaPersistida.getIdPersona()))) {
-            agregarError("persona", "personaRol.personaRequerida");
-            return false;
-        }
-        seleccionado.setIdPersona(personaPersistida);
 
-        if (seleccionado.getIdRol() == null || seleccionado.getIdRol().getIdRol() == null) {
-            agregarError("rol", "personaRol.rolRequerido");
-            return false;
-        }
-        if (seleccionado.getIdClinica() == null || seleccionado.getIdClinica().getIdClinica() == null) {
-            agregarError("clinica", "personaRol.clinicaRequerida");
-            return false;
-        }
 
-        if (getEstado() == ESTADO_CRUD.EDICION && !relacionesNoCambiaron()) {
-            agregarError("rol", "personaRol.relacionNoEditable");
-            return false;
-        }
 
-        Rol rolPersistido = rolDAO.buscarPorId(seleccionado.getIdRol().getIdRol());
-        if (rolPersistido == null) {
-            agregarError("rol", "personaRol.rolRequerido");
-            return false;
-        }
-        if (getEstado() == ESTADO_CRUD.CREACION && !Boolean.TRUE.equals(rolPersistido.getActivo())) {
-            agregarError("rol", "personaRol.rolInactivo");
-            return false;
-        }
-        seleccionado.setIdRol(rolPersistido);
-
-        Clinica clinicaPersistida = clinicaDAO.buscarPorId(seleccionado.getIdClinica().getIdClinica());
-        if (clinicaPersistida == null) {
-            agregarError("clinica", "personaRol.clinicaNoExiste");
-            return false;
-        }
-        if (getEstado() == ESTADO_CRUD.CREACION && !Boolean.TRUE.equals(clinicaPersistida.getActivo())) {
-            agregarError("clinica", "personaRol.clinicaInactiva");
-            return false;
-        }
-        seleccionado.setIdClinica(clinicaPersistida);
-
-        if (getEstado() == ESTADO_CRUD.CREACION
-                && personaRolDAO.existeAsignacion(personaPersistida.getIdPersona(),
-                        clinicaPersistida.getIdClinica(), rolPersistido.getIdRol())) {
-            agregarError("personaRol.duplicada");
-            return false;
-        }
-        return true;
-    }
-
-    private boolean relacionesNoCambiaron() {
-        if (seleccionado.getIdPersonaRol() == null) {
-            return false;
-        }
-        PersonaRol persistido = personaRolDAO.buscarPorId(seleccionado.getIdPersonaRol());
-        UUID rolPersistido = persistido == null || persistido.getIdRol() == null
-                ? null : persistido.getIdRol().getIdRol();
-        UUID clinicaPersistida = persistido == null || persistido.getIdClinica() == null
-                ? null : persistido.getIdClinica().getIdClinica();
-        UUID rolActual = seleccionado.getIdRol() == null ? null : seleccionado.getIdRol().getIdRol();
-        UUID clinicaActual = seleccionado.getIdClinica() == null
-                ? null : seleccionado.getIdClinica().getIdClinica();
-        if (!Objects.equals(rolOriginalId, rolPersistido)
-                || !Objects.equals(clinicaOriginalId, clinicaPersistida)
-                || !Objects.equals(rolPersistido, rolActual)
-                || !Objects.equals(clinicaPersistida, clinicaActual)) {
-            if (persistido != null) {
-                seleccionado.setIdRol(rolOriginal);
-                seleccionado.setIdClinica(clinicaOriginal);
-            }
-            return false;
-        }
-        return persistido != null;
-    }
 
     private void agregarError(String clave) {
         agregarMensaje(clave, FacesMessage.SEVERITY_ERROR);
