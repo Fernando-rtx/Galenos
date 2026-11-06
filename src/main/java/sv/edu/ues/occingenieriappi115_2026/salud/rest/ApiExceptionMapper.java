@@ -27,7 +27,8 @@ public class ApiExceptionMapper implements ExceptionMapper<Exception> {
         if (exception instanceof sv.edu.ues.occingenieriappi115_2026.salud.control.FlujoConsultaException flujo) {
             int status = switch (flujo.getMessage()) {
                 case "clinicaActual.noDisponible", "consultaFlujo.contextoInvalido" -> 404;
-                case "consultaFlujo.relacionBloqueada", "consultaFlujo.sinResponsable" -> 409;
+                case "consultaFlujo.relacionBloqueada", "consultaFlujo.sinResponsable",
+                        "consultaFlujo.transicionInvalida", "consultaFlujo.transicionDuplicada" -> 409;
                 default -> 422;
             };
             String mensaje;
