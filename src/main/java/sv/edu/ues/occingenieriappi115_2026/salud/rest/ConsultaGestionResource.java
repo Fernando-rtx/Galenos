@@ -5,7 +5,6 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.json.JsonObject;
 import jakarta.json.bind.annotation.JsonbNillable;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
@@ -15,27 +14,23 @@ import java.util.UUID;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaFlujoService;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.*;
 
-/** Flujo de Consulta del primer entregable, sobre base sintética y clínica autorizada. */
+/** Flujo de Consulta del primer entregable, sobre datos académicos y una clínica de trabajo. */
 @RequestScoped @Path("v2") @Produces(MediaType.APPLICATION_JSON)
 public class ConsultaGestionResource {
     @EJB ConsultaFlujoService service;
     @Inject ApiSettings settings;
-    @Context HttpServletRequest request;
     @Context HttpServletResponse response;
     @Context UriInfo uri;
     private UUID clinic(String raw) {
         settings.requireManagement();
-        UUID id = RestParameters.uuid(raw, "idClinica");
-        settings.requireClinic(request.getUserPrincipal().getName(), id);
-        return id;
+        return RestParameters.uuid(raw, "idClinica");
     }
     private static String instant(Date date) { return date == null ? null : date.toInstant().toString(); }
     @GET @Path("clinica_disponible")
     public List<ClinicaDto> clinicas(@QueryParam("first") String first, @QueryParam("max") String max) {
         settings.requireManagement();var page=RestParameters.page(first,max,settings);
-        var ids=settings.clinicsFor(request.getUserPrincipal().getName());
-        response.setHeader("Total-registros",Long.toString(service.contarClinicasDisponibles(ids)));
-        return service.clinicasDisponibles(ids,page.first(),page.max()).stream().map(ClinicaDto::new).toList();
+        response.setHeader("Total-registros",Long.toString(service.contarClinicasDisponibles()));
+        return service.clinicasDisponibles(page.first(),page.max()).stream().map(ClinicaDto::new).toList();
     }
     @JsonbNillable
     public record ConsultaDatos(String idConsulta, String idPersonaRol, String idClinica, String personaNombre,

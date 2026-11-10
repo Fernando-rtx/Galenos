@@ -1,20 +1,25 @@
 <server description="GalenosSV">
 
     <featureManager>
-        <feature>webProfile-11.0</feature>
+        <feature>faces-4.1</feature>
+        <feature>enterpriseBeansLite-4.0</feature>
+        <feature>persistence-3.2</feature>
+        <feature>restfulWS-4.0</feature>
+        <feature>jsonb-3.0</feature>
+        <feature>validation-3.1</feature>
+        <feature>jdbc-4.2</feature>
     </featureManager>
 
     <variable name="HTTP_PORT" defaultValue="9080"/>
-    <variable name="HTTPS_PORT" defaultValue="9443"/>
     <variable name="POSTGRESQL_DB_HOST" defaultValue="localhost"/>
     <variable name="POSTGRESQL_DB_PORT" defaultValue="5432"/>
     <variable name="POSTGRESQL_DB_NAME" defaultValue="clinica"/>
     <variable name="POSTGRESQL_JDBC_DRIVER_DIR" defaultValue="${server.config.dir}/jdbc"/>
 
     <httpEndpoint id="defaultHttpEndpoint"
-                  host="*"
+                  host="127.0.0.1"
                   httpPort="${HTTP_PORT}"
-                  httpsPort="${HTTPS_PORT}"/>
+                  httpsPort="-1"/>
 
     <webApplication id="GalenosSV"
                     name="GalenosSV"

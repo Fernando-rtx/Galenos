@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.Set;
 
-/** CORS solo para la API: orígenes exactos, lectura y sin credenciales. */
+/** CORS solo para la API: orígenes exactos y sin credenciales. */
 @Provider
 @PreMatching
 @Priority(Priorities.AUTHENTICATION - 100)
@@ -37,20 +37,19 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
         request.setProperty(APPROVED_ORIGIN, origin);
         boolean crud = settings.isManagementEnabled() && request.getUriInfo().getPath().replaceFirst("^/+", "").startsWith("v2/");
         Set<String> methods = crud ? Set.of("GET", "HEAD", "POST", "PUT", "DELETE") : METHODS;
-        Set<String> headers = crud ? Set.of("accept", "content-type", "authorization") : HEADERS;
         String requestedMethod = request.getHeaderString("Access-Control-Request-Method");
         if ("OPTIONS".equals(request.getMethod()) && requestedMethod != null) {
             String requestedHeaders = request.getHeaderString("Access-Control-Request-Headers");
             boolean headersAllowed = requestedHeaders == null || Arrays.stream(requestedHeaders.split(","))
                     .map(String::strip).map(value -> value.toLowerCase(Locale.ROOT))
-                    .allMatch(headers::contains);
+                    .allMatch(HEADERS::contains);
             if (!methods.contains(requestedMethod) || !headersAllowed) {
                 reject(request);
                 return;
             }
             request.abortWith(Response.noContent()
                     .header("Access-Control-Allow-Methods", crud ? "GET, HEAD, POST, PUT, DELETE, OPTIONS" : "GET, HEAD, OPTIONS")
-                    .header("Access-Control-Allow-Headers", crud ? "Accept, Content-Type, Authorization" : "Accept, Content-Type")
+                    .header("Access-Control-Allow-Headers", "Accept, Content-Type")
                     .build());
         }
     }

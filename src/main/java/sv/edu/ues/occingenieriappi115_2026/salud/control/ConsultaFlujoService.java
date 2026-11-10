@@ -178,11 +178,11 @@ public class ConsultaFlujoService {
 
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public List<Clinica> clinicasDisponibles(java.util.Set<UUID> ids, int primero, int tamano) {
-        return clinicaDAO.buscarDisponibles(ids, primero, tamano);
+    public List<Clinica> clinicasDisponibles(int primero, int tamano) {
+        return clinicaDAO.buscarDisponibles(primero, tamano);
     }
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public long contarClinicasDisponibles(java.util.Set<UUID> ids) { return clinicaDAO.contarDisponibles(ids); }
+    public long contarClinicasDisponibles() { return clinicaDAO.contarDisponibles(); }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<PersonaRol> buscarPacientes(UUID clinica, String criterio) {
