@@ -3,6 +3,7 @@ target/
 /demo.env
 /docs/*
 !/docs/api-gestion-v2.md
+!/docs/gt02-contratos-rest.md
 !/docs/implementacion-crud.md
 !/docs/desarrollo-local.md
 !/docs/api-contract.md
