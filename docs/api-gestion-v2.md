@@ -1,5 +1,11 @@
 # Gestión académica local (v2)
 
+> Extensión GT02: [gt02-contratos-rest.md](gt02-contratos-rest.md) define la sesión
+> por documento y las restricciones actuales. El acceso anónimo y el contexto
+> global descritos debajo corresponden al comportamiento anterior. Los DTO se
+> conservan; las lecturas clínicas requieren Bearer y PersonaRol propios, y las
+> escrituras requieren una política explícita HU3/HU4.
+
 `/GalenosSV/resources/v2` sirve exclusivamente datos ficticios en loopback. El frontend
 carga los recursos sin iniciar sesión y usa las operaciones publicadas en este documento.
 `GALENOS_API_MODE=academic` habilita v2 sobre `clinica` con el modo demo desactivado.

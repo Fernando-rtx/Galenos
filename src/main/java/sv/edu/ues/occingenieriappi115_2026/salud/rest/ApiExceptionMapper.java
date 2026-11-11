@@ -42,6 +42,10 @@ public class ApiExceptionMapper implements ExceptionMapper<Exception> {
             int status=flujo.getMessage().contains("Duplicado") || flujo.getMessage().contains("mismoOrden") || flujo.getMessage().contains("NoEliminable") ? 409 : 422;
             return Response.status(status).type(MediaType.APPLICATION_JSON_TYPE).entity(new ApiError(mensaje)).build();
         }
+        if (exception instanceof sv.edu.ues.occingenieriappi115_2026.salud.control.IdentificacionException expected) {
+            return Response.status(expected.getStatus()).type(MediaType.APPLICATION_JSON_TYPE)
+                    .entity(new ApiError(expected.getMessage())).build();
+        }
         if (exception instanceof ApiException expected) {
             return Response.status(expected.getStatus()).type(MediaType.APPLICATION_JSON_TYPE)
                     .entity(new ApiError(expected.getMessage())).build();

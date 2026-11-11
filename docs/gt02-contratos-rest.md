@@ -1,9 +1,9 @@
 # GT02 2026 — Contrato compartido HU1/HU2 y contexto HU3/HU4
 
-Estado: primer entregable contractual, pendiente de confirmación antes de implementar.
+Estado: contrato auditado; implementación HU1/HU2 en curso. Configuración compartida: clinica.
 Las rutas marcadas **nueva** y las medidas de sesión/autorización aquí descritas
-son decisiones de implementación; **todavía no existen en el SHA auditado**.
-Este documento no constituye evidencia de HU1/HU2 funcionando.
+son extensiones implementadas en esta rama; **no existen en el SHA original auditado**.
+La evidencia de ejecución se publica por separado en gt02-hu1-hu2-entrega.md.
 
 ## 1. Procedencia y auditoría
 
@@ -20,6 +20,9 @@ Auditoría del 11 de noviembre de 2026, exclusivamente del código versionado:
   `/private/tmp/gt02-hu1-hu2-frontend`.
 - `GalenosSV_Integrado` tiene cambios ajenos y no se utiliza ni modifica.
   `GalenosSV_Anterior` apunta al mismo remoto, pero no se toma su rama como base.
+
+No se encontró la rúbrica oficial como documento independiente; la auditoría usa los requisitos
+aportados por el usuario. No se afirma cotejo literal con una rúbrica no disponible.
 
 Fuentes bajo `src/main/java/sv/edu/ues/occingenieriappi115_2026/salud/`:
 
@@ -104,7 +107,7 @@ clínica revoca inmediatamente su uso. No inventar `PersonaRol.activo`.
 
 ## 4. Identificación y clínicas de pacientes (HU1)
 
-**Nuevas**, rutas relativas a la base:
+**Extensiones GT02**, rutas relativas a la base:
 
 | Método y ruta | Entrada / salida |
 | --- | --- |
@@ -121,7 +124,7 @@ filtrarlas en JavaScript.
 
 ## 5. Identificación y contexto de empleados (HU2)
 
-**Nuevas**:
+**Extensiones GT02**:
 
 | Método y ruta | Entrada / salida |
 | --- | --- |
@@ -176,7 +179,7 @@ al otro propósito responde403 sin revocarlo. Las lecturas requieren token váli
 
 ## 6. Búsqueda de citas y PDF (HU1)
 
-**Nueva** `GET /v2/citas_paciente` con Bearer PACIENTE. Query obligatorio:
+**Extensión GT02** `GET /v2/citas_paciente` con Bearer PACIENTE. Query obligatorio:
 `idClinica`, `fechaDesde`, `fechaHasta`; opcional `first`, `max` con paginación
 existente (por defecto0/20, máximo configurable100). No acepta idPersona ni
 idPersonaRol proporcionados por el cliente. Propiedades/query desconocidas:422.
@@ -207,7 +210,7 @@ nombre» conservando su ID, sin inventar descripción. No ocultar asociaciones
 históricas sólo porque Procedimiento.activo sea false. No exponer observaciones,
 resultados clínicos, responsables ni documentos en este portal.
 
-**Nueva** `GET /v2/citas_paciente/{idConsulta}/ticket` con Bearer PACIENTE;
+**Extensión GT02** `GET /v2/citas_paciente/{idConsulta}/ticket` con Bearer PACIENTE;
 no requiere rango ni clínica: el backend resuelve consulta y verifica persona,
 rol paciente y clínica utilizable. Inexistente o ajena:404 indistinguible. No
 basta con conocer idConsulta. Paciente con ninguna asignación válida:403.
@@ -219,20 +222,22 @@ Contenido: marca visual GalenosSV, personaNombre, clínica, fecha y hora local,
 procedimientos (o «Sin procedimientos asociados»), UUID de cita como referencia
 y fecha/hora de emisión. No es necesario revelar referenciaExterna.
 
-Generación binaria en Java, con cabecera PDF, objetos, streams, tabla xref y
-trailer válidos. Decisión inicial: escritor pequeño con JDK, sin dependencia
-adicional ni licencia externa que aprobar. Debe escapar texto, calcular offsets
-sobre bytes, ajustar líneas/páginas y probar acentos y nombres. Evaluar fuente y
-cobertura de caracteres antes de implementarlo: no truncar ni corromper nombres.
-Si este enfoque no cumple la fidelidad, documentar alternativa/licencia/versión
-y acordarla antes de añadir una biblioteca; este commit no autoriza dependencias.
-La aceptación exige un lector PDF real y extracción de contenido, además de
-cabeceras HTTP; cambiar la extensión de texto/HTML no cumple.
+Generación binaria en Java con cabecera PDF, objetos, streams, tabla xref y
+trailer válidos. Se utiliza JDK: Java2D renderiza páginas con fuentes lógicas e
+ImageIO genera imágenes embebidas en el PDF, con ajuste de líneas y varias páginas.
+No se agregan dependencias ni se distribuyen fuentes externas. Se conservan acentos
+y caracteres que cubran las fuentes instaladas; verificar visualmente nombres.
+Limitación: el texto del ticket es una imagen, no se puede seleccionar ni extraer
+como texto y no es un PDF etiquetado accesible. La interfaz HTML sí publica los
+datos de la cita como texto accesible. La aceptación exige apertura y renderizado
+con un lector PDF real y comprobación visual del contenido y cabeceras HTTP.
+Cambiar la extensión de texto/HTML no cumple.
 
 ## 7. Autorización compartida y consumo por Responsable 2
 
-`GET /v2/contexto` existente queda como información heredada de despliegue;
-`puedeEscribir` y su lista global **no autorizan operaciones GT02**. El frontend
+`GET /v2/contexto` conserva sus claves heredadas, pero ahora devuelve actor
+`academico-empleado`, `puedeEscribir: false` y sólo clínicas de la identidad
+empleada verificada. Ya no publica la lista global ni acceso anónimo. El frontend
 nuevo usa `GET /v2/identidad_academica/empleado`. No restaurar el administrador
 local. Evitar acceso alternativo a los mismos datos desde recursos antiguos.
 
@@ -246,7 +251,7 @@ Contrato interno nuevo para HU3/HU4:
 `IdentidadAcademicaService.exigirEmpleado(token, idPersonaRol, idClinica)` devuelve
 la PersonaRol revalidada o error401/403. Resuelve persona desde sesión, verifica
 propósito EMPLEADO, pertenencia, rol permitido y clínica activa. No acepta UUID
-de persona como prueba de identidad. Se implementará antes de integrar HU3/HU4.
+de persona como prueba de identidad. Está implementado para integrar HU3/HU4.
 
 El Responsable 2 debe:
 
@@ -331,8 +336,8 @@ del servidor; no aceptar fecha/hora de emisión enviada por cliente.
 
 ## 10. Verificación pendiente y aislamiento
 
-Este primer commit sólo documenta auditoría y contrato; no crea endpoints,
-sesiones ni PDF y no acredita pruebas funcionales HU1/HU2.
+El primer commit sólo documentaba auditoría y contrato; la implementación y sus
+resultados comprobados se describen en gt02-hu1-hu2-entrega.md.
 
 Antes de completar implementación verificar las unidades y los escenarios de
 HU1/HU2 de la solicitud: documentos inválidos/inexistentes, sólo paciente,
@@ -341,13 +346,49 @@ PDF legible y ticket ajeno, cierre/revocación y errores de red/servidor/reconex
 Ejecutar mvn test, npm test, npm run check, npm run test:transport y declarar
 separadamente integración HTTP real y navegador Chromium/Playwright disponible.
 
-Las escrituras y fixtures se ejecutarán exclusivamente en una base sintética
-nueva `galenos_rest_test_gt02_*`. ApiSettings actualmente impide modo academic
-sobre esa base: se requiere adaptación limitada del perfil aislado y pruebas de
-rechazo antes de integración. Nunca cambiar ni poblar clinica para probar.
-No reutilizar base de desarrollo ni asumir que los fixtures existentes cubren
-empleados con documento y múltiples asignaciones: deben ampliarse en el entorno
-sintético. No arrancar ni desplegar sobre servidor existente para este entregable.
+La aplicación real de HU1/HU2/HU3/HU4 comparte la base PostgreSQL `clinica`,
+la conexión JDBC `jdbc/pgdb` y las entidades/relaciones existentes. La configuración
+normal no crea bases ni duplica esquemas. JPA conserva schema-generation=none.
+No se añaden tablas, columnas ni restricciones. Cualquier cambio futuro del esquema
+requiere migración revisada y autorización; este trabajo no la necesita.
 
-Puerta de continuidad solicitada: entregar el SHA de este commit y obtener
-confirmación antes de interfaces o implementación; sin push ni merge a main.
+Contra `clinica` sólo se harán verificaciones de lectura. Identificar y cerrar
+sesiones modifica únicamente memoria, nunca registros persistidos. Escrituras de
+pruebas mediante mocks/unitarias; no se hacen inserciones ni cambios de estado
+para preparar escenarios. Una prueba que requiera obligatoriamente base aislada
+necesita explicación y autorización previa del usuario. La ejecución normal conserva GALENOS_API_MODE=academic y POSTGRESQL_DB_NAME=clinica.
+Tras autorización explícita posterior del usuario, existe GALENOS_API_MODE=test
+únicamente para bases nuevas galenos_rest_test_gt02_*. No puede apuntar a clinica.
+El runner verifica que la base no exista, carga esquema versionado y fixtures
+sintéticos y no modifica el servidor compartido. No se usa para ejecución normal.
+Los perfiles históricos de demostración se conservan.
+
+La consulta de auditoría de sólo lectura del 11/11/2026 confirmó `clinica`,
+transaction_read_only=on en esa consulta, tres personas y el rol Paciente inactivo.
+Las dos asignaciones de ese rol no habilitan HU1; no se cambió el estado. No existe
+la base galenos_rest_test_gt02_20261111. Por ello un flujo completo HU1 contra esos
+datos no puede darse por verificado. Los escenarios sintéticos deben identificarse
+como tales, incluyendo navegador/HTTP con servidor de fixtures cuando se utilice.
+
+El primer commit contractual fue a79fbae40b95d9f45db3e1f710e503f34aff13a5; el usuario
+autorizó continuar y luego aclaró que la ejecución real debe compartir clinica.
+Sin push ni merge a main.
+
+## Extensiones de compatibilidad verificadas
+
+- GET v2/clinica_disponible conserva DTO y paginación, pero restringe resultados a
+  clínicas de las asignaciones del empleado. Con X-Persona-Rol limita a esa
+  asignación revalidada; asignación ajena403.
+- GET v2/consulta, consulta/{id}, persona_rol/pacientes, consulta_procedimiento
+  y consulta_procedimiento_paso conservan entradas/DTO. Se añade Bearer EMPLEADO
+  y X-Persona-Rol; se exige pertenencia de la asignación y de idClinica.
+- Las escrituras y los listados globales de personas/catálogos permanecen
+  denegados por defecto hasta acordar políticas explícitas HU3/HU4; no hay
+  permiso administrativo implícito ni modo de omitir el filtro desde el navegador.
+- Los componentes internos HU3/HU4 no se alteran. Responsable 2 debe ampliar la
+  política de AccesoAcademicoFilter para sus operaciones y probar sus límites;
+  conservar DTO no implica conservar el acceso anónimo previo.
+- En frontend, importar obtenerContextoEmpleado, actualizarContextoEmpleado y
+  solicitudEmpleado desde control/contexto-empleado.js. Este módulo usa el
+  control de HU2 en memoria y añade Bearer/X-Persona-Rol. solicitudEmpleado no
+  representa una autorización: el backend decide y revalida cada operación.

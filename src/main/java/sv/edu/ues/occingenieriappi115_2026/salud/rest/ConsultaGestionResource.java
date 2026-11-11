@@ -18,6 +18,8 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.*;
 @RequestScoped @Path("v2") @Produces(MediaType.APPLICATION_JSON)
 public class ConsultaGestionResource {
     @EJB ConsultaFlujoService service;
+    @EJB sv.edu.ues.occingenieriappi115_2026.salud.control.IdentidadAcademicaService identidad;
+    @Context HttpHeaders headers;
     @Inject ApiSettings settings;
     @Context HttpServletResponse response;
     @Context UriInfo uri;
@@ -29,8 +31,18 @@ public class ConsultaGestionResource {
     @GET @Path("clinica_disponible")
     public List<ClinicaDto> clinicas(@QueryParam("first") String first, @QueryParam("max") String max) {
         settings.requireManagement();var page=RestParameters.page(first,max,settings);
-        response.setHeader("Total-registros",Long.toString(service.contarClinicasDisponibles()));
-        return service.clinicasDisponibles(page.first(),page.max()).stream().map(ClinicaDto::new).toList();
+        var contexto = identidad.contexto(headers.getHeaderString("Authorization"), "EMPLEADO", settings.getClinicZone().getId());
+        var propias = new java.util.LinkedHashMap<String, ClinicaDto>();
+        String seleccion = headers.getHeaderString("X-Persona-Rol");
+        if (seleccion != null && contexto.asignaciones().stream().noneMatch(a -> a.idPersonaRol().equals(seleccion)))
+            throw new ApiException(403, "Asignación no disponible");
+        for (var a : contexto.asignaciones()) {
+            if (seleccion != null && !a.idPersonaRol().equals(seleccion)) continue;
+            var clinica = new Clinica(UUID.fromString(a.idClinica())); clinica.setNombre(a.clinicaNombre());
+            propias.putIfAbsent(a.idClinica(), new ClinicaDto(clinica));
+        }
+        response.setHeader("Total-registros", Integer.toString(propias.size()));
+        return propias.values().stream().skip(page.first()).limit(page.max()).toList();
     }
     @JsonbNillable
     public record ConsultaDatos(String idConsulta, String idPersonaRol, String idClinica, String personaNombre,
