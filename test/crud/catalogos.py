@@ -1,5 +1,4 @@
 """HTTP y PostgreSQL reales, exclusivamente contra galenos_demo_crud sintética."""
-import base64
 import json
 import os
 from pathlib import Path
@@ -12,13 +11,8 @@ import uuid
 ROOT = Path(__file__).resolve().parents[2]
 BASE = 'http://localhost:' + os.environ.get('GALENOS_CRUD_HTTP_PORT', '19083') + '/GalenosSV/resources/v2/'
 CONTAINER = os.environ.get('GALENOS_CRUD_CONTAINER', 'galenos-demo-db')
-CREDENTIALS = json.loads((ROOT / '.galenos-demo/crud/credentials.json').read_text())
-
-def http(path, method='GET', data=None, role='editor', origin='http://127.0.0.1:3000'):
+def http(path, method='GET', data=None, origin='http://127.0.0.1:3000'):
     headers = {'Origin': origin}
-    if role:
-        c = CREDENTIALS[role]
-        headers['Authorization'] = 'Basic ' + base64.b64encode((c['username'] + ':' + c['password']).encode()).decode()
     if data is not None: headers['Content-Type'] = 'application/json'
     request = urllib.request.Request(BASE + path, data=None if data is None else json.dumps(data).encode(), headers=headers, method=method)
     try: response = urllib.request.urlopen(request, timeout=15)
@@ -27,13 +21,12 @@ def http(path, method='GET', data=None, role='editor', origin='http://127.0.0.1:
     return response.status, response.headers, json.loads(raw) if raw else None
 
 class CatalogosHTTP(unittest.TestCase):
-    def test_authentication_and_read_only_authorization(self):
-        status, headers, body = http('tipo_documento', role=None)
-        self.assertEqual(status, 401); self.assertEqual(headers['Access-Control-Allow-Origin'], 'http://127.0.0.1:3000')
-        self.assertIn('mensaje', body)
-        self.assertEqual(http('tipo_documento')[0], 200)
-        self.assertEqual(http('tipo_documento', 'POST', {'nombre':'No autorizado'}, role='lector')[0], 403)
-        self.assertEqual(http('contexto', role='lector')[2]['puedeEscribir'], False)
+    def test_catalogos_sin_sesion_y_origen_local(self):
+        status, headers, _ = http('tipo_documento')
+        self.assertEqual(status, 200)
+        self.assertEqual(headers['Access-Control-Allow-Origin'], 'http://127.0.0.1:3000')
+        self.assertIsNone(headers['WWW-Authenticate'])
+        self.assertEqual(http('tipo_documento', origin='https://externo.invalid')[0], 403)
 
     def test_pagination_validation_missing_and_method(self):
         status, headers, rows = http('tipo_documento?first=0&max=1')

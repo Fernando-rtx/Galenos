@@ -21,6 +21,10 @@ __pycache__/
 
 # Open Liberty local configuration and generated state
 src/main/liberty/config/server.env
+src/main/liberty/config/server.env.*
+!src/main/liberty/config/server.env.example
+src/main/liberty/config/configDropins/overrides/
+src/main/liberty/config/resources/security/
 src/main/liberty/config/logs/
 src/main/liberty/config/workarea/
 src/main/liberty/config/apps/

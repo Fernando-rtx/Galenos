@@ -4,24 +4,23 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.json.JsonObject;
 import jakarta.json.bind.annotation.JsonbNillable;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import java.util.*;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaFlujoService;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.*;
 
-/** Órdenes y resultados dentro de una clínica autorizada; sin entidades JPA en HTTP. */
+/** Órdenes y resultados dentro de una clínica de trabajo; sin entidades JPA en HTTP. */
 @RequestScoped @Path("v2") @Produces(MediaType.APPLICATION_JSON)
 public class ExamenClinicoResource {
     @EJB ConsultaFlujoService service;
     @Inject ApiSettings settings;
-    @Context HttpServletRequest request;
     @Context HttpServletResponse response;
     @Context UriInfo uri;
     private UUID clinic(String value) {
-        settings.requireManagement();var id=RestParameters.uuid(value,"idClinica");
-        settings.requireClinic(request.getUserPrincipal().getName(),id);return id;
+        settings.requireManagement();
+        return RestParameters.uuid(value, "idClinica");
     }
     private static String instant(Date value) { return value==null?null:value.toInstant().toString(); }
     @JsonbNillable public record OrdenDatos(String idOrdenExamen, String idConsultaProcedimientoPaso, String fechaCreacion, String indicaciones) {
