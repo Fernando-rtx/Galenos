@@ -149,4 +149,40 @@ class ConsultaFlujoServiceTest {
             assertFalse(java.util.ResourceBundle.getBundle("i18n.messages",locale).getString(ex.getMessage()).isBlank());
         }
     }
+
+    private ConsultaProcedimientoPaso pasoEnEstado(String estado) {
+        var parent = datos(); parent.setIdConsultaProcedimiento(UUID.randomUUID());
+        var paso = new ConsultaProcedimientoPaso(UUID.randomUUID());
+        paso.setIdConsultaProcedimiento(parent); paso.setIdPersonaRol(responsable);
+        paso.setFechaInicio(new Date(System.currentTimeMillis() - 60000)); paso.setEstado(estado);
+        when(pasos.buscarParaActualizar(paso.getIdConsultaProcedimientoPaso())).thenReturn(paso);
+        when(personas.buscarPorId(responsable.getIdPersonaRol())).thenReturn(responsable);
+        return paso;
+    }
+    private ConsultaProcedimientoPaso cambio(ConsultaProcedimientoPaso original, String estado) {
+        var cambio = new ConsultaProcedimientoPaso(original.getIdConsultaProcedimientoPaso());
+        cambio.setIdConsultaProcedimiento(original.getIdConsultaProcedimiento());
+        cambio.setIdPersonaRol(original.getIdPersonaRol());
+        cambio.setFechaInicio(original.getFechaInicio()); cambio.setEstado(estado);
+        return cambio;
+    }
+    @Test void iniciaYCompletaPasoEnOrden() {
+        var paso = pasoEnEstado("PENDIENTE");
+        service.actualizarPaso(cambio(paso,"EN_CURSO"),clinica.getIdClinica());
+        assertEquals("EN_CURSO",paso.getEstado()); assertNull(paso.getFechaFin());
+        service.actualizarPaso(cambio(paso,"COMPLETADO"),clinica.getIdClinica());
+        assertEquals("COMPLETADO",paso.getEstado()); assertNotNull(paso.getFechaFin());
+        verify(pasos,times(2)).actualizar(paso);
+    }
+    @Test void rechazaSaltosRetrocesosYRepeticionSinEscribir() {
+        var paso = pasoEnEstado("PENDIENTE");
+        assertEquals("consultaFlujo.transicionInvalida",assertThrows(FlujoConsultaException.class,
+                () -> service.actualizarPaso(cambio(paso,"COMPLETADO"),clinica.getIdClinica())).getMessage());
+        paso.setEstado("EN_CURSO");
+        assertThrows(FlujoConsultaException.class,() -> service.actualizarPaso(cambio(paso,"PENDIENTE"),clinica.getIdClinica()));
+        paso.setEstado("COMPLETADO");
+        assertEquals("consultaFlujo.transicionDuplicada",assertThrows(FlujoConsultaException.class,
+                () -> service.actualizarPaso(cambio(paso,"COMPLETADO"),clinica.getIdClinica())).getMessage());
+        verify(pasos,never()).actualizar(any());
+    }
 }
