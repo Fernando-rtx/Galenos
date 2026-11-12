@@ -3,6 +3,8 @@ target/
 /demo.env
 /docs/*
 !/docs/api-gestion-v2.md
+!/docs/gt02-contratos-rest.md
+!/docs/gt02-hu1-hu2-entrega.md
 !/docs/implementacion-crud.md
 !/docs/desarrollo-local.md
 !/docs/api-contract.md
@@ -32,3 +34,6 @@ src/main/liberty/config/dropins/
 
 # Playwright MCP artifacts
 .playwright-mcp/
+
+# Runtime privado de verificación, sobre clinica en sólo lectura
+/.gt02/

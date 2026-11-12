@@ -21,7 +21,7 @@ import java.util.Set;
 @Priority(Priorities.AUTHENTICATION - 100)
 public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilter {
     private static final Set<String> METHODS = Set.of("GET", "HEAD");
-    private static final Set<String> HEADERS = Set.of("accept", "content-type");
+    private static final Set<String> HEADERS = Set.of("accept", "content-type", "authorization", "x-persona-rol");
     private static final String APPROVED_ORIGIN = CorsFilter.class.getName() + ".origin";
     @Inject
     ApiSettings settings;
@@ -49,7 +49,7 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
             }
             request.abortWith(Response.noContent()
                     .header("Access-Control-Allow-Methods", crud ? "GET, HEAD, POST, PUT, DELETE, OPTIONS" : "GET, HEAD, OPTIONS")
-                    .header("Access-Control-Allow-Headers", "Accept, Content-Type")
+                    .header("Access-Control-Allow-Headers", "Accept, Content-Type, Authorization, X-Persona-Rol")
                     .build());
         }
     }
@@ -64,7 +64,7 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
         Object origin = request.getProperty(APPROVED_ORIGIN);
         if (origin != null) {
             response.getHeaders().putSingle("Access-Control-Allow-Origin", origin);
-            response.getHeaders().putSingle("Access-Control-Expose-Headers", "Total-registros, Location");
+            response.getHeaders().putSingle("Access-Control-Expose-Headers", "Total-registros, Location, Content-Disposition");
         }
     }
 

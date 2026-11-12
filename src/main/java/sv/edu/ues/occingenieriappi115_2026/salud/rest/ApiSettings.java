@@ -49,11 +49,14 @@ public class ApiSettings {
             throw new IllegalArgumentException("CRUD requiere la base sintetica galenos_demo_crud y modo demo");
         }
         String mode = environment.getOrDefault("GALENOS_API_MODE", "disabled");
-        if (!Set.of("disabled", "academic", "development").contains(mode)) {
+        if (!Set.of("disabled", "academic", "development", "test").contains(mode)) {
             throw new IllegalArgumentException("GALENOS_API_MODE inválido");
         }
+        boolean test = mode.equals("test");
+        if (test && (demoMode || crudDemo || !environment.getOrDefault("POSTGRESQL_DB_NAME", "").matches("galenos_rest_test_gt02_[a-z0-9_]+")))
+            throw new IllegalArgumentException("El modo test sólo permite una base GT02 temporal explícita");
         academic = !mode.equals("disabled");
-        if (academic && (demoMode || crudDemo || !"clinica".equals(environment.get("POSTGRESQL_DB_NAME")))) {
+        if (academic && !test && (demoMode || crudDemo || !"clinica".equals(environment.get("POSTGRESQL_DB_NAME")))) {
             throw new IllegalArgumentException("El modo académico requiere clinica y demo desactivada");
         }
         clinicZone = ZoneId.of(environment.getOrDefault("GALENOS_CLINIC_TIME_ZONE", "America/El_Salvador"));

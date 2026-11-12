@@ -7,6 +7,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ApiSettingsTest {
+    @Test void perfilDePruebaNoSustituyeClinica() {
+        assertTrue(new ApiSettings(Map.of("GALENOS_API_MODE", "test", "POSTGRESQL_DB_NAME", "galenos_rest_test_gt02_unit")).isManagementEnabled());
+        for (String db : java.util.List.of("clinica", "galenos_demo_crud", "galenos_rest_test_gt02_", "otra"))
+            assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of("GALENOS_API_MODE", "test", "POSTGRESQL_DB_NAME", db)));
+    }
+
     @Test
     void demoDesactivadaPorDefecto() {
         assertEquals(404, assertThrows(ApiException.class,
