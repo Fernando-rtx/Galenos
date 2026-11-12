@@ -13,7 +13,7 @@ Rama: `feat/flujo-clinico-operativo`. Este cambio no altera el esquema de `clini
 | Órdenes y resultados | `ConsultaFlujoService` | `orden_examen`, `examen_resultado` | pruebas REST y de servicio | Vincular una orden al examen concreto si el equipo lo requiere |
 | Clínicas activas del entorno académico | `ApiSettings`, `ClinicaDAO` | `clinica_disponible`, `contexto` | `ApiSettingsTest` | Definir identidad profesional persistente para un modo autenticado futuro |
 
-`actualizarPaso` ahora bloquea la fila mediante `PESSIMISTIC_WRITE` dentro de la transacción EJB. Permite `PENDIENTE → EN_CURSO → COMPLETADO`, además de conservar el estado pendiente o en curso al editar fechas. Rechaza saltos, retrocesos y cualquier petición posterior a `COMPLETADO` con HTTP 409. Si la finalización no trae `fechaFin`, el servidor la registra. El bloqueo hace que dos finalizaciones concurrentes del mismo paso se evalúen en serie; la segunda ve el estado completado y falla. La verificación de concurrencia contra PostgreSQL sigue pendiente de una base de pruebas aislada.
+`actualizarPaso` bloquea la fila mediante `PESSIMISTIC_WRITE` dentro de la transacción EJB. Permite `PENDIENTE → EN_CURSO → COMPLETADO`, rechaza saltos, retrocesos y duplicados con HTTP 409, y registra `fechaFin` al completar. La prueba real `test/integration/flujo_operativo_real.py` valida REST y SQL exclusivamente en `galenos_demo_crud`, incluyendo acceso de otra clínica (404) y concurrencia (200/409). Para repetirla, la fila fixture se restablece por SQL; reinicia Liberty antes de repetir para invalidar la caché JPA.
 
 La pertenencia de consulta y paso a la clínica indicada se valida en las lecturas y escrituras. El `main` académico actual usa datos ficticios locales en loopback y no autentica ni autoriza por usuario; seleccionar una clínica no representa un permiso personal. El mismo servicio conserva las validaciones usadas por JSF; su formulario recibe un mensaje de negocio si solicita una transición inválida. Completar un paso no completa la consulta ni crea el sucesor.
 
@@ -32,4 +32,4 @@ Esta matriz refleja el despliegue académico sin login decidido en `main`; los p
 
 ## Comprobación
 
-`mvn -q -DargLine=-javaagent:/home/rodrigo/.m2/repository/net/bytebuddy/byte-buddy-agent/1.17.7/byte-buddy-agent-1.17.7.jar test`: 776 pruebas, 0 fallos, 0 errores, 0 omitidas. `mvn -q -DskipTests package`: WAR generado. Las pruebas añadidas cubren inicio, finalización, saltos, retrocesos, duplicados y uso del bloqueo JPA. No se hicieron escrituras en `clinica` ni pruebas de persistencia real.
+`mvn test package`: 776 pruebas, 0 fallos, 0 errores, 0 omitidas; WAR generado. La prueba de navegador frontend confirmó selección de consulta, inicio/finalización y estado persistido tras recarga. No se modificó la base principal `clinica`.
