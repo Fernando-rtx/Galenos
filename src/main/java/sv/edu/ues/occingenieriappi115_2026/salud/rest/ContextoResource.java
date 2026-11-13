@@ -16,11 +16,12 @@ import sv.edu.ues.occingenieriappi115_2026.salud.control.ConsultaFlujoService;
 @Produces(MediaType.APPLICATION_JSON)
 public class ContextoResource {
     @Inject ApiSettings settings;
-    @EJB ConsultaFlujoService service;
+    @EJB sv.edu.ues.occingenieriappi115_2026.salud.control.IdentidadAcademicaService identidad;
+    @jakarta.ws.rs.core.Context jakarta.ws.rs.core.HttpHeaders headers;
     @GET public Map<String, Object> get() {
         settings.requireManagement();
-        var clinics = service.clinicasDisponibles(0, Integer.MAX_VALUE).stream()
-                .map(clinic -> clinic.getIdClinica().toString()).sorted().toList();
-        return Map.of("actor", "academico-local", "puedeEscribir", true, "clinicas", clinics);
+        var context = identidad.contexto(headers.getHeaderString("Authorization"), "EMPLEADO", settings.getClinicZone().getId());
+        return Map.of("actor", "academico-empleado", "puedeEscribir", false,
+                "clinicas", context.asignaciones().stream().map(a -> a.idClinica()).distinct().sorted().toList());
     }
 }

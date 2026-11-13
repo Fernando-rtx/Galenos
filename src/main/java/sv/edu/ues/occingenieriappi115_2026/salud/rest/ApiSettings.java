@@ -18,6 +18,9 @@ public class ApiSettings {
     private final ZoneId clinicZone;
     private final boolean crudDemo;
     private final boolean academic;
+    private final boolean development;
+    private final Map<String, Set<java.util.UUID>> actorClinics;
+    private final Map<String, java.util.UUID> actorPersons;
 
     public ApiSettings() {
         this(System.getenv());
@@ -49,13 +52,44 @@ public class ApiSettings {
             throw new IllegalArgumentException("CRUD requiere la base sintetica galenos_demo_crud y modo demo");
         }
         String mode = environment.getOrDefault("GALENOS_API_MODE", "disabled");
-        if (!Set.of("disabled", "academic", "development").contains(mode)) {
+        if (!Set.of("disabled", "academic", "development", "test").contains(mode)) {
             throw new IllegalArgumentException("GALENOS_API_MODE inválido");
         }
+        boolean test = mode.equals("test");
+        if (test && (demoMode || crudDemo || !environment.getOrDefault("POSTGRESQL_DB_NAME", "").matches("galenos_rest_test_gt02_[a-z0-9_]+")))
+            throw new IllegalArgumentException("El modo test sólo permite una base GT02 temporal explícita");
         academic = !mode.equals("disabled");
-        if (academic && (demoMode || crudDemo || !"clinica".equals(environment.get("POSTGRESQL_DB_NAME")))) {
-            throw new IllegalArgumentException("El modo académico requiere clinica y demo desactivada");
+        development = mode.equals("development");
+        if ((academic || development) && !test && (demoMode || crudDemo || !"clinica".equals(environment.get("POSTGRESQL_DB_NAME")))) {
+            throw new IllegalArgumentException("Los modos académico y desarrollo requieren clinica y demo desactivada");
         }
+        Map<String, Set<java.util.UUID>> scopes = new java.util.HashMap<>();
+        if (crudDemo || development) {
+            String key = development ? "GALENOS_API_ACTOR_CLINICS" : "GALENOS_CRUD_ACTOR_CLINICS";
+            for (String item : environment.getOrDefault(key, "").split(";")) {
+                if (item.isBlank()) continue;
+                String[] entry = item.split("=", -1);
+                if (entry.length != 2 || entry[0].isBlank() || scopes.containsKey(entry[0])) {
+                    throw new IllegalArgumentException("Asignacion de clinicas CRUD invalida");
+                }
+                Set<java.util.UUID> ids = Arrays.stream(entry[1].split(","))
+                        .map(java.util.UUID::fromString).collect(Collectors.toUnmodifiableSet());
+                scopes.put(entry[0], ids);
+            }
+        }
+        actorClinics = Map.copyOf(scopes);
+        Map<String, java.util.UUID> people = new java.util.HashMap<>();
+        if (crudDemo) {
+            for (String item : environment.getOrDefault("GALENOS_CRUD_ACTOR_PERSONS", "").split(";")) {
+                if (item.isBlank()) continue;
+                String[] entry = item.split("=", -1);
+                if (entry.length != 2 || entry[0].isBlank() || people.containsKey(entry[0])) {
+                    throw new IllegalArgumentException("Asignacion de personas CRUD invalida");
+                }
+                people.put(entry[0], java.util.UUID.fromString(entry[1]));
+            }
+        }
+        actorPersons = Map.copyOf(people);
         clinicZone = ZoneId.of(environment.getOrDefault("GALENOS_CLINIC_TIME_ZONE", "America/El_Salvador"));
     }
 
@@ -64,7 +98,17 @@ public class ApiSettings {
     public boolean allowsOrigin(String origin) { return allowedOrigins.contains(origin); }
     public ZoneId getClinicZone() { return clinicZone; }
 
-    public boolean isManagementEnabled() { return crudDemo || academic; }
+    public Set<java.util.UUID> clinicsFor(String actor) { return actorClinics.getOrDefault(actor, Set.of()); }
+    public java.util.UUID personFor(String actor) { return actorPersons.get(actor); }
+    public void requireClinic(String actor, java.util.UUID id) {
+        if (!clinicsFor(actor).contains(id)) throw new ApiException(403, "No tiene acceso a la clínica solicitada");
+    }
+
+    public boolean isManagementEnabled() { return crudDemo || development || academic; }
+    public boolean isDevelopment() { return development; }
+    public boolean canWrite(jakarta.servlet.http.HttpServletRequest request) {
+        return request.isUserInRole("galenos-api-write") || (crudDemo && request.isUserInRole("galenos-demo-write"));
+    }
     public void requireManagement() {
         if (!isManagementEnabled()) throw new ApiException(404, "Recurso de gestión no disponible");
     }

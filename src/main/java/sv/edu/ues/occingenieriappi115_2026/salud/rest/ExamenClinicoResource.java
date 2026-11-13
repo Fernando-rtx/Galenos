@@ -23,8 +23,8 @@ public class ExamenClinicoResource {
         return RestParameters.uuid(value, "idClinica");
     }
     private static String instant(Date value) { return value==null?null:value.toInstant().toString(); }
-    @JsonbNillable public record OrdenDatos(String idOrdenExamen, String idConsultaProcedimientoPaso, String fechaCreacion, String indicaciones) {
-        static OrdenDatos from(OrdenExamen value) { return new OrdenDatos(value.getIdOrdenExamen().toString(),value.getIdConsultaProcedimientoPaso().getIdConsultaProcedimientoPaso().toString(),instant(value.getFechaCreacion()),value.getIndicaciones()); }
+    @JsonbNillable public record OrdenDatos(String idOrdenExamen, String idConsultaProcedimientoPaso, String idExamen, String fechaCreacion, String indicaciones) {
+        static OrdenDatos from(OrdenExamen value) { return new OrdenDatos(value.getIdOrdenExamen().toString(),value.getIdConsultaProcedimientoPaso().getIdConsultaProcedimientoPaso().toString(),value.getIdExamen()==null?null:value.getIdExamen().getIdExamen().toString(),instant(value.getFechaCreacion()),value.getIndicaciones()); }
     }
     @GET @Path("orden_examen")
     public List<OrdenDatos> listarOrden(@QueryParam("idClinica") String c,@QueryParam("idPaso") String parent,@QueryParam("first") String first,@QueryParam("max") String max) {
@@ -37,9 +37,11 @@ public class ExamenClinicoResource {
         var value=service.buscarOrden(RestParameters.uuid(id,"id"),clinic(c));if(value==null)throw new ApiException(404,"Registro no encontrado");return OrdenDatos.from(value);
     }
     private OrdenExamen leerOrden(JsonObject body,UUID id) {
-        var input=new RestInput(body,"idConsultaProcedimientoPaso","fechaCreacion","indicaciones");var value=new OrdenExamen(id);
+        var input=new RestInput(body,"idConsultaProcedimientoPaso","idExamen","fechaCreacion","indicaciones");var value=new OrdenExamen(id);
         value.setIdConsultaProcedimientoPaso(new ConsultaProcedimientoPaso(input.uuid("idConsultaProcedimientoPaso")));value.setFechaCreacion(input.date("fechaCreacion"));
         if(value.getFechaCreacion()==null)throw new ApiException(422,"La fecha de creación es requerida");
+        String examen=input.text("idExamen");
+        value.setIdExamen(examen==null?null:new Examen(RestParameters.uuid(examen,"idExamen")));
         value.setIndicaciones(input.text("indicaciones"));
         return value;
     }
