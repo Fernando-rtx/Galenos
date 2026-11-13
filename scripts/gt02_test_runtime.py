@@ -77,6 +77,13 @@ def main():
         (STATE / "usr/shared/resources/primefaces").mkdir(parents=True, exist_ok=True)
         info = json.loads(subprocess.check_output(["docker", "inspect", CONTAINER]))[0]
         values = dict(item.split("=", 1) for item in info["Config"]["Env"] if "=" in item)
+        java_home = os.environ.get("JAVA_HOME")
+        if not java_home:
+            java_command = shutil.which("java")
+            if java_command:
+                java_home = str(Path(java_command).resolve().parent.parent)
+        if not java_home:
+            raise SystemExit("Define JAVA_HOME para usar un JDK 21 instalado en este equipo")
         env = {
             "HTTP_PORT": "19085",
             "POSTGRESQL_DB_HOST": "127.0.0.1",
@@ -89,7 +96,7 @@ def main():
             "GALENOS_CRUD_DEMO": "false",
             "GALENOS_CORS_ORIGINS": "http://127.0.0.1:3000,http://localhost:3000",
             "GALENOS_EMPLEADO_ROLES": "00000000-0000-4000-8000-000000000032,00000000-0000-4000-8000-000000000033",
-            "JAVA_HOME": "/Library/Java/JavaVirtualMachines/jdk-21.jdk/Contents/Home",
+            "JAVA_HOME": java_home,
         }
         with os.fdopen(
             os.open(server / "server.env", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w"
