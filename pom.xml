@@ -21,7 +21,7 @@
         <openliberty.version>26.0.0.8</openliberty.version>
         <liberty.install.dir>${user.home}/openliberty/wlp</liberty.install.dir>
         <liberty.maven.plugin.version>3.12.1</liberty.maven.plugin.version>
-        <liberty.server.name>GalenosSV</liberty.server.name>
+        <liberty.server.name>GalenosSVAcademico</liberty.server.name>
         <postgresql.jdbc.version>42.7.4</postgresql.jdbc.version>
 
         <!-- Testing -->

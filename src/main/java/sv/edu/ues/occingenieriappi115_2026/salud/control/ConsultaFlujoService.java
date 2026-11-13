@@ -155,7 +155,7 @@ public class ConsultaFlujoService {
     public ConsultaProcedimientoPaso actualizarPaso(ConsultaProcedimientoPaso datos, UUID clinica) {
         validarClinica(clinica);
         ConsultaProcedimientoPaso persistido = datos.getIdConsultaProcedimientoPaso() == null ? null
-                : pasoDAO.buscarPorId(datos.getIdConsultaProcedimientoPaso());
+                : pasoDAO.buscarParaActualizar(datos.getIdConsultaProcedimientoPaso());
         if (persistido == null || persistido.getIdConsultaProcedimiento() == null || datos.getIdConsultaProcedimiento() == null
                 || persistido.getIdPersonaRol() == null || datos.getIdPersonaRol() == null) {
             throw new FlujoConsultaException("consultaFlujo.contextoInvalido");
@@ -168,23 +168,39 @@ public class ConsultaFlujoService {
         if (!personaEnClinica(responsable, clinica)) {
             throw new FlujoConsultaException("consultaFlujo.sinResponsable");
         }
-        validarFechas(datos.getFechaInicio(), datos.getFechaFin());
         if (!java.util.Set.of("PENDIENTE", "EN_CURSO", "COMPLETADO").contains(datos.getEstado() == null ? "" : datos.getEstado())) {
             throw new FlujoConsultaException("consultaFlujo.estadoInvalido");
         }
+        String anterior = persistido.getEstado();
+        String siguiente = datos.getEstado();
+        if (("PENDIENTE".equals(anterior) && "COMPLETADO".equals(siguiente))
+                || ("EN_CURSO".equals(anterior) && "PENDIENTE".equals(siguiente))
+                || ("COMPLETADO".equals(anterior) && !"COMPLETADO".equals(siguiente))
+                || !java.util.Set.of("PENDIENTE", "EN_CURSO", "COMPLETADO").contains(anterior == null ? "" : anterior)) {
+            throw new FlujoConsultaException("consultaFlujo.transicionInvalida");
+        }
+        if ("COMPLETADO".equals(anterior)) {
+            throw new FlujoConsultaException("consultaFlujo.transicionDuplicada");
+        }
+        if (!"COMPLETADO".equals(siguiente) && datos.getFechaFin() != null) {
+            throw new FlujoConsultaException("consultaFlujo.transicionInvalida");
+        }
+        Date fin = "COMPLETADO".equals(siguiente) && datos.getFechaFin() == null
+                ? new Date() : datos.getFechaFin();
+        validarFechas(datos.getFechaInicio(), fin);
         persistido.setFechaInicio(datos.getFechaInicio());
-        persistido.setFechaFin(datos.getFechaFin());
+        persistido.setFechaFin(fin);
         persistido.setEstado(datos.getEstado());
         return pasoDAO.actualizar(persistido);
     }
 
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public List<Clinica> clinicasDisponibles(java.util.Set<UUID> ids, int primero, int tamano) {
-        return clinicaDAO.buscarDisponibles(ids, primero, tamano);
+    public List<Clinica> clinicasDisponibles(int primero, int tamano) {
+        return clinicaDAO.buscarDisponibles(primero, tamano);
     }
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public long contarClinicasDisponibles(java.util.Set<UUID> ids) { return clinicaDAO.contarDisponibles(ids); }
+    public long contarClinicasDisponibles() { return clinicaDAO.contarDisponibles(); }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<PersonaRol> buscarPacientes(UUID clinica, String criterio) {

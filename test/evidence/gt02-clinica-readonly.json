@@ -1,0 +1,15 @@
+{
+  "scope": "Liberty con JDBC sólo lectura -> clinica existente",
+  "checks": [
+    "Catálogo REST real sobre clinica",
+    "Listado indiscriminado de personas sin sesión rechazado",
+    "HU2 empleado real: identificación, contexto propio y roles/clínicas",
+    "Cierre y revocación de sesión efímera",
+    "Asignación no disponible rechazada sin modificar registros",
+    "Hashes de las veinte tablas iguales antes y después"
+  ],
+  "employeeFlows": 1,
+  "patientRejectedInactive": 1,
+  "unchangedTables": 20,
+  "clinicalResponsesStored": false
+}

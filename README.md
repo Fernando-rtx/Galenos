@@ -54,6 +54,12 @@ para consultar las órdenes generadas. Desde cada orden se navega a sus
 resultados con el deep-link `ExamenResultado?idOrden=`, que preselecciona la
 orden en `nuevo()`; los resultados se registran en `ExamenResultado`.
 
+## Despliegue académico local
+
+Este proyecto usa datos ficticios. El frontend y REST v2 funcionan sin iniciar sesión.
+Para ejecutar el backend y conectar el frontend, sigue la
+[guía de desarrollo local](docs/desarrollo-local.md).
+
 ## Comandos
 
 Para la integración del nuevo frontend con **datos ficticios**:

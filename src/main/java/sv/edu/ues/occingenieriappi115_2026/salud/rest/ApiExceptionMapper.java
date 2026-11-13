@@ -28,7 +28,8 @@ public class ApiExceptionMapper implements ExceptionMapper<Exception> {
             int status = switch (flujo.getMessage()) {
                 case "clinicaActual.noDisponible", "consultaFlujo.contextoInvalido" -> 404;
                 case "consultaFlujo.relacionBloqueada", "consultaFlujo.sinResponsable",
-                        "consultaFlujo.pasoSinPlantilla", "consultaFlujo.conflictoPaso" -> 409;
+                        "consultaFlujo.pasoSinPlantilla", "consultaFlujo.conflictoPaso",
+                        "consultaFlujo.transicionInvalida", "consultaFlujo.transicionDuplicada" -> 409;
                 case "consultaFlujo.asignacionInvalida" -> 403;
                 default -> 422;
             };
@@ -43,6 +44,10 @@ public class ApiExceptionMapper implements ExceptionMapper<Exception> {
             catch (java.util.MissingResourceException ex) { mensaje="Datos del procedimiento no válidos"; }
             int status=flujo.getMessage().contains("Duplicado") || flujo.getMessage().contains("mismoOrden") || flujo.getMessage().contains("NoEliminable") ? 409 : 422;
             return Response.status(status).type(MediaType.APPLICATION_JSON_TYPE).entity(new ApiError(mensaje)).build();
+        }
+        if (exception instanceof sv.edu.ues.occingenieriappi115_2026.salud.control.IdentificacionException expected) {
+            return Response.status(expected.getStatus()).type(MediaType.APPLICATION_JSON_TYPE)
+                    .entity(new ApiError(expected.getMessage())).build();
         }
         if (exception instanceof ApiException expected) {
             return Response.status(expected.getStatus()).type(MediaType.APPLICATION_JSON_TYPE)

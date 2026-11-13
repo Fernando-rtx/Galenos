@@ -4,7 +4,7 @@ import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.json.JsonObject;
 import jakarta.json.bind.annotation.JsonbNillable;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.*;
 import java.time.Instant;
@@ -12,17 +12,15 @@ import java.util.*;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.PersonaFlujoService;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.*;
 
-/** Personas y asociaciones: DTO explícitos, nunca colecciones JPA. Solo demo autenticado. */
+/** Personas y asociaciones: DTO explícitos, nunca colecciones JPA. */
 @RequestScoped @Path("v2") @Produces(MediaType.APPLICATION_JSON)
 public class PersonaResource {
  @EJB PersonaFlujoService service;
  @Inject ApiSettings settings;
  @Context HttpServletResponse response;
- @Context HttpServletRequest request;
  @Context UriInfo uri;
  private void enabled(){settings.requireManagement();}
  private Persona persona(UUID id){var p=service.buscarPersona(id);if(p==null)throw new ApiException(404,"Persona no encontrada");return p;}
- private void clinic(UUID id){settings.requireClinic(request.getUserPrincipal().getName(),id);}
  private static String instant(Date value){return value==null?null:Instant.ofEpochMilli(value.getTime()).toString();}
  @JsonbNillable public record PersonaDatos(String idPersona,String nombres,String apellidos,String fechaNacimiento,String fechaCreacion){
   static PersonaDatos from(Persona p){return new PersonaDatos(p.getIdPersona().toString(),p.getNombres(),p.getApellidos(),instant(p.getFechaNacimiento()),instant(p.getFechaCreacion()));}
@@ -115,7 +113,7 @@ public class PersonaResource {
  private PersonaRol guardarPersonaRol(JsonObject body,UUID id){
   var input=new RestInput(body,"idPersona","idRol","idClinica");var old=id==null?null:service.buscarAsignacion(id);
   if(id!=null&&old==null)throw new ApiException(404,"Registro no encontrado");
-  var p=new PersonaRol(id);p.setIdPersona(persona(input.uuid("idPersona")));p.setIdRol(new Rol(input.uuid("idRol")));p.setIdClinica(new Clinica(input.uuid("idClinica")));clinic(p.getIdClinica().getIdClinica());p.setFechaCreacion(old==null?new Date():old.getFechaCreacion());
+  var p=new PersonaRol(id);p.setIdPersona(persona(input.uuid("idPersona")));p.setIdRol(new Rol(input.uuid("idRol")));p.setIdClinica(new Clinica(input.uuid("idClinica")));p.setFechaCreacion(old==null?new Date():old.getFechaCreacion());
   return service.guardarAsignacion(p,id!=null,old==null?null:old.getIdPersona().getIdPersona(),old==null?null:old.getIdClinica().getIdClinica(),old==null?null:old.getIdRol().getIdRol());
  }
  @POST @Path("persona_rol") @Consumes(MediaType.APPLICATION_JSON)
@@ -125,6 +123,6 @@ public class PersonaResource {
  public PersonaRolDatos actualizarPersonaRol(@PathParam("id")String id,JsonObject body){enabled();return PersonaRolDatos.from(guardarPersonaRol(body,RestParameters.uuid(id,"id")));}
  @DELETE @Path("persona_rol/{id}")
  public Response eliminarPersonaRol(@PathParam("id")String id){enabled();var value=service.buscarAsignacion(RestParameters.uuid(id,"id"));
-  if(value==null)throw new ApiException(404,"Registro no encontrado");clinic(value.getIdClinica().getIdClinica());
+  if(value==null)throw new ApiException(404,"Registro no encontrado");
   service.eliminarAsignacion(value.getIdPersonaRol());return Response.noContent().build();}
 }

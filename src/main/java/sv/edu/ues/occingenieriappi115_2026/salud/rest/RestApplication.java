@@ -9,9 +9,10 @@ import java.util.Set;
 public class RestApplication extends Application {
     @Override
     public Set<Class<?>> getClasses() {
-        return Set.of(TipoDocumentoResource.class, ConsultaResource.class, ClinicaResource.class,
-                ApiExceptionMapper.class, CorsFilter.class, CatalogoResource.class, DemoAccessFilter.class, ContextoResource.class,
-                ConsultaGestionResource.class, PersonaResource.class, ExamenClinicoResource.class, ProcedimientoPasoResource.class,
-                RelacionesResource.class, AcademicCareResource.class);
+        return Set.of(IdentidadAcademicaResource.class, CitasPacienteResource.class, AccesoAcademicoFilter.class,
+                TipoDocumentoResource.class, ConsultaResource.class, ClinicaResource.class,
+                ApiExceptionMapper.class, CorsFilter.class, CatalogoResource.class, ContextoResource.class,
+                ConsultaGestionResource.class, PersonaResource.class, ExamenClinicoResource.class,
+                ProcedimientoPasoResource.class, RelacionesResource.class, AcademicCareResource.class);
     }
 }

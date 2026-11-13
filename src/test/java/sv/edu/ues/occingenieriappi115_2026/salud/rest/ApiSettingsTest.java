@@ -7,6 +7,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ApiSettingsTest {
+    @Test void perfilDePruebaNoSustituyeClinica() {
+        assertTrue(new ApiSettings(Map.of("GALENOS_API_MODE", "test", "POSTGRESQL_DB_NAME", "galenos_rest_test_gt02_unit")).isManagementEnabled());
+        for (String db : java.util.List.of("clinica", "galenos_demo_crud", "galenos_rest_test_gt02_", "otra"))
+            assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of("GALENOS_API_MODE", "test", "POSTGRESQL_DB_NAME", db)));
+    }
+
     @Test
     void demoDesactivadaPorDefecto() {
         assertEquals(404, assertThrows(ApiException.class,
@@ -119,8 +125,17 @@ class ApiSettingsTest {
         assertTrue(settings.isManagementEnabled());
         assertDoesNotThrow(settings::requireManagement);
         assertThrows(ApiException.class, settings::requireDemo);
-        assertTrue(settings.clinicsFor("sin-asignacion").isEmpty());
-        assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of("GALENOS_API_MODE", "development", "POSTGRESQL_DB_NAME", "galenos_demo_crud")));
-        assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of("GALENOS_API_MODE", "development", "POSTGRESQL_DB_NAME", "clinica", "GALENOS_DEMO_MODE", "true")));
+        assertTrue(settings.clinicsFor("nadie").isEmpty());
     }
+
+    @Test
+    void academicoRequiereClinicaSinModoDemo() {
+        var settings = new ApiSettings(Map.of("GALENOS_API_MODE", "academic", "POSTGRESQL_DB_NAME", "clinica"));
+        assertTrue(settings.isManagementEnabled());
+        assertDoesNotThrow(settings::requireManagement);
+        assertThrows(ApiException.class, settings::requireDemo);
+        assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of("GALENOS_API_MODE", "academic", "POSTGRESQL_DB_NAME", "galenos_demo_crud")));
+        assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of("GALENOS_API_MODE", "academic", "POSTGRESQL_DB_NAME", "clinica", "GALENOS_DEMO_MODE", "true")));
+    }
+
 }
