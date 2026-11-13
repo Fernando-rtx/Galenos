@@ -51,11 +51,13 @@ def main():
     subprocess.run([sys.executable, str(ROOT / "scripts/prepare_crud_demo.py")], env=fixture_env, check=True)
     subprocess.run(["mvn", "-q", "package", "-DskipTests"], cwd=ROOT, env=env, check=True)
     credential_path = STATE / "credentials.json"
-    if credential_path.exists():
-        accounts = json.loads(credential_path.read_text())
-    else:
-        accounts = {name: {"username": name + "-demo", "password": secrets.token_hex(24)}
-                    for name in ["editor", "lector", "otro"]}
+    accounts = json.loads(credential_path.read_text()) if credential_path.exists() else {}
+    credentials_changed = False
+    for name in ["editor", "lector", "otro", "medico"]:
+        if name not in accounts:
+            accounts[name] = {"username": name + "-demo", "password": secrets.token_hex(24)}
+            credentials_changed = True
+    if credentials_changed:
         private(credential_path, json.dumps(accounts))
     server = STATE / "usr/servers" / SERVER
     (server / "apps").mkdir(parents=True, exist_ok=True)
@@ -70,7 +72,7 @@ def main():
     xml.getroot().find("httpEndpoint").set("host", "127.0.0.1")
     registry = E.SubElement(xml.getroot(), "basicRegistry", {"id": "crud-demo", "realm": "GalenosDemo"})
     binding = E.SubElement(xml.getroot().find("webApplication"), "application-bnd")
-    for role, users in [("galenos-demo-read", ["editor", "lector", "otro"]), ("galenos-demo-write", ["editor", "otro"])]:
+    for role, users in [("galenos-demo-read", ["editor", "lector", "otro", "medico"]), ("galenos-demo-write", ["editor", "otro", "medico"])]:
         mapping = E.SubElement(binding, "security-role", {"name": role})
         for name in users:
             E.SubElement(mapping, "user", {"name": accounts[name]["username"]})
@@ -80,8 +82,8 @@ def main():
     xml.write(server / "server.xml", encoding="utf-8", xml_declaration=True)
     values.update(HTTP_PORT=str(http), HTTPS_PORT=str(https), POSTGRESQL_DB_NAME="galenos_demo_crud",
                   GALENOS_CRUD_DEMO="true", GALENOS_CORS_ORIGINS="http://127.0.0.1:3000,http://localhost:3000",
-                  GALENOS_CRUD_ACTOR_CLINICS="editor-demo=00000000-0000-4000-8000-000000000011;lector-demo=00000000-0000-4000-8000-000000000011;otro-demo=00000000-0000-4000-8000-000000000012",
-                  GALENOS_CRUD_ACTOR_PERSONS="editor-demo=00000000-0000-4000-8000-000000000045;lector-demo=00000000-0000-4000-8000-000000000046;otro-demo=00000000-0000-4000-8000-000000000046")
+                  GALENOS_CRUD_ACTOR_CLINICS="editor-demo=00000000-0000-4000-8000-000000000011;lector-demo=00000000-0000-4000-8000-000000000011;otro-demo=00000000-0000-4000-8000-000000000012;medico-demo=00000000-0000-4000-8000-000000000011",
+                  GALENOS_CRUD_ACTOR_PERSONS="editor-demo=00000000-0000-4000-8000-000000000045;lector-demo=00000000-0000-4000-8000-000000000046;otro-demo=00000000-0000-4000-8000-000000000046;medico-demo=00000000-0000-4000-8000-000000000046")
     private(server / "server.env", "\n".join(k + "=" + v for k, v in values.items()) + "\n")
     print("CRUD sintetico:", "http://localhost:" + str(http) + "/GalenosSV/resources/v2", flush=True)
     print("Identidades privadas de prueba en", credential_path, "(no se muestran claves)", flush=True)

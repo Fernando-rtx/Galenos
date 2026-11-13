@@ -7,6 +7,7 @@ import jakarta.ejb.TransactionAttributeType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
+import jakarta.json.bind.annotation.JsonbNillable;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -21,19 +22,21 @@ public class AcademicCareService {
 
     public record Clinic(String idClinica, String nombre) {}
     public record Role(String idPersonaRol, String idRol, String nombreRol, String idClinica, String nombreClinica) {}
-    public record Identity(String idPersona, String nombres, String apellidos, List<Clinic> clinicas,
+    @JsonbNillable public record Identity(String idPersona, String nombres, String apellidos, List<Clinic> clinicas,
                            List<Role> roles) {}
-    public record History(String idPaso, String idConsultaProcedimientoPaso, String nombre, String fechaInicio, String fechaFin,
+    @JsonbNillable public record History(String idPaso, String idConsultaProcedimientoPaso, String nombre, String fechaInicio, String fechaFin,
                           String responsable, String valor, String estado) {}
-    public record Appointment(String idConsulta, String fechaInicio, String fechaFin,
+    @JsonbNillable public record Appointment(String idConsulta, String fechaInicio, String fechaFin,
                               String paciente, String clinica, String procedimiento,
                               String idPasoActual, String pasoActual, List<History> historial) {}
     public record Exam(String idExamen, String nombre) {}
     public record NextStep(String idPaso, String nombre, String tipoSecuencia) {}
-    public record CareDetail(String idConsulta, String idConsultaProcedimientoPaso, String paciente, String clinica, String rol,
+    @JsonbNillable public record CareDetail(String idConsulta, String idConsultaProcedimientoPaso, String paciente, String clinica, String rol,
                              String procedimiento, String idPasoActual, String pasoActual,
                              String valorActual, boolean pasoFinal, List<History> historial, List<Exam> examenes,
                              List<NextStep> siguientes, boolean puedeRetroceder) {}
+    @JsonbNillable public record CareResult(String idConsulta, String accion, String estado, String idConsultaProcedimientoPaso,
+                             String idPasoActual, boolean finalizada) {}
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public Identity employee(UUID typeId, String number, UUID expectedPerson) {
@@ -131,7 +134,7 @@ public class AcademicCareService {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void register(UUID employee, UUID clinic, UUID role, UUID consultationId, UUID stepId,
+    public CareResult register(UUID employee, UUID clinic, UUID role, UUID consultationId, UUID stepId,
                         String action, String value, UUID nextStep, List<UUID> examIds) {
         requireAssignment(employee, clinic, role);
         Consulta consultation = em.find(Consulta.class, consultationId, LockModeType.PESSIMISTIC_WRITE);
@@ -157,7 +160,8 @@ public class AcademicCareService {
         if ("GUARDAR_PARCIAL".equals(action)) {
             current.setEstado("EN_CURSO");
             em.merge(current);
-            return;
+            return new CareResult(consultationId.toString(), action, current.getEstado(),
+                    current.getIdConsultaProcedimientoPaso().toString(), templateId(current), false);
         }
         if ("RETROCEDER".equals(action)) {
             ConsultaProcedimientoPaso previous = history.stream().filter(s -> current.getIdConsultaProcedimiento().equals(s.getIdConsultaProcedimiento()) && "COMPLETADO".equals(s.getEstado())
@@ -177,7 +181,8 @@ public class AcademicCareService {
             replay.setIdProcedimientoPaso(previous.getIdProcedimientoPaso());
             replay.setIdPersonaRol(replayAssignee); replay.setFechaInicio(now); replay.setEstado("PENDIENTE");
             em.persist(replay);
-            return;
+            return new CareResult(consultationId.toString(), action, replay.getEstado(),
+                    replay.getIdConsultaProcedimientoPaso().toString(), templateId(replay), false);
         }
         ProcedimientoPaso template = current.getIdProcedimientoPaso();
         if (template == null) throw new FlujoConsultaException("consultaFlujo.pasoSinPlantilla");
@@ -210,9 +215,12 @@ public class AcademicCareService {
             ConsultaProcedimientoPaso next = new ConsultaProcedimientoPaso(UUID.randomUUID());
             next.setIdConsultaProcedimiento(current.getIdConsultaProcedimiento()); next.setIdProcedimientoPaso(target);
             next.setIdPersonaRol(assignee); next.setFechaInicio(now); next.setEstado("PENDIENTE"); em.persist(next);
+            return new CareResult(consultationId.toString(), action, next.getEstado(),
+                    next.getIdConsultaProcedimientoPaso().toString(), templateId(next), false);
         } else {
             current.getIdConsultaProcedimiento().setFechaFin(now);
             em.merge(current.getIdConsultaProcedimiento());
+            return new CareResult(consultationId.toString(), action, current.getEstado(), null, null, true);
         }
     }
 
@@ -241,13 +249,15 @@ public class AcademicCareService {
         String jpql = "SELECT DISTINCT c FROM Consulta c JOIN FETCH c.idPersonaRol pr JOIN FETCH pr.idPersona person "
                 + "JOIN FETCH pr.idClinica clinic LEFT JOIN c.consultaProcedimientoCollection cp "
                 + "LEFT JOIN cp.consultaProcedimientoPasoCollection p WHERE pr.idClinica.idClinica=:clinic AND " + predicate
-                + " AND (:from IS NULL OR c.fechaInicio >= :from) AND (:until IS NULL OR c.fechaInicio < :until) "
+                + (from == null ? "" : " AND c.fechaInicio >= :from")
+                + (until == null ? "" : " AND c.fechaInicio < :until") + " "
                 + "ORDER BY c.fechaInicio DESC";
         Instant start = from == null ? null : from.atStartOfDay(ZONE).toInstant();
         Instant end = until == null ? null : until.plusDays(1).atStartOfDay(ZONE).toInstant();
         var query = em.createQuery(jpql, Consulta.class).setParameter("clinic", clinic)
-                .setParameter("from", start == null ? null : Date.from(start))
-                .setParameter("until", end == null ? null : Date.from(end));
+                ;
+        if (start != null) query.setParameter("from", Date.from(start));
+        if (end != null) query.setParameter("until", Date.from(end));
         if (predicate.contains(":assignment")) query.setParameter("assignment", assignmentOrPerson);
         else { query.setParameter("person", assignmentOrPerson); query.setParameter("role", role); }
         List<Consulta> rows = query.setFirstResult(first).setMaxResults(max).getResultList();
@@ -259,12 +269,14 @@ public class AcademicCareService {
         String jpql = "SELECT COUNT(DISTINCT c.idConsulta) FROM Consulta c JOIN c.idPersonaRol pr "
                 + "LEFT JOIN c.consultaProcedimientoCollection cp LEFT JOIN cp.consultaProcedimientoPasoCollection p "
                 + "WHERE pr.idClinica.idClinica=:clinic AND " + predicate
-                + " AND (:from IS NULL OR c.fechaInicio >= :from) AND (:until IS NULL OR c.fechaInicio < :until)";
+                + (from == null ? "" : " AND c.fechaInicio >= :from")
+                + (until == null ? "" : " AND c.fechaInicio < :until");
         Instant start = from == null ? null : from.atStartOfDay(ZONE).toInstant();
         Instant end = until == null ? null : until.plusDays(1).atStartOfDay(ZONE).toInstant();
         var query = em.createQuery(jpql, Long.class).setParameter("clinic", clinic)
-                .setParameter("from", start == null ? null : Date.from(start))
-                .setParameter("until", end == null ? null : Date.from(end));
+                ;
+        if (start != null) query.setParameter("from", Date.from(start));
+        if (end != null) query.setParameter("until", Date.from(end));
         if (predicate.contains(":assignment")) query.setParameter("assignment", assignmentOrPerson);
         else { query.setParameter("person", assignmentOrPerson); query.setParameter("role", role); }
         return query.getSingleResult();
@@ -315,6 +327,9 @@ public class AcademicCareService {
         List<ConsultaProcedimientoPaso> active = steps.stream().filter(s -> activeState(s.getEstado())).toList();
         if (active.size() > 1) throw new FlujoConsultaException("consultaFlujo.conflictoPaso");
         return active.stream().findFirst().orElse(null);
+    }
+    private static String templateId(ConsultaProcedimientoPaso step) {
+        return step.getIdProcedimientoPaso() == null ? null : step.getIdProcedimientoPaso().getIdProcedimientoPaso().toString();
     }
     private static boolean activeState(String state) { return "PENDIENTE".equals(state) || "EN_CURSO".equals(state); }
     private static boolean patient(Rol role) { return role != null && "paciente".equalsIgnoreCase(role.getNombre() == null ? "" : role.getNombre().strip()); }

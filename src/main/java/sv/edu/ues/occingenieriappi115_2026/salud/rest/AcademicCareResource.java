@@ -141,7 +141,7 @@ public class AcademicCareResource {
     }
 
     @POST @Path("atencion/consulta/{id}/registrar") @Consumes(MediaType.APPLICATION_JSON)
-    public AcademicCareService.CareDetail register(@PathParam("id") String rawId,
+    public AcademicCareService.CareResult register(@PathParam("id") String rawId,
             @QueryParam("idPersona") String rawPerson, @QueryParam("idClinica") String rawClinic,
             @QueryParam("idRol") String rawRole, JsonObject body) {
         UUID person = employee(rawPerson), clinic = RestParameters.uuid(rawClinic, "idClinica"), role = RestParameters.uuid(rawRole, "idRol");
@@ -149,13 +149,12 @@ public class AcademicCareResource {
         RestInput input = new RestInput(body, "accion", "idConsultaProcedimientoPaso", "valor", "idPasoSiguiente", "examenes");
         UUID step = RestParameters.uuid(input.text("idConsultaProcedimientoPaso"), "idConsultaProcedimientoPaso");
         String target = input.text("idPasoSiguiente");
-        service.register(person, clinic, role, RestParameters.uuid(rawId, "id"), step,
+        return service.register(person, clinic, role, RestParameters.uuid(rawId, "id"), step,
                 input.text("accion"), input.text("valor"), target == null ? null : RestParameters.uuid(target, "idPasoSiguiente"), input.uuidList("examenes"));
-        return service.detail(person, clinic, role, RestParameters.uuid(rawId, "id"));
     }
 
     @POST @Path("atencion/registrar") @Consumes(MediaType.APPLICATION_JSON)
-    public AcademicCareService.CareDetail registerAcademic(JsonObject body) {
+    public AcademicCareService.CareResult registerAcademic(JsonObject body) {
         RestInput input = new RestInput(body, "idConsulta", "idPersona", "idClinica", "idRol", "accion",
                 "idConsultaProcedimientoPaso", "valor", "idPasoSiguiente", "examenes");
         UUID person = employee(input.text("idPersona"));
@@ -163,10 +162,9 @@ public class AcademicCareResource {
         UUID role = RestParameters.uuid(input.text("idRol"), "idRol");
         UUID consultation = RestParameters.uuid(input.text("idConsulta"), "idConsulta");
         String next = input.text("idPasoSiguiente");
-        service.register(person, clinic, role, consultation,
+        return service.register(person, clinic, role, consultation,
                 RestParameters.uuid(input.text("idConsultaProcedimientoPaso"), "idConsultaProcedimientoPaso"),
                 input.text("accion"), input.text("valor"), next == null ? null : RestParameters.uuid(next, "idPasoSiguiente"),
                 input.uuidList("examenes"));
-        return service.detail(person, clinic, role, consultation);
     }
 }
