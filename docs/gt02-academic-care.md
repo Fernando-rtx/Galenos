@@ -2,15 +2,17 @@
 
 ## Ámbito y seguridad
 
-Los endpoints de este flujo solo funcionan con `GALENOS_CRUD_DEMO=true`, Basic Auth del perfil CRUD sintético y clínicas permitidas por `GALENOS_CRUD_ACTOR_CLINICS`. El empleado se vincula al principal técnico con `GALENOS_CRUD_ACTOR_PERSONS`; el documento presentado debe coincidir con la persona de ese principal. Este mecanismo es para la demostración académica, no sustituye el inicio de sesión de una instalación real. El script de preparación de frontend genera una configuración local ignorada por Git; no copiar credenciales a archivos versionados.
+En el perfil académico normal, el frontend comparte la sesión efímera del portal: el paciente usa su token `PACIENTE` y el empleado su token `EMPLEADO` junto con `X-Persona-Rol`. El backend deriva la persona de la sesión; los UUID enviados por el navegador no conceden acceso por sí solos. Paciente, clínica, rol y asignación se revalidan en el servidor. `GALENOS_EMPLEADO_ROLES` debe contener los UUID de roles de personal permitidos, nunca el rol Paciente.
+
+El perfil sintético sigue disponible con `GALENOS_CRUD_DEMO=true`, Basic Auth y clínicas/personas limitadas por `GALENOS_CRUD_ACTOR_CLINICS` y `GALENOS_CRUD_ACTOR_PERSONS`. Solo ese perfil usa identidades CRUD sintéticas; requiere la base `galenos_demo_crud` y no debe apuntar a `clinica`.
 
 ## Endpoints implementados
 
-- `GET /v2/paciente/clinicas`: verifica un documento sintético y devuelve clínicas de paciente dentro del alcance demo.
-- `GET /v2/paciente/citas`: filtra por identidad, clínica, rango de fecha y paginación; devuelve `Total-registros` real.
-- `GET /v2/paciente/citas/{id}/ticket`: devuelve PDF, validando la identidad, clínica y cita.
-- `GET /v2/empleado/identidad`: valida documento contra la persona asociada al principal de demostración.
-- `GET /v2/empleado/consultas`: bandeja de la persona, clínica, rol, paso activo y fechas; al omitir fechas usa el día en `America/El_Salvador`.
+- `GET /v2/paciente/clinicas`: devuelve las clínicas de la sesión de paciente (o la identidad sintética del perfil demo).
+- `GET /v2/paciente/citas`: filtra la identidad autenticada por clínica, rango de fecha y paginación; devuelve `Total-registros` real.
+- `GET /v2/paciente/citas/{id}/ticket`: devuelve PDF y comprueba que la cita pertenezca al paciente autenticado y a la clínica seleccionada.
+- `GET /v2/empleado/identidad`: devuelve el contexto del empleado autenticado y sus asignaciones habilitadas.
+- `GET /v2/empleado/consultas`: bandeja del empleado autenticado y su asignación/rol; al omitir fechas usa el día en `America/El_Salvador`.
 - `GET /v2/atencion/consulta/{id}`: carga contexto de atención solo cuando el paso activo está asignado al empleado/rol/clínica.
 - `POST /v2/atencion/registrar`: guarda texto/exámenes y, en la misma transacción, conserva historial y aplica transición validada del grafo.
 
@@ -26,10 +28,10 @@ La ejecución actual se determina por los estados `PENDIENTE`/`EN_CURSO`, la per
 
 ## Demo local
 
-1. Inicia primero el perfil académico aislado descrito por `scripts/crud_demo.py`; solo usa el contenedor/base sintética identificada por sus etiquetas y digest.
-2. Desde GalenoFE, ejecuta `python3 scripts/configure-demo.py [ruta-a-Galenos]`. El archivo `src/js/control/environment.local.js` se crea con permisos privados y está ignorado por Git.
-3. Inicia `npm run dev`; abre el origen admitido por CORS (normalmente `http://localhost:3000`).
-4. Prueba paciente sintético `ABC`; empleado sintético `DEF` con cuenta `editor-demo` del perfil demo. No expongas credenciales en capturas, commits o documentación.
+1. Configura Liberty con PostgreSQL `clinica`, `GALENOS_API_MODE=academic` y los UUID autorizados en `GALENOS_EMPLEADO_ROLES`.
+2. Inicia Liberty con `mvn liberty:dev` y el frontend con `npm run dev`.
+3. Identifícate en el portal `#pacientes` o `#empleados`. Luego abre `#academico`; HU1 y HU3 usan la sesión activa del portal correspondiente.
+4. El perfil sintético aislado sigue disponible para ensayos de HU CRUD y no comparte su base ni sus credenciales con `clinica`.
 
 ## Verificación
 

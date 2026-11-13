@@ -14,7 +14,7 @@ import java.time.ZoneId;
 import java.util.*;
 import sv.edu.ues.occingenieriappi115_2026.salud.entity.*;
 
-/** Academic, synthetic-only use cases for patient lookup and employee care. */
+/** Academic use cases for the patient and employee portals. */
 @Stateless @LocalBean
 public class AcademicCareService {
     @PersistenceContext(unitName = "GalenoPU") private EntityManager em;
@@ -61,6 +61,14 @@ public class AcademicCareService {
     public List<Appointment> patientAppointments(UUID typeId, String number, UUID clinic,
                                                  LocalDate from, LocalDate until, int first, int max) {
         Persona person = requirePerson(typeId, number);
+        return patientAppointments(person.getIdPersona(), clinic, from, until, first, max);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<Appointment> patientAppointments(UUID personId, UUID clinic,
+                                                 LocalDate from, LocalDate until, int first, int max) {
+        Persona person = em.find(Persona.class, personId);
+        if (person == null) throw new FlujoConsultaException("identidad.noEncontrada");
         PersonaRol patient = assignments(person.getIdPersona()).stream()
                 .filter(r -> patient(r.getIdRol()) && clinic.equals(r.getIdClinica().getIdClinica()))
                 .findFirst().orElseThrow(() -> new FlujoConsultaException("consultaFlujo.contextoInvalido"));
@@ -70,6 +78,13 @@ public class AcademicCareService {
 
     public long patientAppointmentCount(UUID typeId, String number, UUID clinic, LocalDate from, LocalDate until) {
         Persona person = requirePerson(typeId, number);
+        return patientAppointmentCount(person.getIdPersona(), clinic, from, until);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long patientAppointmentCount(UUID personId, UUID clinic, LocalDate from, LocalDate until) {
+        Persona person = em.find(Persona.class, personId);
+        if (person == null) throw new FlujoConsultaException("identidad.noEncontrada");
         PersonaRol patient = assignments(person.getIdPersona()).stream()
                 .filter(r -> patient(r.getIdRol()) && clinic.equals(r.getIdClinica().getIdClinica()))
                 .findFirst().orElseThrow(() -> new FlujoConsultaException("consultaFlujo.contextoInvalido"));

@@ -33,6 +33,17 @@ public class AccesoAcademicoFilter implements ContainerRequestFilter {
         || path.startsWith("v2/identidad_academica/")
         || path.equals("v2/citas_paciente")
         || path.startsWith("v2/citas_paciente/")) return;
+    // These HU1-HU4 resources validate the patient/employee bearer session and
+    // assignment themselves. Letting the façade enforce the narrower scope is
+    // necessary because patient routes must not be forced through EMPLEADO.
+    if (path.equals("v2/empleado/identidad")
+        || path.equals("v2/empleado/consultas")
+        || path.equals("v2/paciente/clinicas")
+        || path.equals("v2/paciente/citas")
+        || path.matches("v2/paciente/citas/[0-9a-fA-F-]+/ticket")
+        || path.matches("v2/atencion/consulta/[0-9a-fA-F-]+")
+        || path.equals("v2/atencion/registrar")
+        || path.matches("v2/atencion/consulta/[0-9a-fA-F-]+/registrar")) return;
     String bearer = request.getHeaderString("Authorization");
     identidad.exigir(bearer, "EMPLEADO");
     if (request.getMethod().equals("GET")

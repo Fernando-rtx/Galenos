@@ -1,8 +1,8 @@
 # Estación académica local de GalenosSV
 
-GalenosSV usa exclusivamente datos ficticios y funciona sin cuentas de usuario. La SPA
-abre directamente el dashboard. Las clínicas activas aparecen en el selector y los
-módulos de gestión ofrecen las operaciones publicadas por REST v2.
+GalenosSV se conecta a la base PostgreSQL `clinica`. La SPA identifica pacientes y
+empleados con el tipo y número de documento registrado; el backend emite una sesión
+temporal en memoria y limita cada consulta a sus clínicas y asignaciones.
 
 | Servicio | Dirección |
 | --- | --- |
@@ -12,11 +12,12 @@ módulos de gestión ofrecen las operaciones publicadas por REST v2.
 
 ## Arranque
 
-1. Usa JDK 21, Maven y Open Liberty 26.0.0.8, y comprueba que el PostgreSQL local que
-   contiene la base ficticia `clinica` esté activo.
+1. Usa JDK 21, Maven y Open Liberty 26.0.0.8, y comprueba que PostgreSQL local con
+   la base `clinica` y el esquema de GalenosSV esté activo.
 2. En el backend, copia `src/main/liberty/config/server.env.example` a `server.env`
-   en el mismo directorio. Completa los valores JDBC locales y protege el archivo con
-   `chmod 600 src/main/liberty/config/server.env`. El archivo está excluido de Git.
+   en el mismo directorio. Completa los valores JDBC y `GALENOS_EMPLEADO_ROLES` con
+   los UUID de roles de personal permitidos. Protege el archivo con `chmod 600
+   src/main/liberty/config/server.env`; está excluido de Git.
 3. Libera el puerto 9080 si lo usa el servidor anterior. Ejecuta `./run.sh` desde
    el backend. Maven crea y usa `GalenosSVAcademico` y despliega el contexto
    `/GalenosSV`. Mantén los overrides y claves del servidor anterior en su instancia.
