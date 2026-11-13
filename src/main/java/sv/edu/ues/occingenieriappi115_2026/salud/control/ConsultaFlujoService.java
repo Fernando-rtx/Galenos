@@ -24,6 +24,7 @@ public class ConsultaFlujoService {
     @EJB private ConsultaDAO consultaDAO;
     @EJB private ProcedimientoDAO procedimientoDAO;
     @EJB private ProcedimientoPasoDAO procedimientoPasoDAO;
+    @EJB private ProcedimientoPasoExamenDAO procedimientoPasoExamenDAO;
     @EJB private ConsultaProcedimientoDAO consultaProcedimientoDAO;
     @EJB private ConsultaProcedimientoPasoDAO pasoDAO;
     @EJB private OrdenExamenDAO ordenDAO;
@@ -129,6 +130,7 @@ public class ConsultaFlujoService {
         ConsultaProcedimientoPaso paso = new ConsultaProcedimientoPaso();
         paso.setIdConsultaProcedimiento(asociacion);
         paso.setIdPersonaRol(responsable);
+        paso.setIdProcedimientoPaso(inicial);
         paso.setFechaInicio(datos.getFechaInicio());
         paso.setEstado("PENDIENTE");
         pasoDAO.guardar(paso);
@@ -266,6 +268,15 @@ public class ConsultaFlujoService {
     public OrdenExamen guardarOrden(OrdenExamen datos, UUID clinica, boolean edicion) {
         var parent = pasoEnClinica(datos.getIdConsultaProcedimientoPaso() == null ? null : datos.getIdConsultaProcedimientoPaso().getIdConsultaProcedimientoPaso(), clinica);
         if (edicion && buscarOrden(datos.getIdOrdenExamen(), clinica) == null) throw new FlujoConsultaException("consultaFlujo.contextoInvalido");
+        if (datos.getIdExamen() != null) {
+            UUID templateId = parent.getIdProcedimientoPaso() == null ? null
+                    : parent.getIdProcedimientoPaso().getIdProcedimientoPaso();
+            boolean allowed = templateId != null && !procedimientoPasoExamenDAO.obtenerPagina(0, 1,
+                    List.of(new FiltroDAO("idProcedimientoPaso.idProcedimientoPaso", OperadorFiltro.IGUAL, templateId),
+                            new FiltroDAO("idExamen.idExamen", OperadorFiltro.IGUAL, datos.getIdExamen().getIdExamen()),
+                            new FiltroDAO("activo", OperadorFiltro.IGUAL, true)), List.of()).isEmpty();
+            if (!allowed) throw new FlujoConsultaException("consultaFlujo.examenNoPermitido");
+        }
         datos.setIdConsultaProcedimientoPaso(parent);
         return edicion ? ordenDAO.actualizar(datos) : ordenDAO.guardar(datos);
     }

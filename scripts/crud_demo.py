@@ -80,7 +80,8 @@ def main():
     xml.write(server / "server.xml", encoding="utf-8", xml_declaration=True)
     values.update(HTTP_PORT=str(http), HTTPS_PORT=str(https), POSTGRESQL_DB_NAME="galenos_demo_crud",
                   GALENOS_CRUD_DEMO="true", GALENOS_CORS_ORIGINS="http://127.0.0.1:3000,http://localhost:3000",
-                  GALENOS_CRUD_ACTOR_CLINICS="editor-demo=00000000-0000-4000-8000-000000000011;lector-demo=00000000-0000-4000-8000-000000000011;otro-demo=00000000-0000-4000-8000-000000000012")
+                  GALENOS_CRUD_ACTOR_CLINICS="editor-demo=00000000-0000-4000-8000-000000000011;lector-demo=00000000-0000-4000-8000-000000000011;otro-demo=00000000-0000-4000-8000-000000000012",
+                  GALENOS_CRUD_ACTOR_PERSONS="editor-demo=00000000-0000-4000-8000-000000000045;lector-demo=00000000-0000-4000-8000-000000000046;otro-demo=00000000-0000-4000-8000-000000000046")
     private(server / "server.env", "\n".join(k + "=" + v for k, v in values.items()) + "\n")
     print("CRUD sintetico:", "http://localhost:" + str(http) + "/GalenosSV/resources/v2", flush=True)
     print("Identidades privadas de prueba en", credential_path, "(no se muestran claves)", flush=True)

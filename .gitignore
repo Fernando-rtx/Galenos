@@ -11,6 +11,7 @@ target/
 !/docs/consulta-demo.md
 !/docs/demo-setup.md
 !/docs/integracion-dao-navegador.md
+!/docs/gt02-academic-care.md
 .DS_Store
 nb-configuration.xml
 nbactions.xml

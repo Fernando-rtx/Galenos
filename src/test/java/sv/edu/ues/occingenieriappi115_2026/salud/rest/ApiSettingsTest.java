@@ -100,6 +100,20 @@ class ApiSettingsTest {
     }
 
     @Test
+    void personaDeDemoSeVinculaAlUsuarioBasicYRechazaMapeoInvalido() {
+        String clinic = "00000000-0000-4000-8000-000000000011";
+        String person = "00000000-0000-4000-8000-000000000045";
+        var settings = new ApiSettings(Map.of("GALENOS_CRUD_DEMO", "true", "GALENOS_DEMO_MODE", "true",
+                "POSTGRESQL_DB_NAME", "galenos_demo_crud", "GALENOS_CRUD_ACTOR_CLINICS", "editor-demo=" + clinic,
+                "GALENOS_CRUD_ACTOR_PERSONS", "editor-demo=" + person));
+        assertEquals(java.util.UUID.fromString(person), settings.personFor("editor-demo"));
+        assertNull(settings.personFor("lector-demo"));
+        assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of(
+                "GALENOS_CRUD_DEMO", "true", "GALENOS_DEMO_MODE", "true", "POSTGRESQL_DB_NAME", "galenos_demo_crud",
+                "GALENOS_CRUD_ACTOR_PERSONS", "editor-demo=not-a-uuid")));
+    }
+
+    @Test
     void desarrolloRequiereClinicaSinModoDemoYNoOtorgaClinicasPorDefecto() {
         var settings = new ApiSettings(Map.of("GALENOS_API_MODE", "development", "POSTGRESQL_DB_NAME", "clinica"));
         assertTrue(settings.isManagementEnabled());

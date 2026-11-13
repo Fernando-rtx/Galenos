@@ -53,6 +53,11 @@ public class ConsultaProcedimientoPaso implements Serializable {
     @Size(max = 20)
     @Column(name = "estado")
     private String estado;
+    @Column(name = "valor")
+    private String valor;
+    @JoinColumn(name = "id_procedimiento_paso", referencedColumnName = "id_procedimiento_paso")
+    @ManyToOne
+    private ProcedimientoPaso idProcedimientoPaso;
     @JoinColumn(name = "id_consulta_procedimiento", referencedColumnName = "id_consulta_procedimiento")
     @ManyToOne
     private ConsultaProcedimiento idConsultaProcedimiento;
@@ -99,6 +104,16 @@ public class ConsultaProcedimientoPaso implements Serializable {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public String getValor() { return valor; }
+
+    public void setValor(String valor) { this.valor = valor; }
+
+    public ProcedimientoPaso getIdProcedimientoPaso() { return idProcedimientoPaso; }
+
+    public void setIdProcedimientoPaso(ProcedimientoPaso idProcedimientoPaso) {
+        this.idProcedimientoPaso = idProcedimientoPaso;
     }
 
     public ConsultaProcedimiento getIdConsultaProcedimiento() {

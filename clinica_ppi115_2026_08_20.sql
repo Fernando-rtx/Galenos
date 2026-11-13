@@ -38,9 +38,11 @@ CREATE TABLE public.consulta_procedimiento_paso (
     id_consulta_procedimiento_paso uuid NOT NULL,
     id_consulta_procedimiento uuid,
     id_persona_rol uuid,
+    id_procedimiento_paso uuid,
     fecha_inicio timestamp with time zone DEFAULT now(),
     fecha_fin timestamp with time zone,
-    estado character varying(20)
+    estado character varying(20),
+    valor text
 );
 
 -- Documento de una persona clasificado por tipo. PK UUID y dos FKs.
@@ -92,6 +94,7 @@ CREATE TABLE public.medio_contacto (
 CREATE TABLE public.orden_examen (
     id_orden_examen uuid NOT NULL,
     id_consulta_procedimiento_paso uuid,
+    id_examen uuid,
     fecha_creacion timestamp with time zone DEFAULT now(),
     indicaciones text
 );
@@ -259,6 +262,9 @@ ALTER TABLE ONLY public.consulta_procedimiento_paso
 ALTER TABLE ONLY public.consulta_procedimiento_paso
     ADD CONSTRAINT fk_consulta_procedimiento_paso_persona_rol FOREIGN KEY (id_persona_rol) REFERENCES public.persona_rol(id_persona_rol) ON UPDATE CASCADE ON DELETE RESTRICT;
 
+ALTER TABLE ONLY public.consulta_procedimiento_paso
+    ADD CONSTRAINT fk_consulta_procedimiento_paso_procedimiento_paso FOREIGN KEY (id_procedimiento_paso) REFERENCES public.procedimiento_paso(id_procedimiento_paso) ON UPDATE CASCADE ON DELETE RESTRICT;
+
 ALTER TABLE ONLY public.documento
     ADD CONSTRAINT fk_documento_persona FOREIGN KEY (id_persona) REFERENCES public.persona(id_persona) ON UPDATE CASCADE ON DELETE RESTRICT;
 
@@ -282,6 +288,9 @@ ALTER TABLE ONLY public.medio_contacto
 
 ALTER TABLE ONLY public.orden_examen
     ADD CONSTRAINT fk_orden_examen_consulta_procedimiento_paso FOREIGN KEY (id_consulta_procedimiento_paso) REFERENCES public.consulta_procedimiento_paso(id_consulta_procedimiento_paso) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.orden_examen
+    ADD CONSTRAINT fk_orden_examen_examen FOREIGN KEY (id_examen) REFERENCES public.examen(id_examen) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE ONLY public.persona_rol
     ADD CONSTRAINT fk_persona_rol_clinica FOREIGN KEY (id_clinica) REFERENCES public.clinica(id_clinica);

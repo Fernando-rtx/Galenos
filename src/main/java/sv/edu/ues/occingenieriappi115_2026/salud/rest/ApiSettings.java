@@ -19,6 +19,7 @@ public class ApiSettings {
     private final boolean crudDemo;
     private final boolean development;
     private final Map<String, Set<java.util.UUID>> actorClinics;
+    private final Map<String, java.util.UUID> actorPersons;
 
     public ApiSettings() {
         this(System.getenv());
@@ -69,6 +70,18 @@ public class ApiSettings {
             }
         }
         actorClinics = Map.copyOf(scopes);
+        Map<String, java.util.UUID> people = new java.util.HashMap<>();
+        if (crudDemo) {
+            for (String item : environment.getOrDefault("GALENOS_CRUD_ACTOR_PERSONS", "").split(";")) {
+                if (item.isBlank()) continue;
+                String[] entry = item.split("=", -1);
+                if (entry.length != 2 || entry[0].isBlank() || people.containsKey(entry[0])) {
+                    throw new IllegalArgumentException("Asignacion de personas CRUD invalida");
+                }
+                people.put(entry[0], java.util.UUID.fromString(entry[1]));
+            }
+        }
+        actorPersons = Map.copyOf(people);
         clinicZone = ZoneId.of(environment.getOrDefault("GALENOS_CLINIC_TIME_ZONE", "America/El_Salvador"));
     }
 
@@ -78,6 +91,7 @@ public class ApiSettings {
     public ZoneId getClinicZone() { return clinicZone; }
 
     public Set<java.util.UUID> clinicsFor(String actor) { return actorClinics.getOrDefault(actor, Set.of()); }
+    public java.util.UUID personFor(String actor) { return actorPersons.get(actor); }
     public void requireClinic(String actor, java.util.UUID id) {
         if (!clinicsFor(actor).contains(id)) throw new ApiException(403, "No tiene acceso a la clínica solicitada");
     }
