@@ -129,10 +129,11 @@ public class ConsultaGestionResource {
     public AsociacionDatos actualizarAsociacion(@PathParam("id") String id,@QueryParam("idClinica") String c,JsonObject body) {
         return AsociacionDatos.from(service.actualizarProcedimiento(leerAsociacion(body,RestParameters.uuid(id,"id")),clinic(c)));
     }
-    @JsonbNillable public record PasoDatos(String idConsultaProcedimientoPaso,String idConsultaProcedimiento,String idPersonaRol,String fechaInicio,String fechaFin,String estado) {
+    @JsonbNillable public record PasoDatos(String idConsultaProcedimientoPaso,String idConsultaProcedimiento,String idPersonaRol,String idProcedimientoPaso,String fechaInicio,String fechaFin,String estado,String valor) {
         static PasoDatos from(ConsultaProcedimientoPaso value) {
             return new PasoDatos(value.getIdConsultaProcedimientoPaso().toString(),value.getIdConsultaProcedimiento().getIdConsultaProcedimiento().toString(),
-                    value.getIdPersonaRol().getIdPersonaRol().toString(),instant(value.getFechaInicio()),instant(value.getFechaFin()),value.getEstado());
+                    value.getIdPersonaRol().getIdPersonaRol().toString(),value.getIdProcedimientoPaso()==null?null:value.getIdProcedimientoPaso().getIdProcedimientoPaso().toString(),
+                    instant(value.getFechaInicio()),instant(value.getFechaFin()),value.getEstado(),value.getValor());
         }
     }
     @GET @Path("consulta_procedimiento_paso")

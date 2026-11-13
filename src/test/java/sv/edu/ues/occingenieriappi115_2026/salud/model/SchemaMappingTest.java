@@ -60,15 +60,24 @@ class SchemaMappingTest {
     }
 
     @Test
-    void consultaProcedimientoPasoNoMapeaIdProcedimientoPaso() throws Exception {
+    void consultaProcedimientoPasoMapeaPasoYValorDeAtencion() throws Exception {
         Set<String> columnas = leerEsquema().get("consulta_procedimiento_paso");
-        assertFalse(columnas.contains("id_procedimiento_paso"),
-                "El esquema real no tiene id_procedimiento_paso en consulta_procedimiento_paso");
+        assertTrue(columnas.contains("id_procedimiento_paso"));
+        assertTrue(columnas.contains("valor"));
 
         Class<?> entidad = Class.forName(
                 "sv.edu.ues.occingenieriappi115_2026.salud.entity.ConsultaProcedimientoPaso");
-        assertFalse(columnasMapeadas(entidad).contains("id_procedimiento_paso"),
-                "ConsultaProcedimientoPaso no debe mapear id_procedimiento_paso");
+        assertTrue(columnasMapeadas(entidad).contains("id_procedimiento_paso"));
+        assertTrue(columnasMapeadas(entidad).contains("valor"));
+    }
+
+    @Test
+    void ordenExamenMapeaElExamenSolicitado() throws Exception {
+        Set<String> columnas = leerEsquema().get("orden_examen");
+        assertTrue(columnas.contains("id_examen"));
+        Class<?> entidad = Class.forName(
+                "sv.edu.ues.occingenieriappi115_2026.salud.entity.OrdenExamen");
+        assertTrue(columnasMapeadas(entidad).contains("id_examen"));
     }
 
     private Map<String, Set<String>> leerEsquema() throws IOException {

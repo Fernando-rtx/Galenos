@@ -11,6 +11,7 @@ CONTAINER = os.environ.get("GALENOS_CRUD_CONTAINER", "galenos-demo-db")
 OWNER = os.environ.get("GALENOS_CRUD_OWNER", hashlib.sha256(str(ROOT).encode()).hexdigest()[:20])
 DATABASE = "galenos_demo_crud"
 USER = "galenos_demo"
+KNOWN_PRE_HU3_FIXTURE = "1e9b7a17e4cca93768cbb87f7e71a613ad811581cf058e5dda6437d96e4a034b"
 
 
 def command(args, text=None):
@@ -39,7 +40,21 @@ def main():
         sql("postgres", 'CREATE DATABASE "' + DATABASE + '";')
     marker = sql(DATABASE, "SELECT to_regclass('public.galenos_crud_fixture');")
     if marker:
-        if sql(DATABASE, "SELECT revision FROM galenos_crud_fixture;") != digest:
+        existing = sql(DATABASE, "SELECT revision FROM galenos_crud_fixture;")
+        if existing == KNOWN_PRE_HU3_FIXTURE:
+            migration = (ROOT / "db/migrations/V2026_11_12_01__consulta_paso_atencion.sql").read_text()
+            sql(DATABASE, "BEGIN;\n" + migration + "\n"
+                + "INSERT INTO documento VALUES "
+                + "('00000000-0000-4000-8000-000000009002','00000000-0000-4000-8000-000000000045','00000000-0000-4000-8000-000000000001','DEF',NULL),"
+                + "('00000000-0000-4000-8000-000000009003','00000000-0000-4000-8000-000000000046','00000000-0000-4000-8000-000000000001','GHI',NULL) ON CONFLICT (id_documento) DO NOTHING;\n"
+                + "UPDATE consulta_procedimiento_paso SET id_procedimiento_paso='00000000-0000-4000-8000-000000006001' "
+                + "WHERE id_consulta_procedimiento_paso='00000000-0000-4000-8000-000000019001' AND id_procedimiento_paso IS NULL;\n"
+                + "UPDATE orden_examen SET id_examen='00000000-0000-4000-8000-000000003101' "
+                + "WHERE id_orden_examen='00000000-0000-4000-8000-000000020001' AND id_examen IS NULL;\n"
+                + "UPDATE galenos_crud_fixture SET revision='" + digest + "';\nCOMMIT;")
+            print("Base sintética demo actualizada de forma aditiva; no se eliminaron registros")
+            return
+        if existing != digest:
             raise SystemExit("El fixture cambio; no se reemplazo ni borro la base existente")
         print("Base sintetica reutilizada, revision:", digest)
         return

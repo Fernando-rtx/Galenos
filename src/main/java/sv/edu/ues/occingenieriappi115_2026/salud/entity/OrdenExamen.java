@@ -53,6 +53,9 @@ public class OrdenExamen implements Serializable {
     @JoinColumn(name = "id_consulta_procedimiento_paso", referencedColumnName = "id_consulta_procedimiento_paso")
     @ManyToOne
     private ConsultaProcedimientoPaso idConsultaProcedimientoPaso;
+    @JoinColumn(name = "id_examen", referencedColumnName = "id_examen")
+    @ManyToOne
+    private Examen idExamen;
 
     public OrdenExamen() {
     }
@@ -100,6 +103,10 @@ public class OrdenExamen implements Serializable {
     public void setIdConsultaProcedimientoPaso(ConsultaProcedimientoPaso idConsultaProcedimientoPaso) {
         this.idConsultaProcedimientoPaso = idConsultaProcedimientoPaso;
     }
+
+    public Examen getIdExamen() { return idExamen; }
+
+    public void setIdExamen(Examen idExamen) { this.idExamen = idExamen; }
 
     @Override
     public int hashCode() {

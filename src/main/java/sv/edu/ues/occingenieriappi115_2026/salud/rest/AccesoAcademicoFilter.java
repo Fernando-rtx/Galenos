@@ -5,6 +5,8 @@ import jakarta.ejb.EJB;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.*;
 import jakarta.ws.rs.ext.Provider;
+import jakarta.ws.rs.core.Context;
+import jakarta.servlet.http.HttpServletRequest;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.IdentidadAcademicaService;
 
 /** No existe política administrativa implícita: gestión heredada cerrada por defecto. */
@@ -12,12 +14,22 @@ import sv.edu.ues.occingenieriappi115_2026.salud.control.IdentidadAcademicaServi
 @Priority(Priorities.AUTHORIZATION)
 public class AccesoAcademicoFilter implements ContainerRequestFilter {
   @EJB IdentidadAcademicaService identidad;
+  @jakarta.inject.Inject ApiSettings settings;
+  @Context HttpServletRequest servlet;
 
   @Override
   public void filter(ContainerRequestContext request) {
     String path = request.getUriInfo().getPath().replaceFirst("^/+", "");
+    if (!path.startsWith("v2/")) return;
+    if (settings.isCrudDemo()) {
+      boolean read = servlet.isUserInRole("galenos-demo-read") || servlet.isUserInRole("galenos-demo-write");
+      boolean write = servlet.isUserInRole("galenos-demo-write");
+      if (!read) throw new ApiException(403, "No tiene permiso de lectura");
+      if (!java.util.Set.of("GET", "HEAD", "OPTIONS").contains(request.getMethod()) && !write)
+        throw new ApiException(403, "No tiene permiso de escritura");
+      return;
+    }
     if (request.getMethod().equals("OPTIONS")
-        || !path.startsWith("v2/")
         || path.startsWith("v2/identidad_academica/")
         || path.equals("v2/citas_paciente")
         || path.startsWith("v2/citas_paciente/")) return;
