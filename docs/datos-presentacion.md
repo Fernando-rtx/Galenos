@@ -59,3 +59,15 @@ evaluación médica pendiente, controles finalizados y citas para mañana. Inclu
 órdenes de examen y resultados relacionados con pasos que permiten esos exámenes.
 No asigna la plantilla pediátrica a los pacientes adultos. Al repetir sólo el
 complemento se conservan los avances existentes.
+
+## Conexión unificada
+
+La aplicación usa ahora exclusivamente `clinica` en `postgres-db`, mediante el
+backend principal en `http://127.0.0.1:9080/GalenosSV/`. El frontend configura
+esa misma API en `environment.local.js`. El perfil 19085 está detenido.
+
+Los conjuntos GT02 de este documento quedan como fuentes de prueba; no son la
+conexión activa de la aplicación. `scripts/importar_presentacion_clinica.py`
+incorpora sus datos a `clinica`, reutilizando identificadores equivalentes por
+nombre y conservando los registros existentes. La operación es transaccional y
+agrega las columnas faltantes del esquema actual. No elimina registros.
