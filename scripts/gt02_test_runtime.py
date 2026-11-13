@@ -95,7 +95,7 @@ def main():
             "GALENOS_DEMO_MODE": "false",
             "GALENOS_CRUD_DEMO": "false",
             "GALENOS_CORS_ORIGINS": "http://127.0.0.1:3000,http://localhost:3000",
-            "GALENOS_EMPLEADO_ROLES": "00000000-0000-4000-8000-000000000032,00000000-0000-4000-8000-000000000033",
+            "GALENOS_EMPLEADO_ROLES": os.environ.get("GT02_EMPLEADO_ROLES", "00000000-0000-4000-8000-000000000032,00000000-0000-4000-8000-000000000033"),
             "JAVA_HOME": java_home,
         }
         with os.fdopen(
