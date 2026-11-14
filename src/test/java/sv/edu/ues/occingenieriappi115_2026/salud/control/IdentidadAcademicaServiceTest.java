@@ -26,7 +26,6 @@ class IdentidadAcademicaServiceTest {
     s.documentos = mock(DocumentoDAO.class);
     s.personas = mock(PersonaDAO.class);
     s.asignaciones = mock(PersonaRolDAO.class);
-    s.roles = mock(RolDAO.class);
     s.sesiones = new SesionAcademicaService();
     persona = new Persona(id());
     persona.setNombres("Ana");
@@ -52,8 +51,6 @@ class IdentidadAcademicaServiceTest {
     when(s.personas.buscarPorId(persona.getIdPersona())).thenReturn(persona);
     when(s.asignaciones.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
         .thenReturn(List.of(pr));
-    s.rolesConfigurados = empleado.getIdRol().toString();
-    when(s.roles.buscarPorId(empleado.getIdRol())).thenReturn(empleado);
   }
 
   PersonaRol asignacion(Rol rol, Clinica c) {
@@ -121,8 +118,6 @@ class IdentidadAcademicaServiceTest {
     var rol = new Rol(id());
     rol.setNombre("Médico");
     rol.setActivo(true);
-    s.rolesConfigurados += "," + rol.getIdRol();
-    when(s.roles.buscarPorId(rol.getIdRol())).thenReturn(rol);
     var a = asignacion(empleado, clinica);
     var b = asignacion(rol, otra);
     when(s.asignaciones.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
@@ -201,10 +196,8 @@ class IdentidadAcademicaServiceTest {
   }
 
   @Test
-  void configuracionNoConviertePacienteEnEmpleado() {
-    s.rolesConfigurados = paciente.getIdRol().toString();
-    when(s.roles.buscarPorId(paciente.getIdRol())).thenReturn(paciente);
-    assertThrows(IllegalStateException.class, () -> identificar("EMPLEADO"));
+  void rolPacienteNoSeConvierteEnEmpleadoAunqueExistaLaAsignacion() {
+    assertEquals(403, assertThrows(IdentificacionException.class, () -> identificar("EMPLEADO")).getStatus());
   }
 
   @Test

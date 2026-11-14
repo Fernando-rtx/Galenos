@@ -14,7 +14,6 @@ public class IdentidadAcademicaService {
   @EJB DocumentoDAO documentos;
   @EJB PersonaRolDAO asignaciones;
   @EJB PersonaDAO personas;
-  @EJB RolDAO roles;
   @Inject SesionAcademicaService sesiones;
 
   public record Asignacion(
@@ -33,21 +32,6 @@ public class IdentidadAcademicaService {
 
   public record Identificacion(String token, String expiraEn, Contexto contexto) {}
 
-  String rolesConfigurados = System.getenv().getOrDefault("GALENOS_EMPLEADO_ROLES", "");
-
-  private Set<UUID> rolesEmpleado() {
-    Set<UUID> ids = new HashSet<>();
-    for (String raw : rolesConfigurados.split(",")) {
-      if (raw.isBlank()) continue;
-      UUID id = UUID.fromString(raw.strip());
-      Rol rol = roles.buscarPorId(id);
-      if (rol == null || paciente(rol))
-        throw new IllegalStateException("Configuración de empleado inválida");
-      ids.add(id);
-    }
-    return ids;
-  }
-
   public static boolean paciente(Rol r) {
     return r != null && r.getNombre() != null && "paciente".equalsIgnoreCase(r.getNombre().trim());
   }
@@ -64,7 +48,6 @@ public class IdentidadAcademicaService {
   }
 
   public List<PersonaRol> asignaciones(UUID persona, String tipo) {
-    Set<UUID> permitidos = "EMPLEADO".equals(tipo) ? rolesEmpleado() : Set.of();
     return asignaciones
         .obtenerPagina(
             0,
@@ -77,7 +60,7 @@ public class IdentidadAcademicaService {
             pr ->
                 "PACIENTE".equals(tipo)
                     ? paciente(pr.getIdRol())
-                    : !paciente(pr.getIdRol()) && permitidos.contains(pr.getIdRol().getIdRol()))
+                    : !paciente(pr.getIdRol()))
         .toList();
   }
 
