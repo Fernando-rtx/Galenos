@@ -21,6 +21,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.control.FlujoConsultaException;
 @RequestScoped @Path("v2") @Produces(MediaType.APPLICATION_JSON)
 public class AcademicCareResource {
     @EJB AcademicCareService service;
+    @EJB sv.edu.ues.occingenieriappi115_2026.salud.control.CitasPacienteService citas;
     @EJB IdentidadAcademicaService identidad;
     @Inject ApiSettings settings;
     @Context HttpServletRequest request;
@@ -151,6 +152,11 @@ public class AcademicCareResource {
         if (settings.isCrudDemo()) { patientIdentity(type, number); person = null; }
         else { person = sessionPerson; requirePatientClinic(person, clinic); }
         UUID id = RestParameters.uuid(rawId, "id");
+        if (!settings.isCrudDemo()) {
+            return Response.ok(citas.ticket(bearer(), id, settings.getClinicZone()), "application/pdf")
+                    .header("Content-Disposition", "attachment; filename=galenos-ticket.pdf")
+                    .header("Cache-Control", "no-store").build();
+        }
         List<AcademicCareService.Appointment> rows = settings.isCrudDemo()
                 ? service.patientAppointments(RestParameters.uuid(type, "idTipoDocumento"), number, clinic, null, null, 0, 1000)
                 : service.patientAppointments(person, clinic, null, null, 0, 1000);
@@ -169,7 +175,8 @@ public class AcademicCareResource {
             @QueryParam("idPersona") String rawPerson, @QueryParam("idClinica") String rawClinic,
             @QueryParam("idRol") String rawRole, @QueryParam("fechaDesde") String rawFrom,
             @QueryParam("fechaHasta") String rawUntil, @QueryParam("first") String first,
-            @QueryParam("max") String max, @Context HttpServletResponse response) {
+            @QueryParam("max") String max, @QueryParam("idTipoDocumento") String documentType,
+            @QueryParam("numero") String number, @Context HttpServletResponse response) {
         if (!settings.isCrudDemo()) identidad.exigir(bearer(), "EMPLEADO");
         UUID clinic = RestParameters.uuid(rawClinic, "idClinica"), role = RestParameters.uuid(rawRole, "idRol"); clinic(clinic);
         UUID person = settings.isCrudDemo() ? employee(rawPerson) : sessionEmployee(clinic, role);
@@ -179,6 +186,12 @@ public class AcademicCareResource {
         if (from == null && until == null) from = until = LocalDate.now(java.time.ZoneId.of("America/El_Salvador"));
         dates(from, until);
         var page = RestParameters.page(first, max, settings);
+        if (documentType != null || number != null) {
+            UUID type = RestParameters.uuid(documentType, "idTipoDocumento");
+            var matches = service.searchEmployeeAppointments(person, clinic, role, from, until, page.first(), page.max(), type, number);
+            response.setHeader("Total-registros", Long.toString(service.searchEmployeeAppointmentCount(person, clinic, role, from, until, type, number)));
+            return matches;
+        }
         List<AcademicCareService.Appointment> rows = service.employeeAppointments(person, clinic, role, from, until, page.first(), page.max());
         response.setHeader("Total-registros", Long.toString(service.employeeAppointmentCount(person, clinic, role, from, until))); return rows;
     }

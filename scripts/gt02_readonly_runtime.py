@@ -30,11 +30,6 @@ def main():
         )
         if values.get("POSTGRESQL_DB_NAME") != "clinica":
             raise SystemExit("La fuente debe apuntar a clinica; no se preparó el runtime")
-        employee_roles = os.environ.get("GALENOS_EMPLEADO_ROLES", "")
-        if not employee_roles:
-            raise SystemExit(
-                "Configura GALENOS_EMPLEADO_ROLES con IDs de roles empleados verificados"
-            )
         (server / "apps").mkdir(parents=True, exist_ok=True)
         (server / "jdbc").mkdir(exist_ok=True)
         (STATE / "usr/shared/resources/primefaces").mkdir(parents=True, exist_ok=True)
@@ -44,7 +39,6 @@ def main():
             GALENOS_API_MODE="academic",
             GALENOS_DEMO_MODE="false",
             GALENOS_CRUD_DEMO="false",
-            GALENOS_EMPLEADO_ROLES=employee_roles,
             GALENOS_CORS_ORIGINS="http://127.0.0.1:3000,http://localhost:3000",
         )
         path = server / "server.env"

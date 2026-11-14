@@ -392,3 +392,21 @@ Sin push ni merge a main.
   solicitudEmpleado desde control/contexto-empleado.js. Este módulo usa el
   control de HU2 en memoria y añade Bearer/X-Persona-Rol. solicitudEmpleado no
   representa una autorización: el backend decide y revalida cada operación.
+
+## Extensiones de experiencia integrada (rama feat/gt02-experiencia-integrada)
+
+GET v2/empleado/consultas admite filtros opcionales conjuntos idTipoDocumento
+(UUID) y numero (string), además de fechas/paginación/contexto existente. La
+búsqueda usa coincidencia exacta y mantiene la restricción de empleado, rol,
+clínica y paso; no expone personas fuera de las consultas autorizadas. Tipo
+inexistente404, inactivo/formato inválido422, sin coincidencias lista vacía200.
+
+History añade rol (string/null) y ordenes (lista): idOrdenExamen, examen,
+fechaCreacion, indicaciones y resultados. Cada resultado: idExamenResultado,
+fechaCreacion, resultado, interpretacion. Datos obtenidos de entidades existentes,
+sin cambios de esquema. Los clientes deben aceptar esta extensión aditiva.
+
+El ticket académico de paciente reutiliza CitasPacienteService; valida pertenencia,
+produce PDF Java y responde Cache-Control:no-store. No se limita a las primeras
+1000 consultas. La regla de clasificación de empleado sigue pendiente de decisión;
+esta extensión no sustituye la allowlist por privilegios implícitos.

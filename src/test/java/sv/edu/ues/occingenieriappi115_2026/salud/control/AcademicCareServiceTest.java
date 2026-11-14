@@ -47,6 +47,7 @@ class AcademicCareServiceTest {
     consultation.setIdPersonaRol(assignment);
     procedure.setIdConsulta(consultation);
     template.setIdRol(role); template.setIndicaFin(false);
+    template.setIdProcedimiento(new Procedimiento(id(70)));
     step.setIdConsultaProcedimiento(procedure); step.setIdPersonaRol(assignment);
     step.setIdProcedimientoPaso(template); step.setEstado("PENDIENTE");
     step.setFechaInicio(Date.from(Instant.parse("2026-01-01T12:00:00Z")));
@@ -124,7 +125,7 @@ class AcademicCareServiceTest {
     verify(em).merge(step); verify(em).merge(procedure); verify(em, never()).persist(any());
   }
   @Test void avanzarCreaPasoPendienteConResponsable() {
-    var next = new ProcedimientoPaso(id(20)); next.setIdRol(assignment.getIdRol());
+    var next = new ProcedimientoPaso(id(20)); next.setIdRol(assignment.getIdRol()); next.setIdProcedimiento(template.getIdProcedimiento());
     var link = new ProcedimientoPasoSecuencia(id(21)); link.setIdProcedimientoPasoReferencia(id(20));
     when(outgoing.getResultList()).thenReturn(List.of(link));
     when(em.find(ProcedimientoPaso.class, id(20))).thenReturn(next);
@@ -175,5 +176,35 @@ class AcademicCareServiceTest {
     query(OrdenExamen.class, List.of(new OrdenExamen(id(32))));
     register("GUARDAR_PARCIAL", null, List.of(id(30)));
     verify(em, never()).persist(any()); verify(em).merge(step);
+  }
+
+  @Test void busquedaPorDocumentoMantienePersonaRolYClinicaEnJpa() {
+    var type = new TipoDocumento(id(90)); type.setActivo(true); type.setExpresionRegular("[A-Z]{3}");
+    when(em.find(TipoDocumento.class, id(90))).thenReturn(type);
+    query(Persona.class, List.of(new Persona(id(91))));
+    var appointments = query(Consulta.class, List.of());
+    assertTrue(service.searchEmployeeAppointments(personId, clinicId, roleId,
+        null, null, 0, 20, id(90), "ABC").isEmpty());
+    verify(appointments).setParameter("patient", id(91));
+    verify(appointments).setParameter("person", personId);
+    verify(appointments).setParameter("clinic", clinicId);
+    verify(appointments).setParameter("role", roleId);
+    verify(appointments).setMaxResults(20);
+    verify(em).createQuery(contains("pr.idPersona.idPersona=:patient"), eq(Consulta.class));
+  }
+  @Test void documentoInvalidoNoConsultaPacientes() {
+    var type = new TipoDocumento(id(90)); type.setActivo(true); type.setExpresionRegular("[A-Z]{3}");
+    when(em.find(TipoDocumento.class, id(90))).thenReturn(type);
+    assertEquals(422, assertThrows(IdentificacionException.class, () -> service.searchEmployeeAppointments(
+        personId, clinicId, roleId, null, null, 0, 20, id(90), "123")).getStatus());
+    verify(em, never()).createQuery(anyString(), eq(Persona.class));
+  }
+  @Test void siguientePasoDeOtroProcedimientoSeRechaza() {
+    var next = new ProcedimientoPaso(id(20)); next.setIdRol(assignment.getIdRol());
+    next.setIdProcedimiento(new Procedimiento(id(99)));
+    var link = new ProcedimientoPasoSecuencia(id(21)); link.setIdProcedimientoPasoReferencia(id(20));
+    when(outgoing.getResultList()).thenReturn(List.of(link));
+    when(em.find(ProcedimientoPaso.class, id(20))).thenReturn(next);
+    rejects("consultaFlujo.plantillaInvalida", () -> register("AVANZAR", id(20), List.of()));
   }
 }
