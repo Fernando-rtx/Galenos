@@ -176,3 +176,12 @@ No se declara que la migración esté aplicada ni que exista ya un caso funciona
 
 Corrección de código: commit `8f9c485`. Este diagnóstico y su SQL propuesto se
 registran en un commit documental posterior. Frontend de producción sin cambios.
+
+## Preparación posterior, sin aplicación
+
+Las operaciones A/B separadas, sus SQL exactos, UUID académicos reservados,
+recorrido REST y recuperación están en
+[la propuesta del15/11/2026](../db/proposals/gt02-hu34-20261115/README.md).
+Se creó y verificó un respaldo privado de clinica, sin restaurarlo. No se aplicó
+ningún cambio: A requiere autorización propia; B también requiere confirmar
+la relación examen/paso y su alcance de negocio, además de autorización B.
