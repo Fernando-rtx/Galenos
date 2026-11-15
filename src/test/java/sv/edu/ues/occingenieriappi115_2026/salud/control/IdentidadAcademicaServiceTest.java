@@ -107,7 +107,9 @@ class IdentidadAcademicaServiceTest {
 
   @Test
   void soloPacienteNoEmpleado() {
-    error(403, () -> identificar("EMPLEADO"));
+    var error = assertThrows(IdentificacionException.class, () -> identificar("EMPLEADO"));
+    assertEquals(403, error.getStatus());
+    assertEquals("La persona no tiene asignaciones de empleado.", error.getMessage());
   }
 
   @Test
@@ -204,9 +206,24 @@ class IdentidadAcademicaServiceTest {
   void empleadoConRolOClinicaInactivosNoIniciaSesion() {
     pr.setIdRol(empleado);
     empleado.setActivo(false);
-    error(403, () -> identificar("EMPLEADO"));
+    var error = assertThrows(IdentificacionException.class, () -> identificar("EMPLEADO"));
+    assertEquals(403, error.getStatus());
+    assertEquals("No hay asignaciones de empleado activas. Revisa el rol y la clínica.", error.getMessage());
     empleado.setActivo(true);
     clinica.setActivo(false);
     error(403, () -> identificar("EMPLEADO"));
+  }
+
+  @Test
+  void cambioDeAsignacionRevalidaPertenenciaYEstadoEnCadaPeticion() {
+    pr.setIdRol(empleado);
+    var login = identificar("EMPLEADO");
+    String bearer = "Bearer " + login.token();
+    assertSame(pr, s.exigirEmpleado(bearer, pr.getIdPersonaRol(), clinica.getIdClinica()));
+    pr.setIdPersona(new Persona(id()));
+    error(403, () -> s.exigirEmpleado(bearer, pr.getIdPersonaRol(), clinica.getIdClinica()));
+    pr.setIdPersona(persona);
+    clinica.setActivo(false);
+    error(403, () -> s.exigirEmpleado(bearer, pr.getIdPersonaRol(), clinica.getIdClinica()));
   }
 }

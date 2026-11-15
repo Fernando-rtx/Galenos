@@ -42,19 +42,24 @@ public class IdentidadAcademicaService {
         && pr.getIdPersona() != null
         && persona.equals(pr.getIdPersona().getIdPersona())
         && pr.getIdRol() != null
+        && pr.getIdRol().getIdRol() != null
         && Boolean.TRUE.equals(pr.getIdRol().getActivo())
         && pr.getIdClinica() != null
+        && pr.getIdClinica().getIdClinica() != null
         && Boolean.TRUE.equals(pr.getIdClinica().getActivo());
   }
 
-  public List<PersonaRol> asignaciones(UUID persona, String tipo) {
+  private List<PersonaRol> registradas(UUID persona) {
     return asignaciones
         .obtenerPagina(
             0,
             Integer.MAX_VALUE,
             List.of(new FiltroDAO("idPersona.idPersona", OperadorFiltro.IGUAL, persona)),
-            List.of(new OrdenDAO("idPersonaRol", DireccionOrden.ASCENDENTE)))
-        .stream()
+            List.of(new OrdenDAO("idPersonaRol", DireccionOrden.ASCENDENTE)));
+  }
+
+  private List<PersonaRol> vigentes(List<PersonaRol> registradas, UUID persona, String tipo) {
+    return registradas.stream()
         .filter(pr -> utilizable(pr, persona))
         .filter(
             pr ->
@@ -62,6 +67,10 @@ public class IdentidadAcademicaService {
                     ? paciente(pr.getIdRol())
                     : !paciente(pr.getIdRol()))
         .toList();
+  }
+
+  public List<PersonaRol> asignaciones(UUID persona, String tipo) {
+    return vigentes(registradas(persona), persona, tipo);
   }
 
   public static String nombre(Persona persona) {
@@ -76,8 +85,18 @@ public class IdentidadAcademicaService {
 
   private Contexto contexto(UUID id, String tipo, String zona) {
     Persona persona = personas.buscarPorId(id);
-    var rows = asignaciones(id, tipo);
-    if (persona == null || rows.isEmpty())
+    if (persona == null) throw new IdentificacionException(404, "Persona no encontrada");
+    var registradas = registradas(id);
+    var rows = vigentes(registradas, id, tipo);
+    if (rows.isEmpty() && "EMPLEADO".equals(tipo)) {
+      boolean empleadoAsignado = registradas.stream().anyMatch(pr -> pr != null
+          && pr.getIdPersona() != null && id.equals(pr.getIdPersona().getIdPersona())
+          && pr.getIdRol() != null && !paciente(pr.getIdRol()));
+      throw new IdentificacionException(403, empleadoAsignado
+          ? "No hay asignaciones de empleado activas. Revisa el rol y la clínica."
+          : "La persona no tiene asignaciones de empleado.");
+    }
+    if (rows.isEmpty())
       throw new IdentificacionException(403, "No tiene asignaciones disponibles para este portal");
     return new Contexto(
         tipo,
