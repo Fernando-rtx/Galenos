@@ -14,7 +14,8 @@ class CitasPacienteServiceTest {
   CitasPacienteService s;
   PersonaRol pr;
   Consulta c;
-  UUID persona = UUID.randomUUID(), clinica = UUID.randomUUID();
+  UUID persona = id(1), clinica = id(2);
+  static UUID id(int n) { return new UUID(0, n); }
   ZoneId zona = ZoneId.of("America/El_Salvador");
 
   @BeforeEach
@@ -24,17 +25,17 @@ class CitasPacienteServiceTest {
     s.consultas = mock(ConsultaDAO.class);
     s.asociaciones = mock(ConsultaProcedimientoDAO.class);
     s.procedimientos = mock(ProcedimientoDAO.class);
-    pr = new PersonaRol(UUID.randomUUID());
+    pr = new PersonaRol(id(3));
     var p = new Persona(persona);
     p.setNombres("Ana");
     pr.setIdPersona(p);
     pr.setIdClinica(new Clinica(clinica));
-    c = new Consulta(UUID.randomUUID());
+    c = new Consulta(id(4));
     c.setIdPersonaRol(pr);
     c.setFechaInicio(Date.from(Instant.parse("2026-11-11T14:00:00Z")));
     when(s.identidad.exigir("token", "PACIENTE"))
         .thenReturn(
-            new SesionAcademicaService.Sesion(persona, "PACIENTE", Instant.now().plusSeconds(60)));
+            new SesionAcademicaService.Sesion(persona, "PACIENTE", Instant.parse("2026-11-11T20:00:00Z")));
     when(s.identidad.asignaciones(persona, "PACIENTE")).thenReturn(List.of(pr));
     when(s.asociaciones.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
         .thenReturn(List.of());
@@ -72,11 +73,21 @@ class CitasPacienteServiceTest {
     when(s.consultas.buscar(anyList(), any(), any(), anyInt(), anyInt())).thenReturn(List.of());
     assertTrue(
         s.buscar("token", clinica, "2026-11-11", "2026-11-11", zona, 0, 20).citas().isEmpty());
-    when(s.consultas.buscar(anyList(), any(), any(), anyInt(), anyInt())).thenReturn(List.of(c, c));
+    var segunda = new Consulta(id(5));
+    segunda.setIdPersonaRol(pr);
+    segunda.setFechaInicio(Date.from(Instant.parse("2026-11-11T16:00:00Z")));
+    when(s.consultas.buscar(anyList(), any(), any(), anyInt(), anyInt()))
+        .thenReturn(List.of(c, segunda));
     when(s.consultas.contar(anyList(), any(), any())).thenReturn(2L);
     var page = s.buscar("token", clinica, "2026-11-11", "2026-11-11", zona, 0, 20);
     assertEquals(2, page.citas().size());
     assertEquals(2, page.total());
+    assertEquals(List.of(c.getIdConsulta().toString(), segunda.getIdConsulta().toString()),
+        page.citas().stream().map(CitasPacienteService.Cita::idConsulta).toList());
+    assertEquals("2026-11-11T16:00:00Z", page.citas().get(1).fechaInicio());
+    verify(s.consultas, times(2)).buscar(eq(List.of(pr.getIdPersonaRol())),
+        eq(Date.from(Instant.parse("2026-11-11T06:00:00Z"))),
+        eq(Date.from(Instant.parse("2026-11-12T06:00:00Z"))), eq(0), eq(20));
   }
 
   @Test
@@ -93,6 +104,16 @@ class CitasPacienteServiceTest {
         assertThrows(
                 IdentificacionException.class, () -> s.ticket("token", c.getIdConsulta(), zona))
             .getStatus());
+  }
+
+  @Test
+  void ticketPropioGeneraPdfYConsultaProcedimientos() {
+    when(s.consultas.buscarPorId(c.getIdConsulta())).thenReturn(c);
+    byte[] pdf = s.ticket("token", c.getIdConsulta(), zona);
+    assertTrue(new String(pdf, java.nio.charset.StandardCharsets.ISO_8859_1)
+        .startsWith("%PDF-1.4"));
+    verify(s.identidad).exigir("token", "PACIENTE");
+    verify(s.asociaciones).obtenerPagina(eq(0), eq(Integer.MAX_VALUE), anyList(), anyList());
   }
 
   @Test

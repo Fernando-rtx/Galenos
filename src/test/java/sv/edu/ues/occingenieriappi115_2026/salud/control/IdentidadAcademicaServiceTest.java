@@ -16,6 +16,8 @@ class IdentidadAcademicaServiceTest {
   Rol paciente, empleado;
   Clinica clinica;
   PersonaRol pr;
+  private long siguienteId;
+  private UUID id() { return new UUID(0, ++siguienteId); }
 
   @BeforeEach
   void setup() {
@@ -24,25 +26,24 @@ class IdentidadAcademicaServiceTest {
     s.documentos = mock(DocumentoDAO.class);
     s.personas = mock(PersonaDAO.class);
     s.asignaciones = mock(PersonaRolDAO.class);
-    s.roles = mock(RolDAO.class);
     s.sesiones = new SesionAcademicaService();
-    persona = new Persona(UUID.randomUUID());
+    persona = new Persona(id());
     persona.setNombres("Ana");
     persona.setApellidos("Ficticia");
-    tipo = new TipoDocumento(UUID.randomUUID());
+    tipo = new TipoDocumento(id());
     tipo.setActivo(true);
     tipo.setExpresionRegular("^[A-Z]{3}$");
-    paciente = new Rol(UUID.randomUUID());
+    paciente = new Rol(id());
     paciente.setNombre("Paciente");
     paciente.setActivo(true);
-    empleado = new Rol(UUID.randomUUID());
+    empleado = new Rol(id());
     empleado.setNombre("Recepción");
     empleado.setActivo(true);
-    clinica = new Clinica(UUID.randomUUID());
+    clinica = new Clinica(id());
     clinica.setNombre("Clínica sintética");
     clinica.setActivo(true);
     pr = asignacion(paciente, clinica);
-    var d = new Documento(UUID.randomUUID());
+    var d = new Documento(id());
     d.setIdPersona(persona);
     when(s.tipos.buscarPorId(tipo.getIdTipoDocumento())).thenReturn(tipo);
     when(s.documentos.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
@@ -50,12 +51,10 @@ class IdentidadAcademicaServiceTest {
     when(s.personas.buscarPorId(persona.getIdPersona())).thenReturn(persona);
     when(s.asignaciones.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
         .thenReturn(List.of(pr));
-    s.rolesConfigurados = empleado.getIdRol().toString();
-    when(s.roles.buscarPorId(empleado.getIdRol())).thenReturn(empleado);
   }
 
   PersonaRol asignacion(Rol rol, Clinica c) {
-    var a = new PersonaRol(UUID.randomUUID());
+    var a = new PersonaRol(id());
     a.setIdPersona(persona);
     a.setIdRol(rol);
     a.setIdClinica(c);
@@ -88,7 +87,7 @@ class IdentidadAcademicaServiceTest {
 
   @Test
   void tipoAusenteEInactivo() {
-    error(404, () -> s.identificar(UUID.randomUUID(), "ABC", "PACIENTE", "UTC"));
+    error(404, () -> s.identificar(id(), "ABC", "PACIENTE", "UTC"));
     tipo.setActivo(false);
     error(422, () -> identificar("PACIENTE"));
   }
@@ -113,14 +112,12 @@ class IdentidadAcademicaServiceTest {
 
   @Test
   void empleadoConVariosRolesYClinicas() {
-    var otra = new Clinica(UUID.randomUUID());
+    var otra = new Clinica(id());
     otra.setActivo(true);
     otra.setNombre("Otra");
-    var rol = new Rol(UUID.randomUUID());
+    var rol = new Rol(id());
     rol.setNombre("Médico");
     rol.setActivo(true);
-    s.rolesConfigurados += "," + rol.getIdRol();
-    when(s.roles.buscarPorId(rol.getIdRol())).thenReturn(rol);
     var a = asignacion(empleado, clinica);
     var b = asignacion(rol, otra);
     when(s.asignaciones.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
@@ -148,13 +145,13 @@ class IdentidadAcademicaServiceTest {
 
   @Test
   void nuncaIncluyeAsignacionAjena() {
-    pr.setIdPersona(new Persona(UUID.randomUUID()));
+    pr.setIdPersona(new Persona(id()));
     error(403, () -> identificar("PACIENTE"));
   }
 
   @Test
   void variasClinicasPaciente() {
-    var c = new Clinica(UUID.randomUUID());
+    var c = new Clinica(id());
     c.setActivo(true);
     when(s.asignaciones.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
         .thenReturn(List.of(pr, asignacion(paciente, c)));
@@ -179,6 +176,19 @@ class IdentidadAcademicaServiceTest {
   }
 
   @Test
+  void contextoReconsultaAsignacionesDespuesDelLogin() {
+    var r = identificar("PACIENTE");
+    var otra = new Clinica(id());
+    otra.setActivo(true);
+    var nueva = asignacion(paciente, otra);
+    when(s.asignaciones.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
+        .thenReturn(List.of(nueva));
+    var actualizado = s.contexto("Bearer " + r.token(), "PACIENTE", "UTC");
+    assertEquals(List.of(nueva.getIdPersonaRol().toString()), actualizado.asignaciones().stream()
+        .map(a -> a.idPersonaRol()).toList());
+  }
+
+  @Test
   void falloDAOSePropaga() {
     when(s.documentos.obtenerPagina(anyInt(), anyInt(), anyList(), anyList()))
         .thenThrow(new jakarta.persistence.PersistenceException("sintético"));
@@ -186,10 +196,8 @@ class IdentidadAcademicaServiceTest {
   }
 
   @Test
-  void configuracionNoConviertePacienteEnEmpleado() {
-    s.rolesConfigurados = paciente.getIdRol().toString();
-    when(s.roles.buscarPorId(paciente.getIdRol())).thenReturn(paciente);
-    assertThrows(IllegalStateException.class, () -> identificar("EMPLEADO"));
+  void rolPacienteNoSeConvierteEnEmpleadoAunqueExistaLaAsignacion() {
+    assertEquals(403, assertThrows(IdentificacionException.class, () -> identificar("EMPLEADO")).getStatus());
   }
 
   @Test
