@@ -1,12 +1,17 @@
 # Propuestas A y B — HU3/HU4, clinica
 
+Actualización: A queda simplificada a columna/FK en una transacción, sin respaldos
+ni parámetros adicionales. Solo se preparó; requiere autorización específica.
+El respaldo y B descritos más abajo son antecedentes suspendidos y no forman parte
+de la ejecución actual; se revisarán después de resolver A.
+
 **Estado: PREPARADAS, NO APLICADAS.** Rama `feat/gt02-hu4-atencion`.
 Se reutilizó [el diagnóstico existente](../../../docs/gt02-hu4-bloqueos.md).
 No se crean bases, tablas, roles nuevos, procedimientos nuevos ni secuencias.
 No cambia el código de aplicación ni se abren permisos REST administrativos.
 
-Hay dos autorizaciones independientes. Los parámetros de confirmación de los
-scripts evitan ejecuciones accidentales; **no sustituyen la autorización del usuario**.
+Hay dos autorizaciones independientes. A requiere aprobación expresa del usuario;
+su SQL simplificado ya no usa parámetros adicionales. B permanece suspendida.
 Incluso un ensayo SQL con ROLLBACK necesita autorización y no se ejecutó aquí.
 
 ## Respaldo real, privado y verificable
@@ -50,9 +55,10 @@ es de solo lectura mediante `python3 scripts/gt02_respaldo_clinica.py`.
   contrastarla con el SQL versionado y las relaciones reales.
 - No se ejecuta la migración antigua completa: la FK de plantilla ya existe con
   otro nombre y no debe duplicarse.
-- Precondiciones: base clinica,20tablas, columna todavía ausente, PK examen UUID,
-  inventario actual1orden/1resultado y respaldo coincidente. Si la columna existe
-  o cambian los datos, el script aborta para revisión.
+- Precondiciones de lectura: base clinica, columna todavía ausente y PK examen UUID.
+  Se comprobaron también las FKs y1orden/1resultado existentes. Si la columna existe
+  o el tipo referenciado no es UUID, el script se detiene; PostgreSQL valida la
+  clave referenciada al crear la FK.
 - Riesgo: ALTER necesita bloqueo exclusivo breve. lock_timeout3s y
   statement_timeout30s; cualquier fallo revierte toda A.
 - Recuperación: antes de COMMIT, ROLLBACK revierte el DDL. Después, mantener la
@@ -65,7 +71,7 @@ Solo después de autorizar A se usarían estos comandos, desde la carpeta backen
 ```sh
 docker cp db/proposals/gt02-hu34-20261115 postgres_db:/tmp/gt02-hu34-20261115
 docker exec postgres_db psql -X -U postgres -d clinica \
-  -v autorizacion_a=AUTORIZAR_A_GT02_HU34_20261115 \
+  -v ON_ERROR_STOP=1 \
   -f /tmp/gt02-hu34-20261115/operacion-a.sql
 ```
 
