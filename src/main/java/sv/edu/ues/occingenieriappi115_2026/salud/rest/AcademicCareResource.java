@@ -218,17 +218,19 @@ public class AcademicCareResource {
         UUID person = settings.isCrudDemo() ? employee(rawPerson) : sessionEmployee(clinic, role);
         if (rawPerson != null && !person.equals(RestParameters.uuid(rawPerson, "idPersona")))
             throw new ApiException(403, "La identidad no corresponde al empleado solicitado");
-        RestInput input = new RestInput(body, "accion", "idConsultaProcedimientoPaso", "valor", "idPasoSiguiente", "examenes");
+        RestInput input = new RestInput(body, "accion", "idConsultaProcedimientoPaso", "valor", "idPasoSiguiente", "examenes", "idConsultaProcedimientoPasoAnterior");
         UUID step = RestParameters.uuid(input.text("idConsultaProcedimientoPaso"), "idConsultaProcedimientoPaso");
         String target = input.text("idPasoSiguiente");
+        String previous = input.text("idConsultaProcedimientoPasoAnterior");
         return service.register(person, clinic, role, RestParameters.uuid(rawId, "id"), step,
-                input.text("accion"), input.text("valor"), target == null ? null : RestParameters.uuid(target, "idPasoSiguiente"), input.uuidList("examenes"));
+                input.text("accion"), input.text("valor"), target == null ? null : RestParameters.uuid(target, "idPasoSiguiente"), input.uuidList("examenes"),
+                previous == null ? null : RestParameters.uuid(previous, "idConsultaProcedimientoPasoAnterior"));
     }
 
     @POST @Path("atencion/registrar") @Consumes(MediaType.APPLICATION_JSON)
     public AcademicCareService.CareResult registerAcademic(JsonObject body) {
         RestInput input = new RestInput(body, "idConsulta", "idPersona", "idClinica", "idRol", "accion",
-                "idConsultaProcedimientoPaso", "valor", "idPasoSiguiente", "examenes");
+                "idConsultaProcedimientoPaso", "valor", "idPasoSiguiente", "examenes", "idConsultaProcedimientoPasoAnterior");
         if (!settings.isCrudDemo()) identidad.exigir(bearer(), "EMPLEADO");
         UUID clinic = RestParameters.uuid(input.text("idClinica"), "idClinica"); clinic(clinic);
         UUID role = RestParameters.uuid(input.text("idRol"), "idRol");
@@ -237,9 +239,10 @@ public class AcademicCareResource {
             throw new ApiException(403, "La identidad no corresponde al empleado solicitado");
         UUID consultation = RestParameters.uuid(input.text("idConsulta"), "idConsulta");
         String next = input.text("idPasoSiguiente");
+        String previous = input.text("idConsultaProcedimientoPasoAnterior");
         return service.register(person, clinic, role, consultation,
                 RestParameters.uuid(input.text("idConsultaProcedimientoPaso"), "idConsultaProcedimientoPaso"),
                 input.text("accion"), input.text("valor"), next == null ? null : RestParameters.uuid(next, "idPasoSiguiente"),
-                input.uuidList("examenes"));
+                input.uuidList("examenes"), previous == null ? null : RestParameters.uuid(previous, "idConsultaProcedimientoPasoAnterior"));
     }
 }
