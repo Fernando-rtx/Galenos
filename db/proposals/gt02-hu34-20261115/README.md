@@ -1,21 +1,27 @@
 # Propuestas A y B — HU3/HU4, clinica
 
-Actualización: A queda simplificada a columna/FK en una transacción, sin respaldos
-ni parámetros adicionales. Solo se preparó; requiere autorización específica.
-El respaldo y B descritos más abajo son antecedentes suspendidos y no forman parte
-de la ejecución actual; se revisarán después de resolver A.
+Estado actual, 2026-11-15: **A aplicada y verificada** con autorización expresa.
+Después se aplicó `preparacion-hu123-solo-altas.sql`: nueve filas nuevas en una
+transacción, sin duplicados y sin cambiar el contenido de los registros previos.
+No se crearon respaldos ni bases adicionales. Una nota académica se guardó después
+por el frontend/REST exclusivamente en la ejecución recién creada.
+El respaldo y la B originales descritos más abajo son antecedentes suspendidos;
+**no ejecutar B ni repetir las altas**. B activaría un rol previo y contradice el
+alcance vigente. Credenciales y recorrido comprobado en
+[el estado actualizado de HU4](../../../docs/gt02-hu4-bloqueos.md).
 
-Alternativa preparada, **no ejecutada**: [preparacion-hu123-solo-altas.sql](preparacion-hu123-solo-altas.sql).
-Propone nueve filas nuevas: dos personas, dos documentos sintéticos, dos asignaciones,
+Alternativa aplicada: [preparacion-hu123-solo-altas.sql](preparacion-hu123-solo-altas.sql).
+Incorporó nueve filas nuevas: dos personas, dos documentos sintéticos, dos asignaciones,
 una consulta, un procedimiento asociado y su ejecución inicial PENDIENTE. Reutiliza
 Clínica Central, Evaluación de Salud y la raíz de Atención al publico; no cambia
-ningún catálogo ni registro anterior. Sustituye B para este alcance y requiere su
-propia autorización de inserción. No incluye historial completado ni órdenes de
-examen: Enfermera sigue inactiva y la referencia Orden→Examen continúa pendiente.
-Preparar los datos no prueba todavía su visualización con JPA ni la persistencia
-de HU4; los Services actuales siguen esperando la columna de A.
+ningún catálogo ni registro anterior. Sustituye B para este alcance. La ejecución
+ahora está EN_CURSO tras el guardado real; no incluye historial completado ni
+órdenes de examen porque Enfermera sigue inactiva y faltan permisos de examen.
 
-**Estado: PREPARADAS, NO APLICADAS.** Rama `feat/gt02-hu4-atencion`.
+## Antecedentes de preparación — no ejecutar
+
+El resto del documento describe el plan original, anterior a las autorizaciones
+y a la aplicación limitada indicada arriba. Rama `feat/gt02-hu4-atencion`.
 Se reutilizó [el diagnóstico existente](../../../docs/gt02-hu4-bloqueos.md).
 No se crean bases, tablas, roles nuevos, procedimientos nuevos ni secuencias.
 No cambia el código de aplicación ni se abren permisos REST administrativos.

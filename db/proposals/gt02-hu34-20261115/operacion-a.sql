@@ -1,4 +1,4 @@
--- PROPUESTA NO EJECUTADA. Ejecutar solo tras autorización específica del usuario.
+-- APLICADA en clinica el 2026-11-15 tras autorización expresa. No repetir.
 -- SQL directo para clinica; sin respaldos, copias ni parámetros de autorización.
 BEGIN;
 SET LOCAL lock_timeout = '3s';

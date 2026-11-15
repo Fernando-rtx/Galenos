@@ -1,7 +1,7 @@
--- PROPUESTA NO EJECUTADA. Requiere autorización de estas nueve altas.
+-- APLICADA en clinica el 2026-11-15: nueve altas autorizadas. No repetir.
 -- Alternativa a B: no activa Enfermera ni modifica ningún registro anterior.
 -- No ejecutar operacion-b.sql junto con este archivo: comparten identificadores.
--- Esta preparación no resuelve la referencia OrdenExamen -> Examen pendiente.
+-- La operación A se aplicó y verificó antes de estas altas.
 \set ON_ERROR_STOP on
 \ir escenario.psql
 BEGIN;

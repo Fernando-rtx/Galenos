@@ -1,4 +1,56 @@
-# HU4: diagnóstico de bloqueos y propuesta pendiente de autorización
+# HU4: estado real y diagnóstico de bloqueos
+
+## Actualización autorizada — 2026-11-15
+
+- Operación A aplicada exactamente: `orden_examen.id_examen UUID` nullable y FK
+  `fk_orden_examen_examen` validada. Una transacción; 20 tablas conservadas. Las
+  firmas del contenido anterior coincidieron antes/después, excluyendo solo la
+  columna nueva; la orden previa conserva NULL y su resultado.
+- Nueve altas nuevas aplicadas transaccionalmente con comprobación de colisiones
+  y de conservación del contenido anterior. No se aplicó la B original, ni se
+  activaron roles, ni se crearon respaldos u otras bases.
+- Tipo **Pasaporte**, clínica **Clinica Central** para ambas identidades:
+
+| Portal | Documento académico | Rol |
+|---|---|---|
+| `http://127.0.0.1:3000/#pacientes` | `ACADGT02PAC001` | Paciente |
+| `http://127.0.0.1:3000/#empleados` | `ACADGT02REC001` | Atención al publico |
+
+Consulta `18d1c9f4-c2f5-452f-88d5-0c43d4110348`, referencia
+`GT02-HU34-20261115`, creada el **2026-11-15 12:49:15 America/El_Salvador**.
+Procedimiento **Evaluación de Salud**, paso **Registro de ingreso**. Si se prueba
+otro día, filtrar desde/hasta 2026-11-15. Los servicios ya estaban activos en
+frontend 3000 y backend 9080; si están detenidos: `./run.sh` desde
+`~/Desktop/GalenosSV_Actualizado` y `npm run dev` desde `~/Desktop/GalenoSVFE`.
+
+Chromium contra BrowserSync y Liberty reales, sin sustituir REST: identificación,
+clínica/asignación propia, cita y PDF Java descargado, tarjeta de dashboard,
+apertura HU4, guardado de una nota académica por `POST v2/atencion/registrar`,
+GET posterior desde una sesión nueva y SELECT confirman valor y estado EN_CURSO.
+La única modificación clínica fue a la ejecución académica recién insertada
+`6c3e2823-3133-4259-83b8-a8bdd0cd5044`. No se modificó la ejecución antigua sin
+plantilla. Filtros pasados/restablecer, desconexión y reintento comprobados.
+PersonaRol ajeno devuelve 403; una consulta de otra clínica se oculta con 404.
+Paciente sin asignación de empleado rechazado403 y cierre de sesión realizado.
+
+Pruebas relacionadas: **79 JUnit/Mockito**, **504 Mocha**, **9 de transporte
+HTTP sintético**, sintaxis de **110 archivos**: aprobadas. Evidencia local en
+`/private/tmp/gt02-academicos-reales/` (resultado.json, hu1–hu4.png y PDF académico).
+El primer ensayo corrigió dos expectativas del verificador, sin cambios de
+producción: el PDF requiere Accept adecuado y una consulta de otra clínica se
+oculta con 404. La ejecución final de Chromium terminó aprobada.
+
+Pendiente para completar HU3/HU4: el paso siguiente usa **enfermera**, actualmente
+inactivo y sin asignaciones. Doctor está activo con dos asignaciones en esta
+clínica; no se añadió otro responsable ni se alteró su prioridad. Ningún paso de
+este procedimiento tiene exámenes activos habilitados. Se necesita decisión y
+autorización de negocio para habilitar Enfermería y su asignación, y confirmar
+qué exámenes corresponden a qué pasos. No se inventaron permisos ni se registró
+historial completado por SQL. Avance, retroceso, finalización y órdenes de examen
+**no fueron comprobados con persistencia real**. La FK de A se verificó por el
+catálogo de PostgreSQL y su estado validado; no se insertaron órdenes de prueba.
+
+## Diagnóstico histórico anterior a la autorización
 
 Base de ejecución: **clinica**. Rama: `feat/gt02-hu4-atencion`, desde `c72ed0f`.
 Inspección mediante SELECT/BEGIN READ ONLY; ningún DDL, INSERT, UPDATE o DELETE
