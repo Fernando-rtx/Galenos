@@ -5,6 +5,16 @@ ni parámetros adicionales. Solo se preparó; requiere autorización específica
 El respaldo y B descritos más abajo son antecedentes suspendidos y no forman parte
 de la ejecución actual; se revisarán después de resolver A.
 
+Alternativa preparada, **no ejecutada**: [preparacion-hu123-solo-altas.sql](preparacion-hu123-solo-altas.sql).
+Propone nueve filas nuevas: dos personas, dos documentos sintéticos, dos asignaciones,
+una consulta, un procedimiento asociado y su ejecución inicial PENDIENTE. Reutiliza
+Clínica Central, Evaluación de Salud y la raíz de Atención al publico; no cambia
+ningún catálogo ni registro anterior. Sustituye B para este alcance y requiere su
+propia autorización de inserción. No incluye historial completado ni órdenes de
+examen: Enfermera sigue inactiva y la referencia Orden→Examen continúa pendiente.
+Preparar los datos no prueba todavía su visualización con JPA ni la persistencia
+de HU4; los Services actuales siguen esperando la columna de A.
+
 **Estado: PREPARADAS, NO APLICADAS.** Rama `feat/gt02-hu4-atencion`.
 Se reutilizó [el diagnóstico existente](../../../docs/gt02-hu4-bloqueos.md).
 No se crean bases, tablas, roles nuevos, procedimientos nuevos ni secuencias.
