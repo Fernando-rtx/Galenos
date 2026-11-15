@@ -22,11 +22,12 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Verifica que el mapeo JPA de las entidades del dominio coincida con el
- * esquema real documentado en {@code clinica_ppi115_2026_08_20.sql}.
+ * esquema versionado en {@code clinica_ppi115_2026_08_20.sql}.
  *
  * <p>Detecta el tipo de discrepancia que rompió Órdenes de examen: una columna
- * mapeada que no existe en la base. El SQL versionado es la única fuente de
- * verdad; si una entidad mapea algo que el esquema no tiene, la prueba falla.</p>
+ * mapeada que no existe en el SQL. No se conecta a PostgreSQL ni demuestra que
+ * una ampliación/migración del archivo ya esté aplicada en la base de ejecución.
+ * La compatibilidad con clinica requiere consultar su catálogo real.</p>
  */
 class SchemaMappingTest {
 

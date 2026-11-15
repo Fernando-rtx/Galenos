@@ -72,12 +72,20 @@ class ConsultaFlujoServiceTest {
         orden.verify(asociaciones).guardar(datos); orden.verify(pasos).guardar(captor.capture());
         var paso = captor.getValue();
         assertSame(responsable,paso.getIdPersonaRol()); assertSame(datos,paso.getIdConsultaProcedimiento());
+        assertSame(inicial,paso.getIdProcedimientoPaso());
         assertEquals("PENDIENTE",paso.getEstado()); assertNull(paso.getFechaFin());
         assertEquals(datos.getFechaInicio(),paso.getFechaInicio());
     }
     @Test void sinResponsableNoEscribeNingunRegistro() {
         when(personas.buscarResponsablesPorClinicaYRol(any(),any())).thenReturn(List.of());
         assertThrows(FlujoConsultaException.class, () -> service.crearProcedimiento(datos(),clinica.getIdClinica()));
+        verifyNoInteractions(asociaciones,pasos);
+    }
+    @Test void plantillaInicialConRolPacienteNoPuedeCrearUnaEjecucionDeEmpleado() {
+        inicial.getIdRol().setNombre(" Paciente ");
+        var error = assertThrows(FlujoConsultaException.class,
+                () -> service.crearProcedimiento(datos(),clinica.getIdClinica()));
+        assertEquals("consultaFlujo.plantillaInvalida",error.getMessage());
         verifyNoInteractions(asociaciones,pasos);
     }
     @Test void rechazaResponsableAjenoOConOtroRolAunqueDaoLoDevuelva() {
