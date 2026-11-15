@@ -132,20 +132,23 @@ filtrarlas en JavaScript.
 | `GET /v2/identidad_academica/empleado` | Bearer EMPLEADO; 200 ContextoAcademico actualizado. Sin asignaciones válidas restantes:403. |
 | `DELETE /v2/identidad_academica/empleado` | Revoca token EMPLEADO, 204 sin cuerpo. |
 
-Como el esquema no distingue empleados, se define configuración nueva del
-servidor `GALENOS_EMPLEADO_ROLES`: lista de UUID de Rol separados por comas.
-Debe resolverse contra roles reales activos; nunca se toma del navegador.
-Vacío significa ningún rol habilitado, sin apertura automática. Un UUID
-inexistente o del rol Paciente es error de configuración, no acceso permitido.
-Los nombres Recepción y Médico existen en el fixture sintético
-`test/fixtures/crud_demo.sql`; no se asumen sus UUID en datos existentes.
-Configurar IDs comprobados en la base sintética al desplegar pruebas.
-No clasificar automáticamente todo rol distinto de paciente como empleado.
+Regla académica confirmada por el usuario: una asignación existente PersonaRol
+es de empleado si su rol es distinto de Paciente y tanto rol como clínica están
+activos. PersonaRol no posee columna activo ni vigencia propia; no se añade una.
+No se utiliza `GALENOS_EMPLEADO_ROLES` ni una lista de UUID. Paciente se reconoce
+con la regla clínica existente (nombre normalizado), sin hardcodear roles empleados.
 
-Un empleado obtiene todas sus asignaciones utilizables de los roles configurados,
+Un empleado obtiene todas sus asignaciones utilizables desde JPA,
 incluidas varias clínicas/roles. Sus asignaciones paciente no conceden permisos
 de empleado y no se incluyen en este contexto. La identidad no implica facultad
 de administrar catálogos ni información de otras clínicas.
+
+Sin asignaciones de empleado:403 con `La persona no tiene asignaciones de empleado.`
+Si existen asignaciones propias de empleado pero ninguna utilizable:403 con
+`No hay asignaciones de empleado activas. Revisa el rol y la clínica.`.
+La sesión ausente, revocada o expirada sigue respondiendo401. El cliente elimina
+el contexto anterior y solicita identificación nuevamente; los errores de red no
+se interpretan como una identidad inexistente ni como permisos concedidos.
 
 DTO nuevos, iguales para ambos propósitos:
 
@@ -408,5 +411,5 @@ sin cambios de esquema. Los clientes deben aceptar esta extensión aditiva.
 
 El ticket académico de paciente reutiliza CitasPacienteService; valida pertenencia,
 produce PDF Java y responde Cache-Control:no-store. No se limita a las primeras
-1000 consultas. La regla de clasificación de empleado sigue pendiente de decisión;
-esta extensión no sustituye la allowlist por privilegios implícitos.
+1000 consultas. La clasificación dinámica de empleado es la regla confirmada en
+la sección5; no concede privilegios administrativos ni depende de una allowlist.
