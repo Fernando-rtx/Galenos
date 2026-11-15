@@ -413,3 +413,45 @@ El ticket académico de paciente reutiliza CitasPacienteService; valida pertenen
 produce PDF Java y responde Cache-Control:no-store. No se limita a las primeras
 1000 consultas. La clasificación dinámica de empleado es la regla confirmada en
 la sección5; no concede privilegios administrativos ni depende de una allowlist.
+
+## HU3: historial por procedimiento y contexto atendible
+
+La rama `feat/gt02-hu3-dashboard` conserva las rutas y extiende Appointment,
+respuesta de GET v2/empleado/consultas y GET v2/paciente/citas, con:
+
+```
+idConsultaProcedimientoActual: UUID string | null
+idConsultaProcedimientoPasoActual: UUID string | null
+estadoPasoActual: string | null
+procedimientos: [{
+  idConsultaProcedimiento: UUID string,
+  idProcedimiento: UUID string | null,
+  nombre: string | null,
+  pasos: History[],
+  secuencias: [{idPasoOrigen: UUID string, idPasoDestino: UUID string | null,
+                tipoSecuencia: string | null}]
+}]
+```
+
+No cambia la respuesta pública de HU1 en v2/citas_paciente ni el DTO de atención.
+El frontend nuevo acepta también el Appointment anterior; desplegar las extensiones
+coordinadamente con el cliente, que antes validaba claves exactas.
+
+Los grupos corresponden a ConsultaProcedimiento persistido. pasos contiene
+ejecuciones COMPLETADO o RETROCEDIDO, conservando el estado real; no agrega
+ejecuciones a partir de la plantilla. Las secuencias provienen de
+ProcedimientoPasoSecuencia para el procedimiento correspondiente. El visor solo
+conecta nodos con ejecuciones previas del mismo grupo, y señala enlaces compartidos
+o ciclos sin inventar una cadena lineal. historial plano se conserva por compatibilidad.
+
+La bandeja filtra en JPA por persona responsable, rol, clínica de la consulta,
+clínica de la asignación del paso, estado PENDIENTE/EN_CURSO y rol de plantilla.
+La comprobación del detalle exige asimismo el rol de PersonaRol del paso.
+La sesión y X-Persona-Rol se revalidan en REST. El orden de página incluye
+fechaInicio e idConsulta; conteo y listado comparten los mismos filtros.
+
+No se otorga una consulta a todos los empleados con un mismo rol: se respeta
+PersonaRol responsable de cada ejecución. La política heredada para elegir un
+responsable al crear/avanzar no se cambia. HU4 conserva su conflicto409 si encuentra
+más de una ejecución activa en una consulta; HU3 aplica la misma comprobación al
+proyectar una tarjeta atendible, sin escoger arbitrariamente la más reciente.
