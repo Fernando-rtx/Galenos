@@ -13,6 +13,16 @@ public class ApiExceptionMapper implements ExceptionMapper<Exception> {
 
     @Override
     public Response toResponse(Exception exception) {
+        // Un bloqueo de otra transacción no es un fallo de conexión ni una atención guardada.
+        Throwable conflict = exception;
+        for (int depth = 0; conflict != null && depth < 8; depth++, conflict = conflict.getCause()) {
+            if (conflict instanceof jakarta.persistence.LockTimeoutException
+                    || conflict instanceof jakarta.persistence.PessimisticLockException
+                    || conflict instanceof jakarta.persistence.OptimisticLockException) {
+                return Response.status(409).type(MediaType.APPLICATION_JSON_TYPE)
+                        .entity(new ApiError("La consulta está siendo modificada. Actualiza el paso antes de continuar.")).build();
+            }
+        }
         if (exception instanceof sv.edu.ues.occingenieriappi115_2026.salud.control.ReglaNegocioException regla) {
             int status = switch (regla.getMotivo()) {
                 case VALIDACION -> 422;

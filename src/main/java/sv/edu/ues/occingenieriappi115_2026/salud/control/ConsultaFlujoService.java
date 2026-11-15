@@ -120,6 +120,9 @@ public class ConsultaFlujoService {
                 || inicial.getIdRol().getIdRol() == null || !Boolean.TRUE.equals(inicial.getIdRol().getActivo())) {
             throw new FlujoConsultaException("consultaFlujo.rolInactivo");
         }
+        if (IdentidadAcademicaService.paciente(inicial.getIdRol())) {
+            throw new FlujoConsultaException("consultaFlujo.plantillaInvalida");
+        }
         var responsables = personaRolDAO.buscarResponsablesPorClinicaYRol(clinica, inicial.getIdRol().getIdRol());
         PersonaRol responsable = responsables.stream()
                 .filter(r -> personaEnClinica(r, clinica))

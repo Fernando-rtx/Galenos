@@ -253,9 +253,9 @@ public class ConsultaProcedimientoPasoModel extends AbstractModel<ConsultaProced
     }
 
     /**
-     * Valida que el responsable elegido exista en el catálogo cargado. La
-     * relación con la plantilla de paso no existe en la base, así que no se
-     * infiere un rol a partir de ella.
+     * Valida la asignación del responsable en la clínica actual. La plantilla
+     * se enlaza al crear el procedimiento en ConsultaFlujoService; este
+     * formulario no deduce ni repara plantillas de ejecuciones antiguas.
      *
      * @param contexto contexto Faces activo
      * @param componente componente que dispara la validación

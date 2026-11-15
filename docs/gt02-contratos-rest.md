@@ -413,3 +413,100 @@ El ticket académico de paciente reutiliza CitasPacienteService; valida pertenen
 produce PDF Java y responde Cache-Control:no-store. No se limita a las primeras
 1000 consultas. La clasificación dinámica de empleado es la regla confirmada en
 la sección5; no concede privilegios administrativos ni depende de una allowlist.
+
+## HU3: historial por procedimiento y contexto atendible
+
+La rama `feat/gt02-hu3-dashboard` conserva las rutas y extiende Appointment,
+respuesta de GET v2/empleado/consultas y GET v2/paciente/citas, con:
+
+```
+idConsultaProcedimientoActual: UUID string | null
+idConsultaProcedimientoPasoActual: UUID string | null
+estadoPasoActual: string | null
+procedimientos: [{
+  idConsultaProcedimiento: UUID string,
+  idProcedimiento: UUID string | null,
+  nombre: string | null,
+  pasos: History[],
+  secuencias: [{idPasoOrigen: UUID string, idPasoDestino: UUID string | null,
+                tipoSecuencia: string | null}]
+}]
+```
+
+No cambia la respuesta pública de HU1 en v2/citas_paciente ni el DTO de atención.
+El frontend nuevo acepta también el Appointment anterior; desplegar las extensiones
+coordinadamente con el cliente, que antes validaba claves exactas.
+
+Los grupos corresponden a ConsultaProcedimiento persistido. pasos contiene
+ejecuciones COMPLETADO o RETROCEDIDO, conservando el estado real; no agrega
+ejecuciones a partir de la plantilla. Las secuencias provienen de
+ProcedimientoPasoSecuencia para el procedimiento correspondiente. El visor solo
+conecta nodos con ejecuciones previas del mismo grupo, y señala enlaces compartidos
+o ciclos sin inventar una cadena lineal. historial plano se conserva por compatibilidad.
+
+La bandeja filtra en JPA por persona responsable, rol, clínica de la consulta,
+clínica de la asignación del paso, estado PENDIENTE/EN_CURSO y rol de plantilla.
+La comprobación del detalle exige asimismo el rol de PersonaRol del paso.
+La sesión y X-Persona-Rol se revalidan en REST. El orden de página incluye
+fechaInicio e idConsulta; conteo y listado comparten los mismos filtros.
+
+No se otorga una consulta a todos los empleados con un mismo rol: se respeta
+PersonaRol responsable de cada ejecución. La política heredada para elegir un
+responsable al crear/avanzar no se cambia. HU4 conserva su conflicto409 si encuentra
+más de una ejecución activa en una consulta; HU3 aplica la misma comprobación al
+proyectar una tarjeta atendible, sin escoger arbitrariamente la más reciente.
+
+## HU4: atención activa y retroceso por enlaces persistidos
+
+`feat/gt02-hu4-atencion` reutiliza GET `v2/atencion/consulta/{id}` y POST
+`v2/atencion/registrar` (también conserva el alias por consulta). No cambia el
+esquema PostgreSQL. CareDetail agrega, sin renombrar sus propiedades anteriores:
+
+```
+fechaConsulta: ISO-8601 UTC string | null
+empleado: string
+idPersonaRol: UUID string (responsable de la ejecución)
+idConsultaProcedimiento: UUID string
+estadoPasoActual: string
+ordenesActuales: ExamOrder[] (incluye resultados persistidos)
+anteriores: [{idConsultaProcedimientoPaso: UUID string, idPaso: UUID string,
+             nombre: string | null}]
+```
+
+El frontend nuevo acepta el detalle anterior y el ampliado; desplegar el backend
+junto con este cliente porque el cliente anterior validaba claves exactas.
+El contexto de petición sigue siendo Bearer, X-Persona-Rol y persona/rol/clínica.
+La autorización comprueba al responsable antes de exponer detalles de una ejecución
+sin plantilla. Una consulta de otra clínica/no disponible conserva404; asignación
+o responsable ajenos403; sesión inválida401.
+
+POST conserva accion, valor, examenes e idPasoSiguiente; acepta además
+`idConsultaProcedimientoPasoAnterior` (UUID opcional, para RETROCEDER).
+Si hay varios predecesores válidos se exige elegir uno; un UUID no incluido se
+rechaza422. Si solo hay uno puede omitirse. No se elige un predecesor por fecha
+entre ramas distintas. Los candidatos son ejecuciones COMPLETADO del mismo
+ConsultaProcedimiento, finalizadas antes del inicio actual, cuya plantilla tiene
+un enlace directo al paso actual. Para repeticiones de una misma plantilla se
+ofrece la última ejecución completada anterior. El retroceso crea una nueva
+ejecución PENDIENTE con el responsable anterior todavía válido; conserva intactos
+el registro anterior y su responsable. Si este ya no está habilitado, falla409
+sin reasignarlo automáticamente. El paso abandonado queda RETROCEDIDO.
+
+Avanzar exige un destino enlazado del mismo procedimiento, con rol activo de
+empleado; conserva la política existente de asignación del siguiente responsable.
+Finalizar exige indicaFin. Se rechaza una plantilla de otro procedimiento o un
+procedimiento inactivo/cerrado. El historial del detalle contiene únicamente
+COMPLETADO/RETROCEDIDO, separado del valor y órdenes de la ejecución actual.
+
+El EJB bloquea Consulta con PESSIMISTIC_WRITE, compara el UUID de ejecución vigente
+y valida nota, transición, responsable y todos los exámenes antes de modificar
+entidades. Solo se crean órdenes permitidas por ProcedimientoPasoExamen activo y
+Examen activo; una orden existente para ejecución/examen no se duplica. La
+transacción REQUIRED y FlujoConsultaException(rollback=true) se conservan.
+Conflictos de ejecución o bloqueo JPA responden409; validaciones422; fallos internos500
+sin SQL ni trazas. El cliente bloquea envíos simultáneos y, ante un resultado de
+guardado incierto, conserva el texto y exige una lectura nueva antes de reenviar.
+
+No se ejecutaron escrituras clínicas para verificar esta rama. La reversión SQL,
+concurrencia real y persistencia quedan pendientes de un caso manual autorizado
+en clinica. Las pruebas JUnit/Mockito no certifican esos efectos PostgreSQL.

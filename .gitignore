@@ -4,6 +4,7 @@ target/
 /docs/*
 !/docs/api-gestion-v2.md
 !/docs/gt02-contratos-rest.md
+!/docs/gt02-hu4-bloqueos.md
 !/docs/gt02-hu1-hu2-entrega.md
 !/docs/implementacion-crud.md
 !/docs/desarrollo-local.md

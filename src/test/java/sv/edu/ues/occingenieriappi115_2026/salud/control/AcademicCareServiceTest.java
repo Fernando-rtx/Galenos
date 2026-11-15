@@ -48,6 +48,8 @@ class AcademicCareServiceTest {
     procedure.setIdConsulta(consultation);
     template.setIdRol(role); template.setIndicaFin(false);
     template.setIdProcedimiento(new Procedimiento(id(70)));
+    template.getIdProcedimiento().setActivo(true);
+    procedure.setIdProcedimiento(id(70));
     step.setIdConsultaProcedimiento(procedure); step.setIdPersonaRol(assignment);
     step.setIdProcedimientoPaso(template); step.setEstado("PENDIENTE");
     step.setFechaInicio(Date.from(Instant.parse("2026-01-01T12:00:00Z")));
@@ -55,6 +57,7 @@ class AcademicCareServiceTest {
     query(ConsultaProcedimiento.class, List.of(procedure));
     history = query(ConsultaProcedimientoPaso.class, List.of(step));
     outgoing = query(ProcedimientoPasoSecuencia.class, List.of());
+    query(UUID.class, List.of());
     when(em.find(Rol.class, roleId)).thenReturn(role);
     when(em.find(Consulta.class, consultation.getIdConsulta(), LockModeType.PESSIMISTIC_WRITE))
         .thenReturn(consultation);
@@ -142,15 +145,20 @@ class AcademicCareServiceTest {
     rejects("consultaFlujo.noHayPasoAnterior", () -> register("RETROCEDER", null, List.of()));
   }
   @Test void retrocederReabrePlantillaAnteriorSinBorrarHistoria() {
+    var earlierTemplate = new ProcedimientoPaso(id(21)); earlierTemplate.setIdRol(assignment.getIdRol());
+    earlierTemplate.setIdProcedimiento(template.getIdProcedimiento());
     var previous = new ConsultaProcedimientoPaso(id(20));
-    previous.setIdConsultaProcedimiento(procedure); previous.setIdProcedimientoPaso(template);
+    previous.setIdConsultaProcedimiento(procedure); previous.setIdProcedimientoPaso(earlierTemplate);
+    previous.setIdPersonaRol(assignment);
     previous.setEstado("COMPLETADO"); previous.setFechaFin(step.getFechaInicio());
     when(history.getResultList()).thenReturn(List.of(previous, step));
+    query(UUID.class, List.of(earlierTemplate.getIdProcedimientoPaso()));
     var result = register("RETROCEDER", null, List.of());
     var captured = org.mockito.ArgumentCaptor.forClass(ConsultaProcedimientoPaso.class);
     verify(em).persist(captured.capture());
     assertEquals("PENDIENTE", captured.getValue().getEstado());
-    assertSame(template, captured.getValue().getIdProcedimientoPaso());
+    assertSame(earlierTemplate, captured.getValue().getIdProcedimientoPaso());
+    assertSame(assignment, captured.getValue().getIdPersonaRol());
     assertEquals("RETROCEDIDO", step.getEstado()); assertEquals("COMPLETADO", previous.getEstado());
     assertFalse(result.finalizada()); verify(em, never()).remove(any());
   }
@@ -164,7 +172,7 @@ class AcademicCareServiceTest {
   @Test void examenPermitidoCreaOrdenVinculadaAlPaso() {
     query(ProcedimientoPasoExamen.class, List.of(new ProcedimientoPasoExamen(id(31))));
     query(OrdenExamen.class, List.of());
-    var exam = new Examen(id(30)); when(em.find(Examen.class, id(30))).thenReturn(exam);
+    var exam = new Examen(id(30)); exam.setActivo(true); when(em.find(Examen.class, id(30))).thenReturn(exam);
     register("GUARDAR_PARCIAL", null, List.of(id(30)));
     var captured = org.mockito.ArgumentCaptor.forClass(OrdenExamen.class);
     verify(em).persist(captured.capture());
@@ -206,5 +214,168 @@ class AcademicCareServiceTest {
     when(outgoing.getResultList()).thenReturn(List.of(link));
     when(em.find(ProcedimientoPaso.class, id(20))).thenReturn(next);
     rejects("consultaFlujo.plantillaInvalida", () -> register("AVANZAR", id(20), List.of()));
+  }
+
+  @Test void bandejaProyectaProcedimientoActualYJerarquiaSinPasosFuturos() {
+    procedure.setIdProcedimiento(id(70));
+    template.getIdProcedimiento().setNombre("Procedimiento sintético");
+    template.setNombre("Paso actual");
+    when(em.find(Procedimiento.class, id(70))).thenReturn(template.getIdProcedimiento());
+    var previousTemplate = new ProcedimientoPaso(id(71)); previousTemplate.setNombre("Paso anterior");
+    previousTemplate.setIdProcedimiento(template.getIdProcedimiento());
+    var previous = new ConsultaProcedimientoPaso(id(72)); previous.setIdProcedimientoPaso(previousTemplate);
+    previous.setIdConsultaProcedimiento(procedure); previous.setIdPersonaRol(assignment);
+    previous.setEstado("COMPLETADO"); previous.setValor("Registro persistido sintético");
+    previous.setFechaFin(Date.from(Instant.parse("2026-01-01T11:00:00Z")));
+    when(history.getResultList()).thenReturn(List.of(previous, step));
+    var link = new ProcedimientoPasoSecuencia(id(73)); link.setIdProcedimientoPaso(previousTemplate);
+    link.setIdProcedimientoPasoReferencia(template.getIdProcedimientoPaso()); link.setTipoSecuencia("CONTINUAR");
+    when(outgoing.getResultList()).thenReturn(List.of(link));
+    var rowsQuery = query(Consulta.class, List.of(consultation));
+    var result = service.employeeAppointments(personId, clinicId, roleId,
+        java.time.LocalDate.parse("2026-01-01"), java.time.LocalDate.parse("2026-01-01"), 0, 20).getFirst();
+    assertEquals("Procedimiento sintético", result.procedimiento());
+    assertEquals("PENDIENTE", result.estadoPasoActual());
+    assertEquals(procedure.getIdConsultaProcedimiento().toString(), result.idConsultaProcedimientoActual());
+    assertEquals(step.getIdConsultaProcedimientoPaso().toString(), result.idConsultaProcedimientoPasoActual());
+    var group = result.procedimientos().getFirst();
+    assertEquals(1, group.pasos().size());
+    assertEquals("Registro persistido sintético", group.pasos().getFirst().valor());
+    assertEquals(previousTemplate.getIdProcedimientoPaso().toString(), group.secuencias().getFirst().idPasoOrigen());
+    verify(rowsQuery).setParameter("from", Date.from(Instant.parse("2026-01-01T06:00:00Z")));
+    verify(rowsQuery).setParameter("until", Date.from(Instant.parse("2026-01-02T06:00:00Z")));
+    verify(em).createQuery(contains("p.idPersonaRol.idClinica.idClinica = :clinic"), eq(Consulta.class));
+    verify(em, never()).merge(any()); verify(em, never()).persist(any());
+  }
+
+  @Test void consultaDevueltaPorJpaNoExponeHistorialSiElPasoPerteneceAOtraClinica() {
+    assignment.setIdClinica(new Clinica(id(99)));
+    query(Consulta.class, List.of(consultation));
+    var error = assertThrows(FlujoConsultaException.class, () -> service.employeeAppointments(
+        personId, clinicId, roleId, null, null, 0, 20));
+    assertEquals("consultaFlujo.asignacionInvalida", error.getMessage());
+  }
+
+  @Test void mismaPersonaYClinicaConOtroRolEnElPasoNoAutorizaAtencion() {
+    var other = new PersonaRol(id(90)); other.setIdPersona(assignment.getIdPersona());
+    other.setIdClinica(assignment.getIdClinica()); other.setIdRol(new Rol(id(91)));
+    step.setIdPersonaRol(other);
+    rejects("consultaFlujo.asignacionInvalida", () -> register("GUARDAR_PARCIAL", null, List.of()));
+  }
+
+  @Test void variosProcedimientosNoMezclanElHistorialNiElNombreDelActual() {
+    procedure.setIdProcedimiento(id(70)); template.getIdProcedimiento().setNombre("Actual");
+    when(em.find(Procedimiento.class, id(70))).thenReturn(template.getIdProcedimiento());
+    var other = new ConsultaProcedimiento(id(80)); other.setIdConsulta(consultation); other.setIdProcedimiento(id(81));
+    var otherTemplate = new Procedimiento(id(81)); otherTemplate.setNombre("Anterior");
+    when(em.find(Procedimiento.class, id(81))).thenReturn(otherTemplate);
+    query(ConsultaProcedimiento.class, List.of(other, procedure));
+    @SuppressWarnings("unchecked") TypedQuery<ConsultaProcedimientoPaso> empty = mock(TypedQuery.class, RETURNS_SELF);
+    when(empty.getResultList()).thenReturn(List.of());
+    when(history.setParameter("id", other.getIdConsultaProcedimiento())).thenReturn(empty);
+    query(Consulta.class, List.of(consultation));
+    var result = service.employeeAppointments(personId, clinicId, roleId, null, null, 0, 20).getFirst();
+    assertEquals("Actual", result.procedimiento());
+    assertEquals(procedure.getIdConsultaProcedimiento().toString(), result.idConsultaProcedimientoActual());
+    assertEquals(2, result.procedimientos().size());
+    assertTrue(result.procedimientos().getFirst().pasos().isEmpty());
+    assertEquals(other.getIdConsultaProcedimiento().toString(), result.procedimientos().getFirst().idConsultaProcedimiento());
+  }
+
+  @Test void plantillaDebePertenecerAlProcedimientoDeLaEjecucion() {
+    procedure.setIdProcedimiento(id(99));
+    rejects("consultaFlujo.plantillaInvalida", () -> register("GUARDAR_PARCIAL", null, List.of()));
+    assertNull(step.getValor());
+  }
+  @Test void procedimientoInactivoNoAdmiteEscritura() {
+    template.getIdProcedimiento().setActivo(false);
+    rejects("consultaFlujo.procedimientoInactivo", () -> register("GUARDAR_PARCIAL", null, List.of()));
+  }
+  @Test void errorEnSegundoExamenNoPersisteElPrimeroNiCambiaLaNota() {
+    @SuppressWarnings("unchecked") TypedQuery<ProcedimientoPasoExamen> allowed = mock(TypedQuery.class, RETURNS_SELF);
+    when(em.createQuery(anyString(), eq(ProcedimientoPasoExamen.class))).thenReturn(allowed);
+    when(allowed.getResultList()).thenReturn(List.of(new ProcedimientoPasoExamen(id(31))), List.of());
+    query(OrdenExamen.class, List.of());
+    var exam = new Examen(id(30)); exam.setActivo(true); when(em.find(Examen.class, id(30))).thenReturn(exam);
+    rejects("consultaFlujo.examenNoPermitido", () -> register("GUARDAR_PARCIAL", null, List.of(id(30), id(32))));
+    assertNull(step.getValor()); assertEquals("PENDIENTE", step.getEstado());
+    verify(allowed).setParameter("exam", id(32));
+  }
+  @Test void noRetrocedeAUnPasoSinEnlaceAunqueSeaElUltimoCompletado() {
+    var previous = new ConsultaProcedimientoPaso(id(20)); previous.setEstado("COMPLETADO");
+    previous.setIdProcedimientoPaso(template); previous.setIdConsultaProcedimiento(procedure);
+    previous.setFechaFin(step.getFechaInicio());
+    when(history.getResultList()).thenReturn(List.of(previous, step));
+    rejects("consultaFlujo.noHayPasoAnterior", () -> register("RETROCEDER", null, List.of()));
+  }
+  @Test void bifurcacionRequiereElegirSiguienteValido() {
+    var a = new ProcedimientoPasoSecuencia(id(20)); a.setIdProcedimientoPasoReferencia(id(30));
+    var b = new ProcedimientoPasoSecuencia(id(21)); b.setIdProcedimientoPasoReferencia(id(31));
+    when(outgoing.getResultList()).thenReturn(List.of(a, b));
+    rejects("consultaFlujo.seleccioneSiguientePaso", () -> register("AVANZAR", null, List.of()));
+    assertNull(step.getValor());
+  }
+  @Test void retrocesoConVariosPredecesoresExigeEleccionYConservaResponsable() {
+    var previous = new ArrayList<ConsultaProcedimientoPaso>();
+    for (long n : List.of(20L, 30L)) {
+      var t = new ProcedimientoPaso(id(n)); t.setIdRol(assignment.getIdRol()); t.setIdProcedimiento(template.getIdProcedimiento());
+      var p = new ConsultaProcedimientoPaso(id(n + 1)); p.setIdProcedimientoPaso(t); p.setIdConsultaProcedimiento(procedure);
+      p.setIdPersonaRol(assignment); p.setEstado("COMPLETADO"); p.setFechaFin(step.getFechaInicio()); previous.add(p);
+    }
+    var previousOwner = new PersonaRol(id(85)); previousOwner.setIdPersona(new Persona(id(86)));
+    previousOwner.setIdClinica(assignment.getIdClinica()); previousOwner.setIdRol(assignment.getIdRol());
+    previous.get(1).setIdPersonaRol(previousOwner);
+    query(UUID.class, List.of(id(20), id(30)));
+    when(history.getResultList()).thenReturn(List.of(previous.get(0), previous.get(1), step));
+    rejects("consultaFlujo.seleccionePasoAnterior", () -> register("RETROCEDER", null, List.of()));
+    rejects("consultaFlujo.seleccionePasoAnterior", () -> service.register(personId, clinicId, roleId,
+        consultation.getIdConsulta(), step.getIdConsultaProcedimientoPaso(), "RETROCEDER", "Nota", null, List.of(), id(99)));
+    var result = service.register(personId, clinicId, roleId, consultation.getIdConsulta(),
+        step.getIdConsultaProcedimientoPaso(), "RETROCEDER", "Nota", null, List.of(), id(31));
+    var captured = org.mockito.ArgumentCaptor.forClass(ConsultaProcedimientoPaso.class);
+    verify(em).persist(captured.capture());
+    assertSame(previous.get(1).getIdProcedimientoPaso(), captured.getValue().getIdProcedimientoPaso());
+    assertSame(previousOwner, captured.getValue().getIdPersonaRol());
+    verify(assignments, never()).getResultStream();
+    assertEquals("RETROCEDER", result.accion()); assertEquals("COMPLETADO", previous.get(1).getEstado());
+    verify(em, never()).remove(any());
+  }
+  @Test void detalleIncluyeContextoYOrdenesSinPresentarFuturosComoHistorial() {
+    consultation.setFechaInicio(step.getFechaInicio());
+    assignment.getIdPersona().setNombres("Empleado sintético");
+    var order = new OrdenExamen(id(90)); order.setExamenResultadoCollection(List.of());
+    step.setOrdenExamenCollection(List.of(order));
+    var pending = new ConsultaProcedimientoPaso(id(91)); pending.setEstado("CANCELADO");
+    when(history.getResultList()).thenReturn(List.of(pending, step));
+    query(Consulta.class, List.of(consultation)); query(ProcedimientoPasoExamen.class, List.of());
+    var detail = service.detail(personId, clinicId, roleId, consultation.getIdConsulta());
+    assertEquals("Empleado sintético", detail.empleado()); assertEquals("2026-01-01T12:00:00Z", detail.fechaConsulta());
+    assertEquals(assignment.getIdPersonaRol().toString(), detail.idPersonaRol());
+    assertEquals(procedure.getIdConsultaProcedimiento().toString(), detail.idConsultaProcedimiento());
+    assertEquals("PENDIENTE", detail.estadoPasoActual()); assertEquals(1, detail.ordenesActuales().size());
+    assertTrue(detail.historial().isEmpty()); assertFalse(detail.puedeRetroceder());
+  }
+  @Test void plantillaAusenteEsConflictoParaResponsablePeroNoRevelaDatosAOtroEmpleado() {
+    query(Consulta.class, List.of(consultation)); step.setIdProcedimientoPaso(null);
+    assertEquals("consultaFlujo.pasoSinPlantilla", assertThrows(FlujoConsultaException.class,
+        () -> service.detail(personId, clinicId, roleId, consultation.getIdConsulta())).getMessage());
+    var other = new PersonaRol(id(90)); other.setIdPersona(new Persona(id(91)));
+    other.setIdClinica(assignment.getIdClinica()); other.setIdRol(assignment.getIdRol()); step.setIdPersonaRol(other);
+    assertEquals("consultaFlujo.asignacionInvalida", assertThrows(FlujoConsultaException.class,
+        () -> service.detail(personId, clinicId, roleId, consultation.getIdConsulta())).getMessage());
+    verify(em, never()).persist(any()); verify(em, never()).merge(any());
+  }
+  @Test void lockSeObtieneAntesDeModificarYFalloPersistenciaSePropagaSinExito() {
+    query(ProcedimientoPasoExamen.class, List.of(new ProcedimientoPasoExamen(id(31))));
+    query(OrdenExamen.class, List.of());
+    doThrow(new PersistenceException("Fallo sintético")).when(em).persist(any(OrdenExamen.class));
+    var exam = new Examen(id(30)); exam.setActivo(true); when(em.find(Examen.class, id(30))).thenReturn(exam);
+    assertThrows(PersistenceException.class, () -> register("GUARDAR_PARCIAL", null, List.of(id(30))));
+    var order = inOrder(em);
+    order.verify(em).find(Consulta.class, consultation.getIdConsulta(), LockModeType.PESSIMISTIC_WRITE);
+    order.verify(em).persist(any(OrdenExamen.class));
+    verify(em, never()).merge(any());
+    assertTrue(FlujoConsultaException.class.getAnnotation(jakarta.ejb.ApplicationException.class).rollback());
+    // Mockito no revierte el estado de entidades: el rollback SQL real no queda certificado aquí.
   }
 }

@@ -26,17 +26,26 @@ public class AcademicCareService {
                            List<Role> roles) {}
     @JsonbNillable public record History(String idPaso, String idConsultaProcedimientoPaso, String nombre, String fechaInicio, String fechaFin,
                           String responsable, String valor, String estado, String rol, List<ExamOrder> ordenes) {}
-    public record ExamResult(String idExamenResultado, String fechaCreacion, String resultado, String interpretacion) {}
-    public record ExamOrder(String idOrdenExamen, String examen, String fechaCreacion, String indicaciones, List<ExamResult> resultados) {}
+    @JsonbNillable public record ExamResult(String idExamenResultado, String fechaCreacion, String resultado, String interpretacion) {}
+    @JsonbNillable public record ExamOrder(String idOrdenExamen, String examen, String fechaCreacion, String indicaciones, List<ExamResult> resultados) {}
     @JsonbNillable public record Appointment(String idConsulta, String fechaInicio, String fechaFin,
                               String paciente, String clinica, String procedimiento,
-                              String idPasoActual, String pasoActual, List<History> historial) {}
-    public record Exam(String idExamen, String nombre) {}
-    public record NextStep(String idPaso, String nombre, String tipoSecuencia) {}
+                              String idPasoActual, String pasoActual, List<History> historial,
+                              String idConsultaProcedimientoActual, String idConsultaProcedimientoPasoActual,
+                              String estadoPasoActual, List<ProcedureHistory> procedimientos) {}
+    @JsonbNillable public record Sequence(String idPasoOrigen, String idPasoDestino, String tipoSecuencia) {}
+    @JsonbNillable public record ProcedureHistory(String idConsultaProcedimiento, String idProcedimiento,
+                              String nombre, List<History> pasos, List<Sequence> secuencias) {}
+    @JsonbNillable public record Exam(String idExamen, String nombre) {}
+    @JsonbNillable public record NextStep(String idPaso, String nombre, String tipoSecuencia) {}
+    @JsonbNillable public record PreviousStep(String idConsultaProcedimientoPaso, String idPaso, String nombre) {}
     @JsonbNillable public record CareDetail(String idConsulta, String idConsultaProcedimientoPaso, String paciente, String clinica, String rol,
                              String procedimiento, String idPasoActual, String pasoActual,
                              String valorActual, boolean pasoFinal, List<History> historial, List<Exam> examenes,
-                             List<NextStep> siguientes, boolean puedeRetroceder) {}
+                             List<NextStep> siguientes, boolean puedeRetroceder,
+                             String fechaConsulta, String empleado, String idPersonaRol,
+                             String idConsultaProcedimiento, String estadoPasoActual,
+                             List<ExamOrder> ordenesActuales, List<PreviousStep> anteriores) {}
     @JsonbNillable public record CareResult(String idConsulta, String accion, String estado, String idConsultaProcedimientoPaso,
                              String idPasoActual, boolean finalizada) {}
 
@@ -97,15 +106,13 @@ public class AcademicCareService {
     public List<Appointment> employeeAppointments(UUID employee, UUID clinic, UUID role,
                                                  LocalDate from, LocalDate until, int first, int max) {
         requireAssignment(employee, clinic, role);
-        return appointments("p.idPersonaRol.idPersona.idPersona = :person AND p.idPersonaRol.idRol.idRol = :role "
-                + "AND p.estado IN ('PENDIENTE','EN_CURSO') AND p.idProcedimientoPaso.idRol.idRol = :role",
+        return appointments(staffPredicate(),
                 employee, clinic, role, from, until, first, max);
     }
 
     public long employeeAppointmentCount(UUID employee, UUID clinic, UUID role, LocalDate from, LocalDate until) {
         requireAssignment(employee, clinic, role);
-        return countAppointments("p.idPersonaRol.idPersona.idPersona = :person AND p.idPersonaRol.idRol.idRol = :role "
-                + "AND p.estado IN ('PENDIENTE','EN_CURSO') AND p.idProcedimientoPaso.idRol.idRol = :role",
+        return countAppointments(staffPredicate(),
                 employee, clinic, role, from, until);
     }
 
@@ -128,6 +135,7 @@ public class AcademicCareService {
     }
     private static String staffPredicate() {
         return "p.idPersonaRol.idPersona.idPersona = :person AND p.idPersonaRol.idRol.idRol = :role "
+                + "AND p.idPersonaRol.idClinica.idClinica = :clinic "
                 + "AND p.estado IN ('PENDIENTE','EN_CURSO') AND p.idProcedimientoPaso.idRol.idRol = :role";
     }
     private UUID documentPerson(UUID type, String number) {
@@ -158,12 +166,13 @@ public class AcademicCareService {
                 .sorted(Comparator.comparing(ConsultaProcedimientoPaso::getFechaInicio,
                         Comparator.nullsFirst(Comparator.naturalOrder()))).toList();
         ConsultaProcedimientoPaso current = active(history);
-        if (current == null || current.getIdProcedimientoPaso() == null) {
+        if (current == null) {
             throw new FlujoConsultaException("consultaFlujo.pasoSinPlantilla");
         }
+        assertResponsible(current, employee, clinic, role);
+        Procedimiento procedure = requireTemplate(current);
         assertCanAttend(current, employee, clinic, role);
         ProcedimientoPaso template = current.getIdProcedimientoPaso();
-        UUID procedureId = template.getIdProcedimiento().getIdProcedimiento();
         List<ProcedimientoPasoExamen> links = em.createQuery("SELECT l FROM ProcedimientoPasoExamen l "
                 + "JOIN FETCH l.idExamen e WHERE l.idProcedimientoPaso.idProcedimientoPaso=:step AND l.activo=TRUE AND e.activo=TRUE",
                 ProcedimientoPasoExamen.class).setParameter("step", template.getIdProcedimientoPaso()).getResultList();
@@ -172,23 +181,32 @@ public class AcademicCareService {
                 .setParameter("step", template.getIdProcedimientoPaso()).getResultList().stream()
                 .map(s -> {
                     ProcedimientoPaso target = em.find(ProcedimientoPaso.class, s.getIdProcedimientoPasoReferencia());
-                    return target == null ? null : new NextStep(target.getIdProcedimientoPaso().toString(), target.getNombre(), s.getTipoSecuencia());
+                    return !validTarget(target, procedure.getIdProcedimiento()) ? null
+                            : new NextStep(target.getIdProcedimientoPaso().toString(), target.getNombre(), s.getTipoSecuencia());
                 }).filter(Objects::nonNull).toList();
-        List<History> previous = history.stream().filter(s -> s != current).map(AcademicCareService::history).toList();
-        boolean canBack = history.stream().anyMatch(s -> s != current
-                && current.getIdConsultaProcedimiento().equals(s.getIdConsultaProcedimiento())
-                && "COMPLETADO".equals(s.getEstado()) && s.getIdProcedimientoPaso() != null);
+        List<History> previous = history.stream().filter(s -> "COMPLETADO".equals(s.getEstado())
+                || "RETROCEDIDO".equals(s.getEstado())).map(AcademicCareService::history).toList();
+        List<PreviousStep> backward = previousSteps(current, history).stream().map(s -> new PreviousStep(
+                s.getIdConsultaProcedimientoPaso().toString(), templateId(s), s.getIdProcedimientoPaso().getNombre())).toList();
         return new CareDetail(consultationId.toString(), current.getIdConsultaProcedimientoPaso().toString(), personName(c.getIdPersonaRol().getIdPersona()),
                 c.getIdPersonaRol().getIdClinica().getNombre(), template.getIdRol().getNombre(),
-                em.find(Procedimiento.class, procedureId).getNombre(), template.getIdProcedimientoPaso().toString(),
+                procedure.getNombre(), template.getIdProcedimientoPaso().toString(),
                 template.getNombre(), current.getValor(), Boolean.TRUE.equals(template.getIndicaFin()), previous,
                 links.stream().map(l -> new Exam(l.getIdExamen().getIdExamen().toString(), l.getIdExamen().getNombre())).toList(),
-                next, canBack);
+                next, !backward.isEmpty(), instant(c.getFechaInicio()), personName(current.getIdPersonaRol().getIdPersona()),
+                current.getIdPersonaRol().getIdPersonaRol().toString(), current.getIdConsultaProcedimiento().getIdConsultaProcedimiento().toString(),
+                current.getEstado(), history(current).ordenes(), backward);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public CareResult register(UUID employee, UUID clinic, UUID role, UUID consultationId, UUID stepId,
                         String action, String value, UUID nextStep, List<UUID> examIds) {
+        return register(employee, clinic, role, consultationId, stepId, action, value, nextStep, examIds, null);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public CareResult register(UUID employee, UUID clinic, UUID role, UUID consultationId, UUID stepId,
+                        String action, String value, UUID nextStep, List<UUID> examIds, UUID previousExecution) {
         requireAssignment(employee, clinic, role);
         Consulta consultation = em.find(Consulta.class, consultationId, LockModeType.PESSIMISTIC_WRITE);
         if (consultation == null || consultation.getIdPersonaRol() == null
@@ -202,49 +220,37 @@ public class AcademicCareService {
         ConsultaProcedimientoPaso current = active(history);
         if (current == null || !current.getIdConsultaProcedimientoPaso().equals(stepId))
             throw new FlujoConsultaException("consultaFlujo.conflictoPaso");
+        assertResponsible(current, employee, clinic, role);
+        requireTemplate(current);
         assertCanAttend(current, employee, clinic, role);
         if (value == null || value.isBlank() || value.length() > 10000)
             throw new FlujoConsultaException("consultaFlujo.atencionRequerida");
-        if (!Set.of("GUARDAR_PARCIAL", "AVANZAR", "RETROCEDER", "FINALIZAR").contains(action))
+        if (action == null || !Set.of("GUARDAR_PARCIAL", "AVANZAR", "RETROCEDER", "FINALIZAR").contains(action))
             throw new FlujoConsultaException("consultaFlujo.accionInvalida");
-        current.setValor(value.strip());
-        persistExams(current, examIds == null ? List.of() : examIds);
-        Date now = new Date();
-        if ("GUARDAR_PARCIAL".equals(action)) {
-            current.setEstado("EN_CURSO");
-            em.merge(current);
-            return new CareResult(consultationId.toString(), action, current.getEstado(),
-                    current.getIdConsultaProcedimientoPaso().toString(), templateId(current), false);
-        }
+        // Resolver y validar toda la operación antes de modificar entidades administradas.
+        ConsultaProcedimientoPaso previous = null;
+        PersonaRol replayAssignee = null;
         if ("RETROCEDER".equals(action)) {
-            ConsultaProcedimientoPaso previous = history.stream().filter(s -> current.getIdConsultaProcedimiento().equals(s.getIdConsultaProcedimiento()) && "COMPLETADO".equals(s.getEstado())
-                    && s.getIdProcedimientoPaso() != null && !s.equals(current))
-                    .max(Comparator.comparing(ConsultaProcedimientoPaso::getFechaFin,
-                            Comparator.nullsFirst(Comparator.naturalOrder()))).orElse(null);
-            if (previous == null) throw new FlujoConsultaException("consultaFlujo.noHayPasoAnterior");
-            current.setEstado("RETROCEDIDO"); current.setFechaFin(now); em.merge(current);
-            UUID previousRole = previous.getIdProcedimientoPaso().getIdRol().getIdRol();
-            PersonaRol replayAssignee = em.createQuery("SELECT pr FROM PersonaRol pr JOIN FETCH pr.idRol "
-                    + "JOIN FETCH pr.idClinica WHERE pr.idClinica.idClinica=:clinic AND pr.idRol.idRol=:role AND pr.idRol.activo=TRUE AND pr.idClinica.activo=TRUE "
-                    + "ORDER BY pr.idPersonaRol", PersonaRol.class).setParameter("clinic", clinic)
-                    .setParameter("role", previousRole).setMaxResults(1).getResultStream().findFirst()
-                    .orElseThrow(() -> new FlujoConsultaException("consultaFlujo.sinResponsable"));
-            ConsultaProcedimientoPaso replay = new ConsultaProcedimientoPaso(UUID.randomUUID());
-            replay.setIdConsultaProcedimiento(current.getIdConsultaProcedimiento());
-            replay.setIdProcedimientoPaso(previous.getIdProcedimientoPaso());
-            replay.setIdPersonaRol(replayAssignee); replay.setFechaInicio(now); replay.setEstado("PENDIENTE");
-            em.persist(replay);
-            return new CareResult(consultationId.toString(), action, replay.getEstado(),
-                    replay.getIdConsultaProcedimientoPaso().toString(), templateId(replay), false);
+            List<ConsultaProcedimientoPaso> candidates = previousSteps(current, history);
+            if (candidates.isEmpty()) throw new FlujoConsultaException("consultaFlujo.noHayPasoAnterior");
+            if (previousExecution != null) candidates = candidates.stream()
+                    .filter(s -> previousExecution.equals(s.getIdConsultaProcedimientoPaso())).toList();
+            if (candidates.size() != 1) throw new FlujoConsultaException("consultaFlujo.seleccionePasoAnterior");
+            previous = candidates.getFirst();
+            replayAssignee = previous.getIdPersonaRol();
+            if (!usableAssignee(replayAssignee, clinic, previous.getIdProcedimientoPaso().getIdRol().getIdRol()))
+                throw new FlujoConsultaException("consultaFlujo.sinResponsable");
         }
         ProcedimientoPaso template = current.getIdProcedimientoPaso();
         if (template == null) throw new FlujoConsultaException("consultaFlujo.pasoSinPlantilla");
-        List<ProcedimientoPasoSecuencia> outgoing = em.createQuery("SELECT s FROM ProcedimientoPasoSecuencia s "
+        List<ProcedimientoPasoSecuencia> outgoing = !"AVANZAR".equals(action) ? List.of() : em.createQuery("SELECT s FROM ProcedimientoPasoSecuencia s "
                 + "WHERE s.idProcedimientoPaso.idProcedimientoPaso=:step", ProcedimientoPasoSecuencia.class)
                 .setParameter("step", template.getIdProcedimientoPaso()).getResultList();
         ProcedimientoPaso target = null;
+        PersonaRol assignee = null;
         if ("AVANZAR".equals(action)) {
             if (outgoing.isEmpty()) {
+                if (nextStep != null) throw new FlujoConsultaException("consultaFlujo.seleccioneSiguientePaso");
                 if (!Boolean.TRUE.equals(template.getIndicaFin())) throw new FlujoConsultaException("consultaFlujo.sinTransicion");
                 action = "FINALIZAR";
             } else {
@@ -252,26 +258,36 @@ public class AcademicCareService {
                         .filter(s -> nextStep == null || nextStep.equals(s.getIdProcedimientoPasoReferencia())).toList();
                 if (candidates.size() != 1) throw new FlujoConsultaException("consultaFlujo.seleccioneSiguientePaso");
                 target = em.find(ProcedimientoPaso.class, candidates.getFirst().getIdProcedimientoPasoReferencia());
-                if (target == null || target.getIdProcedimiento() == null || template.getIdProcedimiento() == null
-                        || !target.getIdProcedimiento().equals(template.getIdProcedimiento())
-                        || target.getIdRol() == null || !Boolean.TRUE.equals(target.getIdRol().getActivo())
-                        || patient(target.getIdRol()))
+                if (!validTarget(target, template.getIdProcedimiento().getIdProcedimiento()))
                     throw new FlujoConsultaException("consultaFlujo.plantillaInvalida");
+                UUID targetRole = target.getIdRol().getIdRol();
+                assignee = em.createQuery("SELECT pr FROM PersonaRol pr JOIN FETCH pr.idPersona "
+                        + "JOIN FETCH pr.idRol JOIN FETCH pr.idClinica WHERE pr.idClinica.idClinica=:clinic "
+                        + "AND pr.idRol.idRol=:role AND pr.idRol.activo=TRUE AND pr.idClinica.activo=TRUE ORDER BY pr.idPersonaRol", PersonaRol.class)
+                        .setParameter("clinic", clinic).setParameter("role", targetRole).setMaxResults(1)
+                        .getResultStream().findFirst().orElseThrow(() -> new FlujoConsultaException("consultaFlujo.sinResponsable"));
+                if (!usableAssignee(assignee, clinic, targetRole)) throw new FlujoConsultaException("consultaFlujo.sinResponsable");
             }
         } else if ("FINALIZAR".equals(action) && !Boolean.TRUE.equals(template.getIndicaFin())) {
             throw new FlujoConsultaException("consultaFlujo.pasoNoFinal");
         }
-        current.setEstado("COMPLETADO"); current.setFechaFin(now); em.merge(current);
-        if (target != null) {
-            UUID targetRole = target.getIdRol().getIdRol();
-            PersonaRol assignee = em.createQuery("SELECT pr FROM PersonaRol pr JOIN FETCH pr.idPersona "
-                    + "JOIN FETCH pr.idRol JOIN FETCH pr.idClinica WHERE pr.idClinica.idClinica=:clinic "
-                    + "AND pr.idRol.idRol=:role AND pr.idRol.activo=TRUE AND pr.idClinica.activo=TRUE ORDER BY pr.idPersonaRol", PersonaRol.class)
-                    .setParameter("clinic", clinic).setParameter("role", targetRole).setMaxResults(1)
-                    .getResultStream().findFirst().orElseThrow(() -> new FlujoConsultaException("consultaFlujo.sinResponsable"));
+        List<OrdenExamen> orders = prepareExams(current, examIds == null ? List.of() : examIds);
+        Date now = new Date();
+        current.setValor(value.strip());
+        orders.forEach(em::persist);
+        if ("GUARDAR_PARCIAL".equals(action)) {
+            current.setEstado("EN_CURSO"); em.merge(current);
+            return new CareResult(consultationId.toString(), action, current.getEstado(),
+                    current.getIdConsultaProcedimientoPaso().toString(), templateId(current), false);
+        }
+        current.setEstado(previous == null ? "COMPLETADO" : "RETROCEDIDO");
+        current.setFechaFin(now); em.merge(current);
+        if (target != null || previous != null) {
             ConsultaProcedimientoPaso next = new ConsultaProcedimientoPaso(UUID.randomUUID());
-            next.setIdConsultaProcedimiento(current.getIdConsultaProcedimiento()); next.setIdProcedimientoPaso(target);
-            next.setIdPersonaRol(assignee); next.setFechaInicio(now); next.setEstado("PENDIENTE"); em.persist(next);
+            next.setIdConsultaProcedimiento(current.getIdConsultaProcedimiento());
+            next.setIdProcedimientoPaso(previous == null ? target : previous.getIdProcedimientoPaso());
+            next.setIdPersonaRol(previous == null ? assignee : replayAssignee);
+            next.setFechaInicio(now); next.setEstado("PENDIENTE"); em.persist(next);
             return new CareResult(consultationId.toString(), action, next.getEstado(),
                     next.getIdConsultaProcedimientoPaso().toString(), templateId(next), false);
         } else {
@@ -281,9 +297,10 @@ public class AcademicCareService {
         }
     }
 
-    private void persistExams(ConsultaProcedimientoPaso step, List<UUID> ids) {
+    private List<OrdenExamen> prepareExams(ConsultaProcedimientoPaso step, List<UUID> ids) {
         Set<UUID> unique = new LinkedHashSet<>(ids);
-        if (unique.size() != ids.size()) throw new FlujoConsultaException("consultaFlujo.examenDuplicado");
+        if (unique.contains(null) || unique.size() != ids.size()) throw new FlujoConsultaException("consultaFlujo.examenDuplicado");
+        List<OrdenExamen> orders = new ArrayList<>();
         for (UUID id : unique) {
             boolean allowed = !em.createQuery("SELECT l FROM ProcedimientoPasoExamen l WHERE "
                     + "l.idProcedimientoPaso.idProcedimientoPaso=:step AND l.idExamen.idExamen=:exam "
@@ -294,11 +311,58 @@ public class AcademicCareService {
                     + "AND o.idExamen.idExamen=:exam", OrdenExamen.class).setParameter("step", step.getIdConsultaProcedimientoPaso())
                     .setParameter("exam", id).setMaxResults(1).getResultList().isEmpty();
             if (!exists) {
+                Examen exam = em.find(Examen.class, id);
+                if (exam == null || !Boolean.TRUE.equals(exam.getActivo()))
+                    throw new FlujoConsultaException("consultaFlujo.examenNoPermitido");
                 OrdenExamen order = new OrdenExamen(UUID.randomUUID());
-                order.setIdConsultaProcedimientoPaso(step); order.setIdExamen(em.find(Examen.class, id));
-                order.setFechaCreacion(new Date()); em.persist(order);
+                order.setIdConsultaProcedimientoPaso(step); order.setIdExamen(exam);
+                order.setFechaCreacion(new Date()); orders.add(order);
             }
         }
+        return orders;
+    }
+
+    private boolean validTarget(ProcedimientoPaso target, UUID procedure) {
+        return target != null && target.getIdProcedimiento() != null
+                && procedure.equals(target.getIdProcedimiento().getIdProcedimiento())
+                && target.getIdRol() != null && Boolean.TRUE.equals(target.getIdRol().getActivo()) && !patient(target.getIdRol());
+    }
+
+    private static boolean usableAssignee(PersonaRol assignment, UUID clinic, UUID role) {
+        return assignment != null && assignment.getIdPersona() != null && assignment.getIdClinica() != null
+                && clinic.equals(assignment.getIdClinica().getIdClinica()) && Boolean.TRUE.equals(assignment.getIdClinica().getActivo())
+                && assignment.getIdRol() != null && role.equals(assignment.getIdRol().getIdRol())
+                && Boolean.TRUE.equals(assignment.getIdRol().getActivo()) && !patient(assignment.getIdRol());
+    }
+
+    private Procedimiento requireTemplate(ConsultaProcedimientoPaso step) {
+        ProcedimientoPaso template = step.getIdProcedimientoPaso();
+        if (template == null) throw new FlujoConsultaException("consultaFlujo.pasoSinPlantilla");
+        Procedimiento procedure = template.getIdProcedimiento();
+        if (procedure == null || step.getIdConsultaProcedimiento() == null
+                || !Objects.equals(procedure.getIdProcedimiento(), step.getIdConsultaProcedimiento().getIdProcedimiento()))
+            throw new FlujoConsultaException("consultaFlujo.plantillaInvalida");
+        if (step.getIdConsultaProcedimiento().getFechaFin() != null) throw new FlujoConsultaException("consultaFlujo.conflictoPaso");
+        if (!Boolean.TRUE.equals(procedure.getActivo())) throw new FlujoConsultaException("consultaFlujo.procedimientoInactivo");
+        return procedure;
+    }
+
+    private List<ConsultaProcedimientoPaso> previousSteps(ConsultaProcedimientoPaso current, List<ConsultaProcedimientoPaso> history) {
+        UUID procedure = current.getIdProcedimientoPaso().getIdProcedimiento().getIdProcedimiento();
+        Set<UUID> incoming = new HashSet<>(em.createQuery("SELECT s.idProcedimientoPaso.idProcedimientoPaso "
+                + "FROM ProcedimientoPasoSecuencia s WHERE s.idProcedimientoPasoReferencia=:step "
+                + "AND s.idProcedimientoPaso.idProcedimiento.idProcedimiento=:procedure", UUID.class)
+                .setParameter("step", current.getIdProcedimientoPaso().getIdProcedimientoPaso())
+                .setParameter("procedure", procedure).getResultList());
+        Map<UUID, ConsultaProcedimientoPaso> previous = new LinkedHashMap<>();
+        history.stream().filter(s -> "COMPLETADO".equals(s.getEstado()) && s.getIdProcedimientoPaso() != null
+                && current.getIdConsultaProcedimiento().equals(s.getIdConsultaProcedimiento())
+                && incoming.contains(s.getIdProcedimientoPaso().getIdProcedimientoPaso())
+                && validTarget(s.getIdProcedimientoPaso(), procedure)
+                && s.getFechaFin() != null && current.getFechaInicio() != null
+                && !s.getFechaFin().after(current.getFechaInicio()))
+                .sorted(Comparator.comparing(ConsultaProcedimientoPaso::getFechaFin)).forEach(s -> previous.put(s.getIdProcedimientoPaso().getIdProcedimientoPaso(), s));
+        return new ArrayList<>(previous.values());
     }
 
     private List<Appointment> appointments(String predicate, UUID assignmentOrPerson, UUID clinic, UUID role,
@@ -308,7 +372,7 @@ public class AcademicCareService {
                 + "LEFT JOIN cp.consultaProcedimientoPasoCollection p WHERE pr.idClinica.idClinica=:clinic AND " + predicate
                 + (from == null ? "" : " AND c.fechaInicio >= :from")
                 + (until == null ? "" : " AND c.fechaInicio < :until") + " "
-                + "ORDER BY c.fechaInicio DESC";
+                + "ORDER BY c.fechaInicio DESC, c.idConsulta";
         Instant start = from == null ? null : from.atStartOfDay(ZONE).toInstant();
         Instant end = until == null ? null : until.plusDays(1).atStartOfDay(ZONE).toInstant();
         var query = em.createQuery(jpql, Consulta.class).setParameter("clinic", clinic)
@@ -319,7 +383,8 @@ public class AcademicCareService {
         if (predicate.contains(":assignment")) query.setParameter("assignment", assignmentOrPerson);
         else { query.setParameter("person", assignmentOrPerson); query.setParameter("role", role); }
         List<Consulta> rows = query.setFirstResult(first).setMaxResults(max).getResultList();
-        return rows.stream().map(this::appointment).toList();
+        return rows.stream().map(c -> appointment(c,
+                predicate.contains(":assignment") ? null : assignmentOrPerson, clinic, role)).toList();
     }
 
     private long countAppointments(String predicate, UUID assignmentOrPerson, UUID clinic, UUID role,
@@ -341,25 +406,55 @@ public class AcademicCareService {
         return query.getSingleResult();
     }
 
-    private Appointment appointment(Consulta c) {
-        List<ConsultaProcedimiento> associations = em.createQuery("SELECT cp FROM ConsultaProcedimiento cp WHERE cp.idConsulta.idConsulta=:id", ConsultaProcedimiento.class)
+    private Appointment appointment(Consulta c, UUID employee, UUID clinic, UUID role) {
+        List<ConsultaProcedimiento> associations = em.createQuery("SELECT cp FROM ConsultaProcedimiento cp WHERE cp.idConsulta.idConsulta=:id ORDER BY cp.fechaInicio, cp.idConsultaProcedimiento", ConsultaProcedimiento.class)
                 .setParameter("id", c.getIdConsulta()).getResultList();
-        ConsultaProcedimientoPaso active = associations.stream().flatMap(cp -> steps(cp).stream()).filter(s -> activeState(s.getEstado()))
-                .max(Comparator.comparing(ConsultaProcedimientoPaso::getFechaInicio, Comparator.nullsFirst(Comparator.naturalOrder()))).orElse(null);
-        String procedure = associations.stream().map(cp -> {
-            Procedimiento p = em.find(Procedimiento.class, cp.getIdProcedimiento()); return p == null ? "Procedimiento" : p.getNombre();
-        }).findFirst().orElse("Sin procedimiento");
-        List<History> histories = associations.stream().flatMap(cp -> steps(cp).stream()).map(AcademicCareService::history).toList();
+        Map<ConsultaProcedimiento, List<ConsultaProcedimientoPaso>> executions = new LinkedHashMap<>();
+        associations.forEach(cp -> executions.put(cp, steps(cp)));
+        List<ConsultaProcedimientoPaso> all = executions.values().stream().flatMap(List::stream).toList();
+        ConsultaProcedimientoPaso current = employee == null
+                ? all.stream().filter(s -> activeState(s.getEstado())).max(Comparator.comparing(
+                    ConsultaProcedimientoPaso::getFechaInicio, Comparator.nullsFirst(Comparator.naturalOrder()))).orElse(null)
+                : active(all);
+        if (employee != null) {
+            if (current == null) throw new FlujoConsultaException("consultaFlujo.conflictoPaso");
+            assertCanAttend(current, employee, clinic, role);
+        }
+        List<ProcedureHistory> groups = new ArrayList<>();
+        for (var cp : associations) {
+            Procedimiento proc = cp.getIdProcedimiento() == null ? null : em.find(Procedimiento.class, cp.getIdProcedimiento());
+            List<Sequence> links = em.createQuery("SELECT s FROM ProcedimientoPasoSecuencia s "
+                    + "WHERE s.idProcedimientoPaso.idProcedimiento.idProcedimiento=:procedure "
+                    + "ORDER BY s.idProcedimientoPasoSecuencia", ProcedimientoPasoSecuencia.class)
+                    .setParameter("procedure", cp.getIdProcedimiento()).getResultList().stream()
+                    .map(s -> new Sequence(s.getIdProcedimientoPaso().getIdProcedimientoPaso().toString(),
+                        s.getIdProcedimientoPasoReferencia() == null ? null : s.getIdProcedimientoPasoReferencia().toString(),
+                        s.getTipoSecuencia())).toList();
+            var previous = executions.get(cp).stream()
+                    .filter(s -> "COMPLETADO".equals(s.getEstado()) || "RETROCEDIDO".equals(s.getEstado()))
+                    .map(AcademicCareService::history).toList();
+            groups.add(new ProcedureHistory(cp.getIdConsultaProcedimiento().toString(),
+                    cp.getIdProcedimiento() == null ? null : cp.getIdProcedimiento().toString(),
+                    proc == null ? null : proc.getNombre(), previous, links));
+        }
+        ConsultaProcedimiento currentProcedure = current == null ? null : current.getIdConsultaProcedimiento();
+        String procedure = groups.stream().filter(g -> currentProcedure == null
+                || g.idConsultaProcedimiento().equals(currentProcedure.getIdConsultaProcedimiento().toString()))
+                .map(g -> Objects.toString(g.nombre(), "Procedimiento sin nombre")).findFirst().orElse("Sin procedimiento");
+        List<History> histories = all.stream().map(AcademicCareService::history).toList();
         return new Appointment(c.getIdConsulta().toString(), instant(c.getFechaInicio()), instant(c.getFechaFin()),
                 personName(c.getIdPersonaRol().getIdPersona()), c.getIdPersonaRol().getIdClinica().getNombre(), procedure,
-                active == null || active.getIdProcedimientoPaso() == null ? null : active.getIdProcedimientoPaso().getIdProcedimientoPaso().toString(),
-                active == null || active.getIdProcedimientoPaso() == null ? null : active.getIdProcedimientoPaso().getNombre(), histories);
+                current == null || current.getIdProcedimientoPaso() == null ? null : current.getIdProcedimientoPaso().getIdProcedimientoPaso().toString(),
+                current == null || current.getIdProcedimientoPaso() == null ? null : current.getIdProcedimientoPaso().getNombre(), histories,
+                currentProcedure == null ? null : currentProcedure.getIdConsultaProcedimiento().toString(),
+                current == null ? null : current.getIdConsultaProcedimientoPaso().toString(),
+                current == null ? null : current.getEstado(), groups);
     }
 
     private List<ConsultaProcedimientoPaso> steps(ConsultaProcedimiento cp) {
         return em.createQuery("SELECT p FROM ConsultaProcedimientoPaso p LEFT JOIN FETCH p.idProcedimientoPaso "
                 + "LEFT JOIN FETCH p.idPersonaRol pr LEFT JOIN FETCH pr.idPersona WHERE p.idConsultaProcedimiento.idConsultaProcedimiento=:id "
-                + "ORDER BY p.fechaInicio", ConsultaProcedimientoPaso.class)
+                + "ORDER BY p.fechaInicio, p.idConsultaProcedimientoPaso", ConsultaProcedimientoPaso.class)
                 .setParameter("id", cp.getIdConsultaProcedimiento()).getResultList();
     }
     private List<PersonaRol> assignments(UUID person) {
@@ -375,11 +470,15 @@ public class AcademicCareService {
         if (!found || patient(em.find(Rol.class, role))) throw new FlujoConsultaException("consultaFlujo.asignacionInvalida");
     }
     private void assertCanAttend(ConsultaProcedimientoPaso step, UUID person, UUID clinic, UUID role) {
+        assertResponsible(step, person, clinic, role);
+        if (step.getIdProcedimientoPaso() == null || step.getIdProcedimientoPaso().getIdRol() == null
+                || !role.equals(step.getIdProcedimientoPaso().getIdRol().getIdRol()))
+            throw new FlujoConsultaException("consultaFlujo.asignacionInvalida");
+    }
+    private void assertResponsible(ConsultaProcedimientoPaso step, UUID person, UUID clinic, UUID role) {
         if (step.getIdPersonaRol() == null || step.getIdPersonaRol().getIdPersona() == null
                 || !person.equals(step.getIdPersonaRol().getIdPersona().getIdPersona())
-                || !clinic.equals(step.getIdPersonaRol().getIdClinica().getIdClinica())
-                || step.getIdProcedimientoPaso() == null || step.getIdProcedimientoPaso().getIdRol() == null
-                || !role.equals(step.getIdProcedimientoPaso().getIdRol().getIdRol())
+                || !usableAssignee(step.getIdPersonaRol(), clinic, role)
                 || !activeState(step.getEstado())) throw new FlujoConsultaException("consultaFlujo.asignacionInvalida");
     }
     private static ConsultaProcedimientoPaso active(List<ConsultaProcedimientoPaso> steps) {
@@ -419,7 +518,7 @@ public class AcademicCareService {
         String stepId = s.getIdProcedimientoPaso() == null ? null : s.getIdProcedimientoPaso().getIdProcedimientoPaso().toString();
         String name = s.getIdProcedimientoPaso() == null ? "Paso histórico sin plantilla" : s.getIdProcedimientoPaso().getNombre();
         return new History(stepId, s.getIdConsultaProcedimientoPaso().toString(), name, instant(s.getFechaInicio()), instant(s.getFechaFin()),
-                s.getIdPersonaRol() == null ? null : personName(s.getIdPersonaRol().getIdPersona()), s.getValor(), s.getEstado(),
+                s.getIdPersonaRol() == null || s.getIdPersonaRol().getIdPersona() == null ? null : personName(s.getIdPersonaRol().getIdPersona()), s.getValor(), s.getEstado(),
                 s.getIdPersonaRol() == null || s.getIdPersonaRol().getIdRol() == null ? null : s.getIdPersonaRol().getIdRol().getNombre(),
                 s.getOrdenExamenCollection() == null ? List.of() : s.getOrdenExamenCollection().stream().map(o ->
                     new ExamOrder(o.getIdOrdenExamen().toString(), o.getIdExamen() == null ? null : o.getIdExamen().getNombre(),
