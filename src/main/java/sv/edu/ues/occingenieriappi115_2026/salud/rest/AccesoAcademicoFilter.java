@@ -7,7 +7,10 @@ import jakarta.ws.rs.container.*;
 import jakarta.ws.rs.ext.Provider;
 import jakarta.ws.rs.core.Context;
 import jakarta.servlet.http.HttpServletRequest;
+import java.text.Normalizer;
+import java.util.Locale;
 import sv.edu.ues.occingenieriappi115_2026.salud.control.IdentidadAcademicaService;
+import sv.edu.ues.occingenieriappi115_2026.salud.entity.PersonaRol;
 
 /** No existe política administrativa implícita: gestión heredada cerrada por defecto. */
 @Provider
@@ -16,6 +19,18 @@ public class AccesoAcademicoFilter implements ContainerRequestFilter {
   @EJB IdentidadAcademicaService identidad;
   @jakarta.inject.Inject ApiSettings settings;
   @Context HttpServletRequest servlet;
+
+  private static boolean atencionAlPublico(PersonaRol assignment) {
+    String name = assignment == null || assignment.getIdRol() == null
+        ? null : assignment.getIdRol().getNombre();
+    if (name == null) return false;
+    String normalized = Normalizer.normalize(name, Normalizer.Form.NFD)
+        .replaceAll("\\p{M}+", "")
+        .strip()
+        .replaceAll("\\s+", " ")
+        .toLowerCase(Locale.ROOT);
+    return normalized.equals("atencion al publico");
+  }
 
   @Override
   public void filter(ContainerRequestContext request) {
@@ -48,10 +63,29 @@ public class AccesoAcademicoFilter implements ContainerRequestFilter {
     identidad.exigir(bearer, "EMPLEADO");
     if (request.getMethod().equals("GET")
         && (path.equals("v2/clinica_disponible") || path.equals("v2/contexto"))) return;
+    boolean escrituraRecepcion = request.getMethod().equals("POST")
+        && (path.equals("v2/consulta")
+            || path.equals("v2/empleado/paciente")
+            || path.equals("v2/empleado/cita")
+            || path.equals("v2/consulta_procedimiento"))
+        || request.getMethod().equals("PUT")
+            && (path.matches("v2/consulta/[0-9a-fA-F-]+")
+                || path.matches("v2/consulta_procedimiento/[0-9a-fA-F-]+"));
+    if (escrituraRecepcion) {
+      var params = request.getUriInfo().getQueryParameters();
+      var assignment = identidad.exigirEmpleado(
+          bearer,
+          RestParameters.uuid(request.getHeaderString("X-Persona-Rol"), "X-Persona-Rol"),
+          RestParameters.uuid(params.getFirst("idClinica"), "idClinica"));
+      if (!atencionAlPublico(assignment))
+        throw new ApiException(403, "Solo Atención al público puede registrar pacientes y consultas");
+      return;
+    }
     boolean lecturaClinica =
         path.equals("v2/consulta")
             || path.matches("v2/consulta/[0-9a-fA-F-]+")
             || path.equals("v2/persona_rol/pacientes")
+            || path.equals("v2/procedimiento")
             || path.matches("v2/consulta_procedimiento(?:/[0-9a-fA-F-]+)?")
             || path.matches("v2/consulta_procedimiento_paso(?:/[0-9a-fA-F-]+)?");
     if (request.getMethod().equals("GET") && lecturaClinica) {

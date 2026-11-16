@@ -18,6 +18,7 @@ import sv.edu.ues.occingenieriappi115_2026.salud.entity.*;
 @RequestScoped @Path("v2") @Produces(MediaType.APPLICATION_JSON)
 public class ConsultaGestionResource {
     @EJB ConsultaFlujoService service;
+    @EJB sv.edu.ues.occingenieriappi115_2026.salud.control.AtencionPacienteService atencionPaciente;
     @EJB sv.edu.ues.occingenieriappi115_2026.salud.control.IdentidadAcademicaService identidad;
     @Context HttpHeaders headers;
     @Inject ApiSettings settings;
@@ -96,6 +97,28 @@ public class ConsultaGestionResource {
     public List<PacienteDatos> pacientes(@QueryParam("idClinica") String c,@QueryParam("buscar") String buscar) {
         return service.buscarPacientes(clinic(c),buscar).stream().map(PacienteDatos::from).toList();
     }
+    @POST @Path("empleado/paciente") @Consumes(MediaType.APPLICATION_JSON)
+    public Response registrarPaciente(@QueryParam("idClinica") String c, JsonObject body) {
+        var clinic = clinic(c);
+        var input = new RestInput(body,"nombres","apellidos","fechaNacimiento","idTipoDocumento","documento");
+        var value = atencionPaciente.registrar(input.text("nombres"), input.text("apellidos"),
+                input.date("fechaNacimiento"), input.uuid("idTipoDocumento"), input.text("documento"), clinic);
+        var dto = PacienteDatos.from(value);
+        return Response.created(uri.getAbsolutePathBuilder().path(value.getIdPersonaRol().toString())
+                .queryParam("idClinica",clinic).build()).entity(dto).build();
+    }
+    @POST @Path("empleado/cita") @Consumes(MediaType.APPLICATION_JSON)
+    public Response crearCitaAtencion(@QueryParam("idClinica") String c, JsonObject body) {
+        var clinic = clinic(c);
+        var actor = identidad.exigirEmpleado(headers.getHeaderString("Authorization"),
+                RestParameters.uuid(headers.getHeaderString("X-Persona-Rol"),"X-Persona-Rol"), clinic);
+        var input = new RestInput(body,"idPersonaRol","idProcedimiento","fechaInicio","fechaFin","referenciaExterna","observaciones");
+        var value = atencionPaciente.crearCita(input.uuid("idPersonaRol"), input.uuid("idProcedimiento"),
+                input.date("fechaInicio"), input.date("fechaFin"), input.text("referenciaExterna"),
+                input.text("observaciones"), clinic, actor);
+        return Response.created(uri.getAbsolutePathBuilder().path(value.getIdConsulta().toString())
+                .queryParam("idClinica",clinic).build()).entity(ConsultaDatos.from(value)).build();
+    }
     @JsonbNillable public record AsociacionDatos(String idConsultaProcedimiento,String idConsulta,String idProcedimiento,String fechaInicio,String fechaFin,String observaciones) {
         static AsociacionDatos from(ConsultaProcedimiento value) {
             return new AsociacionDatos(value.getIdConsultaProcedimiento().toString(),value.getIdConsulta().getIdConsulta().toString(),
@@ -122,7 +145,10 @@ public class ConsultaGestionResource {
     }
     @POST @Path("consulta_procedimiento") @Consumes(MediaType.APPLICATION_JSON)
     public Response crearAsociacion(@QueryParam("idClinica") String c,JsonObject body) {
-        var clinic=clinic(c);var value=service.crearProcedimiento(leerAsociacion(body,null),clinic);
+        var clinic=clinic(c);
+        var actor=identidad.exigirEmpleado(headers.getHeaderString("Authorization"),
+                RestParameters.uuid(headers.getHeaderString("X-Persona-Rol"),"X-Persona-Rol"),clinic);
+        var value=service.crearProcedimiento(leerAsociacion(body,null),clinic,actor);
         return Response.created(uri.getAbsolutePathBuilder().path(value.getIdConsultaProcedimiento().toString()).queryParam("idClinica",clinic).build()).entity(AsociacionDatos.from(value)).build();
     }
     @PUT @Path("consulta_procedimiento/{id}") @Consumes(MediaType.APPLICATION_JSON)

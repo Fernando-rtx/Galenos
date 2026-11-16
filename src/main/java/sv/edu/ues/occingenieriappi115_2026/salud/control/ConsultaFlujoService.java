@@ -105,6 +105,11 @@ public class ConsultaFlujoService {
     }
 
     public ConsultaProcedimiento crearProcedimiento(ConsultaProcedimiento datos, UUID clinica) {
+        return crearProcedimiento(datos, clinica, null);
+    }
+
+    /** Usa la asignación autenticada cuando recepción es el primer paso. */
+    public ConsultaProcedimiento crearProcedimiento(ConsultaProcedimiento datos, UUID clinica, PersonaRol actor) {
         validarClinica(clinica);
         Consulta consulta = consultaEnClinica(idConsulta(datos), clinica);
         UUID id = datos.getIdProcedimiento();
@@ -123,8 +128,14 @@ public class ConsultaFlujoService {
         if (IdentidadAcademicaService.paciente(inicial.getIdRol())) {
             throw new FlujoConsultaException("consultaFlujo.plantillaInvalida");
         }
+        if (actor != null && (actor.getIdRol() == null
+                || !inicial.getIdRol().getIdRol().equals(actor.getIdRol().getIdRol()))) {
+            throw new FlujoConsultaException("consultaFlujo.sinResponsable");
+        }
         var responsables = personaRolDAO.buscarResponsablesPorClinicaYRol(clinica, inicial.getIdRol().getIdRol());
-        PersonaRol responsable = responsables.stream()
+        PersonaRol responsable = actor != null && personaEnClinica(actor, clinica)
+                && inicial.getIdRol().getIdRol().equals(actor.getIdRol().getIdRol())
+                ? actor : responsables.stream()
                 .filter(r -> personaEnClinica(r, clinica))
                 .filter(r -> inicial.getIdRol().getIdRol().equals(r.getIdRol().getIdRol()))
                 .findFirst().orElseThrow(() -> new FlujoConsultaException("consultaFlujo.sinResponsable"));

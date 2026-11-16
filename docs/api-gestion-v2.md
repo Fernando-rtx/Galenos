@@ -49,6 +49,8 @@ GET clinica_disponible pagina solo clínicas activas (idClinica,nombre).
 GET persona_rol/pacientes?idClinica=UUID&buscar=texto reutiliza búsqueda de pacientes JSF por nombre/DUI, máximo15.
 GET procedimiento lista paginada de procedimientos (activo=true para asociación) (idProcedimiento,nombre,observaciones,activo).
 
+La escritura de recepción requiere Bearer de empleado, `X-Persona-Rol` de la sesión activa y rol Atención al público en la clínica. `POST empleado/paciente` recibe nombres, apellidos, fechaNacimiento (instante ISO8601), idTipoDocumento y documento; el servidor crea persona, documento y asignación Paciente en una sola transacción, sin aceptar un rol enviado por el cliente. `POST empleado/cita` recibe idPersonaRol, idProcedimiento, fechaInicio, fechaFin, referenciaExterna y observaciones; crea consulta, asociación y primer paso atómicamente. La plantilla debe comenzar con el rol de la asignación de recepción, que queda responsable del paso inicial.
+
 | Ruta | Operaciones | DTO / campos de entrada |
 | --- | --- | --- |
 | consulta | GET lista/ID, POST, PUT | idConsulta,idPersonaRol,idClinica,personaNombre,rolNombre,clinicaNombre,fechaInicio,fechaFin,referenciaExterna,observaciones. Entrada: idPersonaRol,fechas,referenciaExterna,observaciones |
@@ -58,7 +60,7 @@ GET procedimiento lista paginada de procedimientos (activo=true para asociación
 Listas de asociaciones/pasos requieren idConsulta además de idClinica; first/max y Total-registros como catálogos.
 Fechas de entrada ISO8601 con zona, salida UTC; fechas nulas se publican como null. Inicio obligatorio y fin>=inicio.
 Paciente/asociaciones/responsable inmutables al editar; los estados válidos del paso son PENDIENTE/EN_CURSO/COMPLETADO.
-Asociar un procedimiento crea su primer paso en la misma transacción EJB; no existe POST de paso manual ni DELETE de consulta.
+Asociar un procedimiento crea su primer paso en la misma transacción EJB; no existe POST de paso manual ni DELETE de consulta. Las escrituras POST/PUT de consulta y asociación están limitadas a Atención al público; la atención del paso inicial y el avance siguen las reglas HU4 y la secuencia de la plantilla.
 Reglas idénticas al servicio JSF ConsultaFlujoService. Clínica incompatible o ID inexistente404; relación modificada409; regla inválida422.
 El frontend conserva el dashboard y las tarjetas, añade formularios y relaciones anidadas y recupera el registro guardado por UUID.
 
