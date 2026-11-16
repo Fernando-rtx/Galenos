@@ -34,7 +34,9 @@ public class AccesoAcademicoFilter implements ContainerRequestFilter {
 
   @Override
   public void filter(ContainerRequestContext request) {
-    String path = request.getUriInfo().getPath().replaceFirst("^/+", "");
+    String path = request.getUriInfo().getPath()
+        .replaceFirst("^/+", "")
+        .replaceFirst("/+$", "");
     if (!path.startsWith("v2/")) return;
     if (settings.isCrudDemo()) {
       boolean read = servlet.isUserInRole("galenos-demo-read") || servlet.isUserInRole("galenos-demo-write");
@@ -63,14 +65,15 @@ public class AccesoAcademicoFilter implements ContainerRequestFilter {
     identidad.exigir(bearer, "EMPLEADO");
     if (request.getMethod().equals("GET")
         && (path.equals("v2/clinica_disponible") || path.equals("v2/contexto"))) return;
-    boolean escrituraRecepcion = request.getMethod().equals("POST")
+    String method = request.getMethod().toUpperCase(Locale.ROOT);
+    boolean escrituraRecepcion = (method.equals("POST")
         && (path.equals("v2/consulta")
             || path.equals("v2/empleado/paciente")
             || path.equals("v2/empleado/cita")
-            || path.equals("v2/consulta_procedimiento"))
-        || request.getMethod().equals("PUT")
-            && (path.matches("v2/consulta/[0-9a-fA-F-]+")
-                || path.matches("v2/consulta_procedimiento/[0-9a-fA-F-]+"));
+            || path.equals("v2/consulta_procedimiento")))
+        || (method.equals("PUT")
+            && (path.matches("v2/consulta/[0-9a-fA-F-]{36}")
+                || path.matches("v2/consulta_procedimiento/[0-9a-fA-F-]{36}")));
     if (escrituraRecepcion) {
       var params = request.getUriInfo().getQueryParameters();
       var assignment = identidad.exigirEmpleado(
