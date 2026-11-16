@@ -5,6 +5,8 @@ import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.CacheRetrieveMode;
+import jakarta.persistence.CacheStoreMode;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
 import jakarta.json.bind.annotation.JsonbNillable;
@@ -185,7 +187,7 @@ public class AcademicCareService {
                             : new NextStep(target.getIdProcedimientoPaso().toString(), target.getNombre(), s.getTipoSecuencia());
                 }).filter(Objects::nonNull).toList();
         List<History> previous = history.stream().filter(s -> "COMPLETADO".equals(s.getEstado())
-                || "RETROCEDIDO".equals(s.getEstado())).map(AcademicCareService::history).toList();
+                || "RETROCEDIDO".equals(s.getEstado())).map(this::history).toList();
         List<PreviousStep> backward = previousSteps(current, history).stream().map(s -> new PreviousStep(
                 s.getIdConsultaProcedimientoPaso().toString(), templateId(s), s.getIdProcedimientoPaso().getNombre())).toList();
         return new CareDetail(consultationId.toString(), current.getIdConsultaProcedimientoPaso().toString(), personName(c.getIdPersonaRol().getIdPersona()),
@@ -432,7 +434,7 @@ public class AcademicCareService {
                         s.getTipoSecuencia())).toList();
             var previous = executions.get(cp).stream()
                     .filter(s -> "COMPLETADO".equals(s.getEstado()) || "RETROCEDIDO".equals(s.getEstado()))
-                    .map(AcademicCareService::history).toList();
+                    .map(this::history).toList();
             groups.add(new ProcedureHistory(cp.getIdConsultaProcedimiento().toString(),
                     cp.getIdProcedimiento() == null ? null : cp.getIdProcedimiento().toString(),
                     proc == null ? null : proc.getNombre(), previous, links));
@@ -441,7 +443,7 @@ public class AcademicCareService {
         String procedure = groups.stream().filter(g -> currentProcedure == null
                 || g.idConsultaProcedimiento().equals(currentProcedure.getIdConsultaProcedimiento().toString()))
                 .map(g -> Objects.toString(g.nombre(), "Procedimiento sin nombre")).findFirst().orElse("Sin procedimiento");
-        List<History> histories = all.stream().map(AcademicCareService::history).toList();
+        List<History> histories = all.stream().map(this::history).toList();
         return new Appointment(c.getIdConsulta().toString(), instant(c.getFechaInicio()), instant(c.getFechaFin()),
                 personName(c.getIdPersonaRol().getIdPersona()), c.getIdPersonaRol().getIdClinica().getNombre(), procedure,
                 current == null || current.getIdProcedimientoPaso() == null ? null : current.getIdProcedimientoPaso().getIdProcedimientoPaso().toString(),
@@ -514,13 +516,26 @@ public class AcademicCareService {
         }
         return new Identity(p.getIdPersona().toString(), p.getNombres(), p.getApellidos(), List.copyOf(clinics.values()), List.copyOf(roles));
     }
-    private static History history(ConsultaProcedimientoPaso s) {
+    // La FK de la orden es la fuente de verdad. La colección inversa del paso
+    // puede estar cargada antes de crear una orden y conservarse en la caché JPA.
+    private List<OrdenExamen> ordersFor(ConsultaProcedimientoPaso step) {
+        return em.createQuery("SELECT DISTINCT o FROM OrdenExamen o LEFT JOIN FETCH o.idExamen "
+                + "LEFT JOIN FETCH o.examenResultadoCollection WHERE "
+                + "o.idConsultaProcedimientoPaso.idConsultaProcedimientoPaso=:step "
+                + "ORDER BY o.fechaCreacion, o.idOrdenExamen", OrdenExamen.class)
+                .setParameter("step", step.getIdConsultaProcedimientoPaso())
+                .setHint("jakarta.persistence.cache.retrieveMode", CacheRetrieveMode.BYPASS)
+                .setHint("jakarta.persistence.cache.storeMode", CacheStoreMode.REFRESH)
+                .getResultList();
+    }
+
+    private History history(ConsultaProcedimientoPaso s) {
         String stepId = s.getIdProcedimientoPaso() == null ? null : s.getIdProcedimientoPaso().getIdProcedimientoPaso().toString();
         String name = s.getIdProcedimientoPaso() == null ? "Paso histórico sin plantilla" : s.getIdProcedimientoPaso().getNombre();
         return new History(stepId, s.getIdConsultaProcedimientoPaso().toString(), name, instant(s.getFechaInicio()), instant(s.getFechaFin()),
                 s.getIdPersonaRol() == null || s.getIdPersonaRol().getIdPersona() == null ? null : personName(s.getIdPersonaRol().getIdPersona()), s.getValor(), s.getEstado(),
                 s.getIdPersonaRol() == null || s.getIdPersonaRol().getIdRol() == null ? null : s.getIdPersonaRol().getIdRol().getNombre(),
-                s.getOrdenExamenCollection() == null ? List.of() : s.getOrdenExamenCollection().stream().map(o ->
+                ordersFor(s).stream().map(o ->
                     new ExamOrder(o.getIdOrdenExamen().toString(), o.getIdExamen() == null ? null : o.getIdExamen().getNombre(),
                         instant(o.getFechaCreacion()), o.getIndicaciones(),
                         o.getExamenResultadoCollection() == null ? List.of() : o.getExamenResultadoCollection().stream().map(r ->

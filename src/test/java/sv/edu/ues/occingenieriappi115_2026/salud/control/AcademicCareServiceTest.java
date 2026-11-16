@@ -58,6 +58,7 @@ class AcademicCareServiceTest {
     history = query(ConsultaProcedimientoPaso.class, List.of(step));
     outgoing = query(ProcedimientoPasoSecuencia.class, List.of());
     query(UUID.class, List.of());
+    query(OrdenExamen.class, List.of());
     when(em.find(Rol.class, roleId)).thenReturn(role);
     when(em.find(Consulta.class, consultation.getIdConsulta(), LockModeType.PESSIMISTIC_WRITE))
         .thenReturn(consultation);
@@ -365,6 +366,7 @@ class AcademicCareServiceTest {
     assignment.getIdPersona().setNombres("Empleado sintético");
     var order = new OrdenExamen(id(90)); order.setExamenResultadoCollection(List.of());
     step.setOrdenExamenCollection(List.of(order));
+    query(OrdenExamen.class, List.of(order));
     var pending = new ConsultaProcedimientoPaso(id(91)); pending.setEstado("CANCELADO");
     when(history.getResultList()).thenReturn(List.of(pending, step));
     query(Consulta.class, List.of(consultation)); query(ProcedimientoPasoExamen.class, List.of());
@@ -375,6 +377,41 @@ class AcademicCareServiceTest {
     assertEquals("PENDIENTE", detail.estadoPasoActual()); assertEquals(1, detail.ordenesActuales().size());
     assertTrue(detail.historial().isEmpty()); assertFalse(detail.puedeRetroceder());
   }
+  @Test void historialRecuperaHemogramaDelPasoRetrocedidoSinMezclarOrdenesActuales() {
+    var previous = new ConsultaProcedimientoPaso(id(90));
+    previous.setIdConsultaProcedimiento(procedure);
+    previous.setIdProcedimientoPaso(template);
+    previous.setIdPersonaRol(assignment);
+    previous.setEstado("RETROCEDIDO");
+    previous.setValor("Nota médica conservada");
+    previous.setOrdenExamenCollection(List.of()); // colección inversa desactualizada
+    var exam = new Examen(id(91)); exam.setNombre("Hemograma completo");
+    var order = new OrdenExamen(id(92)); order.setIdExamen(exam);
+    order.setIdConsultaProcedimientoPaso(previous);
+    order.setExamenResultadoCollection(List.of());
+    var orders = query(OrdenExamen.class, List.of());
+    when(orders.setParameter(eq("step"), any())).thenAnswer(call -> {
+      when(orders.getResultList()).thenReturn(call.getArgument(1).equals(previous.getIdConsultaProcedimientoPaso())
+          ? List.of(order) : List.of());
+      return orders;
+    });
+    when(history.getResultList()).thenReturn(List.of(previous, step));
+    query(Consulta.class, List.of(consultation));
+    query(ProcedimientoPasoExamen.class, List.of());
+
+    var detail = service.detail(personId, clinicId, roleId, consultation.getIdConsulta());
+
+    assertTrue(detail.ordenesActuales().isEmpty());
+    assertEquals(1, detail.historial().size());
+    var historical = detail.historial().getFirst();
+    assertEquals("RETROCEDIDO", historical.estado());
+    assertEquals("Nota médica conservada", historical.valor());
+    assertEquals(1, historical.ordenes().size());
+    assertEquals("Hemograma completo", historical.ordenes().getFirst().examen());
+    assertTrue(historical.ordenes().getFirst().resultados().isEmpty());
+    verify(em, never()).persist(any()); verify(em, never()).merge(any());
+  }
+
   @Test void plantillaAusenteEsConflictoParaResponsablePeroNoRevelaDatosAOtroEmpleado() {
     query(Consulta.class, List.of(consultation)); step.setIdProcedimientoPaso(null);
     assertEquals("consultaFlujo.pasoSinPlantilla", assertThrows(FlujoConsultaException.class,
