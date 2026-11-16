@@ -141,6 +141,26 @@ class AcademicCareServiceTest {
     assertEquals(created.getIdConsultaProcedimientoPaso().toString(), result.idConsultaProcedimientoPaso());
     assertEquals("COMPLETADO", step.getEstado()); assertFalse(result.finalizada());
   }
+  @Test void avanzarSinResponsableConservaNotaYEstadoDeRecepcion() {
+    step.setEstado("EN_CURSO");
+    step.setValor("Nota de recepción existente");
+    var next = new ProcedimientoPaso(id(20));
+    next.setIdRol(assignment.getIdRol());
+    next.setIdProcedimiento(template.getIdProcedimiento());
+    var link = new ProcedimientoPasoSecuencia(id(21));
+    link.setIdProcedimientoPasoReferencia(id(20));
+    when(outgoing.getResultList()).thenReturn(List.of(link));
+    when(em.find(ProcedimientoPaso.class, id(20))).thenReturn(next);
+    when(assignments.getResultStream()).thenReturn(java.util.stream.Stream.empty());
+
+    rejects("consultaFlujo.sinResponsable", () -> register("AVANZAR", id(20), List.of()));
+
+    assertEquals("EN_CURSO", step.getEstado());
+    assertEquals("Nota de recepción existente", step.getValor());
+    assertNull(step.getFechaFin());
+    assertNull(procedure.getFechaFin());
+  }
+
   @Test void retrocederSinHistoriaNoCreaPaso() {
     rejects("consultaFlujo.noHayPasoAnterior", () -> register("RETROCEDER", null, List.of()));
   }
