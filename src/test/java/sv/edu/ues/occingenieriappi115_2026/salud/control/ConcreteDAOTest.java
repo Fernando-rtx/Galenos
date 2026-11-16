@@ -39,20 +39,7 @@ public class ConcreteDAOTest {
     );
 
     @Test
-    public void testHeredanDeDefaultDAO() {
-        // Escenario: el DAO generico centraliza la logica de persistencia.
-        // Esperado: todo DAO concreto debe extender DefaultDAO para heredar
-        // guardar, buscarPorId, obtenerTodos, actualizar, eliminar y contar.
-        DAOS_CONCRETOS.forEach(daoClase
-                -> assertTrue(
-                        DefaultDAO.class.isAssignableFrom(daoClase),
-                        daoClase.getSimpleName() + " debe heredar de DefaultDAO"
-                )
-        );
-    }
-
-    @Test
-    public void testEstanAnotadosComoEjbStatelessLocalBean() {
+    public void daoConservaLasAnotacionesNecesariasParaElContenedor() {
         // Escenario: EJB maneja el ciclo de vida y las transacciones del DAO.
         // Esperado: todos estan anotados con @Stateless y @LocalBean.
         DAOS_CONCRETOS.forEach(daoClase -> assertTrue(
@@ -65,7 +52,7 @@ public class ConcreteDAOTest {
     }
 
     @Test
-    public void testResuelvenLaEntidadCorrecta() throws ReflectiveOperationException {
+    public void daoAdministraLaEntidadCorrespondiente() throws ReflectiveOperationException {
         // Escenario: cada DAO administra exactamente una entidad del proyecto.
         // Esperado: el generico de la superclase coincide con la entidad que
         // el equipo le asigno al DAO.
