@@ -4,7 +4,7 @@
 
 Se leyó el PDF oficial local `definicionSegundoParcialPPI115_gt02_2026.pdf`: confirma los 14 observables, las historias y la revisión secuencial al clonar el commit entregado. Exige pruebas significativas, sin fijar un porcentaje numérico V8. Se conservan ECMAScript nativo, Web Components, Boundary/Control/Entity, Services y transporte común; backend REST/Services/DAO/JPA sin cambios funcionales.
 
-Ramas: `audit/gt02-final-2026` en ambos repositorios. Bases publicadas FE `ebfa0c3`, BE `ce23fd3`; auditoría anterior FE `7f7df6d`, `42590fa`, BE `582b3a2`. Nuevos commits FE `6be1edc`, `2aae94e`, `a773144`, `5859e14`, `dca5798`; consultar `git log` para los commits posteriores de documentación y unificación del runner offline. No hubo merge/push, reset, migraciones ni escrituras clínicas. `scripts/academic/` sigue sin seguimiento.
+Ramas: `audit/gt02-final-2026` en ambos repositorios. Bases publicadas FE `ebfa0c3`, BE `ce23fd3`; auditoría anterior FE `7f7df6d`, `42590fa`, BE `582b3a2`. Nuevos commits FE `6be1edc`, `2aae94e`, `a773144`, `5859e14`, `dca5798`; frontend final `7c48cc5` (código validado `dca5798`); consultar `git log` para el commit final de documentación del backend. No hubo merge/push, reset, migraciones ni escrituras clínicas. `scripts/academic/` sigue sin seguimiento.
 
 ## Matriz de los 14 observables
 
@@ -48,7 +48,7 @@ El aumento de 1 punto proviene de instalación comunicada (+0.5), modularidad re
 | Tipo | Resultado | Qué demuestra / qué no |
 |---|---|---|
 | `npm test` | **415 pasan** (antes 409) | Unitarias sintéticas; no commit PostgreSQL |
-| `npm run check` | **124 archivos válidos** | Incluye JS/CJS/MJS; HTML se ejecuta en Chromium |
+| `npm run check` | **124 locales / 122 del clon válidos** | Incluye JS/CJS/MJS; HTML se ejecuta en Chromium |
 | `npm run test:transport` | **9 pasan** | HTTP real a servidor sintético, no al backend Java |
 | `npm run test:coverage` | **Pasa** | 59 módulos unitarios; 3970/5322 líneas (74.60 %), 973/1160 ramas (83.88 %), 318/444 funciones (71.62 %) de módulos cargados |
 | `mvn clean test` | **843 pasan** | Mockito/JUnit Jupiter; no se presentan como transacciones PostgreSQL |

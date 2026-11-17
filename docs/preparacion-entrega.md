@@ -91,3 +91,5 @@ La instalación técnica desde clon fue verificada; la demostración clínica re
 ## Archivo de entrega en Classroom
 
 El PDF oficial pide un archivo de texto con los nombres de los tres integrantes, identificador del commit y URL del repositorio que contiene ese commit. Completar los datos del equipo y los dos commits finales aprobados; no entregar referencias a ramas locales ni afirmar que los commits están publicados antes de subirlos con autorización.
+
+Verificación final del clon local sin archivos ignorados: frontend código `dca5798`, 415 unitarias y122archivos de sintaxis válidos (124en el árbol local, que incluye dos configuraciones ignoradas). El commit frontend final con documentación es `7c48cc5`. Los archivos ignorados de configuración son opcionales/privados y no se requieren para instalar las dependencias ni ejecutar estas pruebas.
