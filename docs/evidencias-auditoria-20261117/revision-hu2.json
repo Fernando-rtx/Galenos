@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "scope": "Chromium, REST Java y PostgreSQL clinica; sin escrituras de datos",
+  "checks": [
+    "Tipo obligatorio, número inicialmente deshabilitado y error accesible",
+    "Documento con formato incorrecto rechazado",
+    "Paciente sin rol empleado rechazado por Java",
+    "Dos envíos simultáneos producen una única identificación REST",
+    "Doctor identificado por documento real, asignaciones recibidas de JPA y documento borrado del formulario",
+    "Selección exacta de PersonaRol, clínica y rol en dashboard SPA; sin falso acceso denegado",
+    "PersonaRol ajeno rechazado con403 por REST real",
+    "Sesión revocada401 regresa al acceso y borra identidad, selección y resultados",
+    "Cierre real en backend y limpieza de paneles del empleado",
+    "Desconexión de Chromium y nueva identificación real",
+    "HU1 real: identificación pública, citas y descarga de PDF Java",
+    "PWA conserva el acceso de empleados sin conexión; Cache Storage sin REST, documentos ni sesiones"
+  ],
+  "multipleAssignmentsAvailable": false,
+  "unchangedTables": 20,
+  "pageErrors": 0
+}

@@ -30,8 +30,18 @@ Mientras guarda: indicador de carga y botones deshabilitados. Doble clic: un env
 
 ## PWA y Safari
 
-Con servidor encendido, abrir mismo origen/puerto y recargar. Inspector: `await navigator.serviceWorker.ready`, controlador no nulo, caché `galenossv-shell-v34`. Instalar desde perfil normal: Safari Añadir al Dock o navegador compatible. Cerrar y abrir instalada. Detener BrowserSync con Control+C y recargar normalmente: interfaz y navegación deben aparecer. Después desconectar la red: aviso offline, sin REST ni PDF recuperados de caché. Revisar Cache Storage: solo recursos públicos, ninguna respuesta clínica, documento, token o configuración local. Reanudar BrowserSync y Liberty para volver a datos. Primera visita requiere red; localhost y 127.0.0.1 son orígenes distintos.
+Con servidor encendido, abrir mismo origen/puerto y recargar. Inspector: `await navigator.serviceWorker.ready`, controlador no nulo, caché `galenossv-shell-v37`. Instalar desde perfil normal: Safari Añadir al Dock o navegador compatible. Cerrar y abrir instalada. Detener BrowserSync con Control+C y recargar normalmente: interfaz y navegación deben aparecer. Después desconectar la red: aviso offline, sin REST ni PDF recuperados de caché. Revisar Cache Storage: solo recursos públicos, ninguna respuesta clínica, documento, token o configuración local. Reanudar BrowserSync y Liberty para volver a datos. Primera visita requiere red; localhost y 127.0.0.1 son orígenes distintos.
 
 ## Accesibilidad y tamaños
 
 390, 768 y 1440 px; ambos portales, bandeja, historial largo y atención. Tab/Shift+Tab, Enter/Escape, enlace de salto y devolución de foco en diálogo. Leer errores, cargando y éxito con VoiceOver, comprobar etiquetas/contraste y que el toast no tape el botón siguiente. Conservar evidencia del lector y la aplicación instalada, pendientes en esta auditoría.
+
+## Cierre de las verificaciones pendientes
+
+La instalación/apertura PWA fue confirmada por el usuario. Adjuntar captura y versión de navegador, origen y commit; repetir con caché v37 para la entrega. La automatización comprueba flujo de prompt de manera sintética, no instala por el usuario.
+
+VoiceOver en macOS: activar con Cmd+F5. Recorrer HU1/HU2 con Tab y Shift+Tab; en el tipo de documento de empleado usar texto, flechas y Enter, Escape para cerrar opciones. Confirmar anuncio de etiqueta, opción activa y error asociado. Abrir diálogo PDF/atención, comprobar nombre, foco dentro del modal y retorno al cerrar con Escape. Leer carga, éxito y conflicto persistente del toast; recorrer HU3/HU4 a390px y con zoom200%. Registrar navegador, versión, commit y resultado; no atribuir al lector una prueba hecha solo con atributos ARIA.
+
+Para HU4 persistente, con autorización y caso dedicado, anotar UUID de consulta/ejecución, responsable y orden. Tras cada botón volver a leer mediante REST y SELECT de solo lectura. Guardar parcial: mismo UUID, EN_CURSO, nota y orden conservadas, sin fecha_fin. Avanzar: ejecución actual COMPLETADO y nueva PENDIENTE de otro responsable válido. Retroceder: ejecución actual RETROCEDIDO y otra ejecución del paso previo, sin mover sus órdenes. Finalizar: fecha_fin de consulta_procedimiento y paso completado; historial íntegro. No usar el caso residual sin plantilla ni sobrescribir el historial de Luis para preparar la prueba. Una prueba automática sintética no acredita estas transacciones en PostgreSQL.
+
+Para asignaciones múltiples y consultas de hoy/futuro, el equipo necesita datos sintéticos preparados con autorización. Hoy es17/11/2026: buscar15–16/11 muestra el caso existente, mientras un rango vacío no prueba una consulta futura real. Ninguna de esas inserciones forma parte de esta auditoría.

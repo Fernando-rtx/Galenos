@@ -1,0 +1,25 @@
+{
+  "beforeScore": 8.25,
+  "afterScore": 9.25,
+  "scoreIncludesUserReportedInstallation": true,
+  "date": "2026-11-17",
+  "frontendTestsBefore": 409,
+  "frontendTestsAfter": 415,
+  "transport": 9,
+  "backend": 843,
+  "backendFailures": 0,
+  "browserFixtures": 6,
+  "browserSourceFiles": 77,
+  "unitSourceFiles": 59,
+  "outsideUnitScope": 19,
+  "syntaxFiles": 124,
+  "clinicalWrites": false,
+  "unchangedTables": 20,
+  "npmAuditVulnerabilities": 0,
+  "manualPending": [
+    "VoiceOver",
+    "HU4 controlled PostgreSQL write walkthrough",
+    "Multiple active assignments",
+    "Installed app with shell v37"
+  ]
+}

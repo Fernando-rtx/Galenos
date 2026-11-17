@@ -1,0 +1,55 @@
+{
+  "consulta": "e5bd6458-4469-5543-98b0-1a5b595559a3",
+  "academicIdentities": 23,
+  "checks": [
+    {
+      "HU1": "REST paciente + fechas + PDF real",
+      "citas": 1,
+      "pdfBytes": 69152,
+      "noStore": true
+    },
+    {
+      "detailStatus": 403,
+      "role": "Atención al publico",
+      "reason": "El empleado no tiene asignado este paso en la clínica seleccionada."
+    },
+    {
+      "detailStatus": 403,
+      "role": "Atención al publico",
+      "reason": "El empleado no tiene asignado este paso en la clínica seleccionada."
+    },
+    {
+      "detailStatus": 200,
+      "role": "Doctor",
+      "reason": null
+    },
+    {
+      "HU4": "lectura detalle real",
+      "historial": 3,
+      "ordenesHistoricas": [
+        {
+          "estadoEjecucion": "RETROCEDIDO",
+          "examen": "Hemograma completo",
+          "idOrden": "dba100db-f74c-4028-95fe-a4654eb0d26b"
+        }
+      ],
+      "ordenesActuales": 1
+    },
+    {
+      "HU3": "2026-11-15..2026-11-16",
+      "status": 200,
+      "registros": 4
+    },
+    {
+      "HU3": "2026-11-17..2026-11-17",
+      "status": 200,
+      "registros": 0
+    },
+    {
+      "HU3": "2026-11-18..2026-12-31",
+      "status": 200,
+      "registros": 0
+    }
+  ],
+  "unchangedTables": 20
+}

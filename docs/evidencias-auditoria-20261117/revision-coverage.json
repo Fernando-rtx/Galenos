@@ -1,0 +1,217 @@
+{
+  "scope": "Unitarias Mocha/V8. La cobertura de navegador se informa aparte, sin sumar porcentajes.",
+  "measuredFiles": 59,
+  "lines": {
+    "covered": 3970,
+    "total": 5322
+  },
+  "branches": {
+    "covered": 973,
+    "total": 1160
+  },
+  "functions": {
+    "covered": 318,
+    "total": 444
+  },
+  "unmeasuredFiles": [
+    "src/js/boundary/appearance.js",
+    "src/js/boundary/components/application-markup.js",
+    "src/js/boundary/components/galenos-application.js",
+    "src/js/boundary/components/galenos-notifications.js",
+    "src/js/boundary/dashboard.js",
+    "src/js/boundary/gestion.js",
+    "src/js/boundary/modelos/BusquedaCitasModel.js",
+    "src/js/boundary/modelos/CatalogoModel.js",
+    "src/js/boundary/modelos/ConsultaGestionModel.js",
+    "src/js/boundary/modelos/DashboardModel.js",
+    "src/js/boundary/modelos/InicioSesionModel.js",
+    "src/js/boundary/modelos/OrdenModel.js",
+    "src/js/boundary/modelos/PersonaModel.js",
+    "src/js/boundary/modelos/PortalAcademicoModel.js",
+    "src/js/boundary/modelos/ProcedimientoModel.js",
+    "src/js/boundary/modelos/RelacionModel.js",
+    "src/js/boundary/portal-academico.js",
+    "src/js/control/environment.example.js",
+    "src/js/main.js"
+  ],
+  "browser": {
+    "status": "PASS",
+    "generatedAt": "2026-11-17T15:53:24.008Z",
+    "currentMeasuredFiles": [
+      "src/js/boundary/appearance.js",
+      "src/js/boundary/components/application-markup.js",
+      "src/js/boundary/components/galenos-academic-app.js",
+      "src/js/boundary/components/galenos-application.js",
+      "src/js/boundary/components/galenos-notifications.js",
+      "src/js/boundary/components/historial-consulta.js",
+      "src/js/boundary/components/tarjeta_consulta.js",
+      "src/js/boundary/components/tarjeta_simple.js",
+      "src/js/boundary/dashboard.js",
+      "src/js/boundary/gestion.js",
+      "src/js/boundary/language.js",
+      "src/js/boundary/modelos/BusquedaCitasModel.js",
+      "src/js/boundary/modelos/CatalogoModel.js",
+      "src/js/boundary/modelos/ConsultaGestionModel.js",
+      "src/js/boundary/modelos/dashboard-presentation.js",
+      "src/js/boundary/modelos/DashboardModel.js",
+      "src/js/boundary/modelos/editable-record.js",
+      "src/js/boundary/modelos/form-validation.js",
+      "src/js/boundary/modelos/format-utc-date.js",
+      "src/js/boundary/modelos/historial-presentacion.js",
+      "src/js/boundary/modelos/InicioSesionModel.js",
+      "src/js/boundary/modelos/OrdenModel.js",
+      "src/js/boundary/modelos/PersonaModel.js",
+      "src/js/boundary/modelos/PortalAcademicoModel.js",
+      "src/js/boundary/modelos/ProcedimientoModel.js",
+      "src/js/boundary/modelos/RelacionModel.js",
+      "src/js/boundary/notifications.js",
+      "src/js/boundary/portal-academico.js",
+      "src/js/boundary/pwa.js",
+      "src/js/boundary/ticket-options.js",
+      "src/js/control/AcademicCareControl.js",
+      "src/js/control/AcademicCareService.js",
+      "src/js/control/api-config.js",
+      "src/js/control/api-routes.js",
+      "src/js/control/api-v2-routes.js",
+      "src/js/control/AtencionCitaService.js",
+      "src/js/control/AtencionPacienteService.js",
+      "src/js/control/BusquedaCitasControl.js",
+      "src/js/control/CatalogoControl.js",
+      "src/js/control/CitasPacienteService.js",
+      "src/js/control/ClinicaService.js",
+      "src/js/control/ConsultaGestionControl.js",
+      "src/js/control/ConsultaProcedimientoPasoService.js",
+      "src/js/control/ConsultaProcedimientoService.js",
+      "src/js/control/ConsultaService.js",
+      "src/js/control/contexto-empleado.js",
+      "src/js/control/DashboardControl.js",
+      "src/js/control/DefaultService.js",
+      "src/js/control/DocumentoService.js",
+      "src/js/control/environment.example.js",
+      "src/js/control/ExamenResultadoService.js",
+      "src/js/control/ExamenService.js",
+      "src/js/control/ExamenTipoExamenService.js",
+      "src/js/control/IdentidadAcademicaService.js",
+      "src/js/control/IdentificacionControl.js",
+      "src/js/control/MedioContactoService.js",
+      "src/js/control/OrdenControl.js",
+      "src/js/control/OrdenExamenService.js",
+      "src/js/control/PersonaControl.js",
+      "src/js/control/PersonaRolService.js",
+      "src/js/control/PersonaService.js",
+      "src/js/control/ProcedimientoControl.js",
+      "src/js/control/ProcedimientoPasoExamenService.js",
+      "src/js/control/ProcedimientoPasoSecuenciaService.js",
+      "src/js/control/ProcedimientoPasoService.js",
+      "src/js/control/ProcedimientoService.js",
+      "src/js/control/query-parameters.js",
+      "src/js/control/RelacionControl.js",
+      "src/js/control/rest-validators.js",
+      "src/js/control/RolService.js",
+      "src/js/control/TipoDocumentoService.js",
+      "src/js/control/TipoExamenService.js",
+      "src/js/control/TipoMedioContactoService.js",
+      "src/js/entity/DefaultError.js",
+      "src/js/entity/DefaultResponse.js",
+      "src/js/index.js",
+      "src/js/main.js"
+    ]
+  },
+  "outsideUnitScope": [
+    {
+      "file": "src/js/boundary/appearance.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/components/application-markup.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/components/galenos-application.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/components/galenos-notifications.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/dashboard.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/gestion.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/modelos/BusquedaCitasModel.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/modelos/CatalogoModel.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/modelos/ConsultaGestionModel.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/modelos/DashboardModel.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/modelos/InicioSesionModel.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/modelos/OrdenModel.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/modelos/PersonaModel.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/modelos/PortalAcademicoModel.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/modelos/ProcedimientoModel.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/modelos/RelacionModel.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/boundary/portal-academico.js",
+      "reason": "Presentación y ciclo de vida del navegador",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/control/environment.example.js",
+      "reason": "Punto de entrada o configuración pública",
+      "browserMeasuredCurrentSource": true
+    },
+    {
+      "file": "src/js/main.js",
+      "reason": "Punto de entrada o configuración pública",
+      "browserMeasuredCurrentSource": true
+    }
+  ]
+}

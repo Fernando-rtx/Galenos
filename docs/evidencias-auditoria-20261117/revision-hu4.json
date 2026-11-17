@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "synthetic": [
+    "PASS: HU4 sintético — formulario, exámenes, guardado único, avance, conflictos, desconexión y limpieza de contexto"
+  ],
+  "realReadonly": [
+    "Identificación y bandeja200 reales; consulta de otro responsable rechazada403 antes de exponer plantilla/historial",
+    "Contenido de las20tablas idéntico antes/después; ninguna petición de registro de atención"
+  ],
+  "database": "clinica, solo lectura",
+  "missingTemplateExecutions": 1,
+  "unchangedTables": 20,
+  "pageErrors": 0
+}

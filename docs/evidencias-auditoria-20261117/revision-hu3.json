@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "real": [
+    "Identificación, selección propia y consultas de hoy con fecha clínica dinámica y encabezados correctos:200",
+    "Filtros pasado/futuro y restablecer envían REST y reciben200",
+    "Lista vacía200 confirmada por SELECT de asignaciones, sin tarjetas inventadas",
+    "PersonaRol ajeno rechazado403",
+    "Proyección JPA y DTO ampliado compatible con el cliente mediante sesión propia de paciente:200",
+    "Desconexión de Chromium conserva la interfaz y reintento real recupera200",
+    "Sesión revocada401 elimina el dashboard y regresa al acceso"
+  ],
+  "synthetic": [
+    "PASS: tarjetas, jerarquía, Ver registro, HU4 sin escritura, filtros, paginación, 403 y cancelación entre clínicas (sintético)"
+  ],
+  "sqlAssignedAllDates": 0,
+  "sqlCompletedSteps": 17,
+  "projectionGroupsRead": 1,
+  "unchangedTables": 20,
+  "pageErrors": 0
+}

@@ -5,7 +5,7 @@ Bases auditadas: frontend `ebfa0c3220bca477dba1f0ca5967526390e97ff8`, backend `c
 
 ## Requisitos y clonación
 
-Git, JDK 21, Maven, Node >=22 y npm, Open Liberty 26.0.0.8, PostgreSQL local con `clinica` y sus 20 tablas oficiales. Playwright/Chromium son herramientas opcionales de desarrollo, no recursos de la SPA.
+Git, JDK 21, Maven, Node >=22.12.0 y npm, Open Liberty 26.0.0.8, PostgreSQL local con `clinica` y sus 20 tablas oficiales. Playwright/Chromium son herramientas opcionales de desarrollo, no recursos de la SPA.
 
 ```sh
 git clone https://github.com/Fernando-rtx/GalenoSVFE.git
@@ -51,4 +51,43 @@ Antes de la revisión, confirmar al menos un paciente con citas, empleados por p
 
 ## Lista del equipo
 
-Asignar responsables para instalar/abrir PWA, VoiceOver/teclado/contraste, datos sintéticos y escritura clínica controlada. Corregir o sustituir el runner Python PWA antiguo que depende de `componentes.html`. Revisar las cuatro alertas npm de desarrollo (una alta), con actualización compatible y pruebas. Adjuntar [auditoría](auditoria-final-gt02.md), evidencias, commits y [manual](manual-pruebas-finales.md); no presentar 10/10 mientras haya observables NO VERIFICADO o PARCIAL.
+Asignar responsables para instalar/abrir PWA, VoiceOver/teclado/contraste, datos sintéticos y escritura clínica controlada. El runner Python PWA delega ahora al runner Node vigente, con fixtures corregidos. Las cuatro alertas npm quedaron corregidas mediante lockfile y overrides limitados a Mocha, sin cambiar herramientas principales. Adjuntar [auditoría](auditoria-final-gt02.md), evidencias, commits y [manual](manual-pruebas-finales.md); no presentar 10/10 mientras haya observables NO VERIFICADO o PARCIAL.
+
+## Correcciones entregables de esta revisión
+
+Frontend: `6be1edc` (limpieza/fixtures/modularidad/pruebas), `2aae94e` (dependencias), `a773144` (contraste), `5859e14` (catálogo sintético), `dca5798` (placeholder Shadow DOM y configuración portátil). Usar `git log -1` para incluir también el último commit de documentación/test offline. Backend: reglas/DAO/JPA no modificadas; la documentación actualiza `582b3a2`. No se han publicado estas ramas; antes de la revisión de pares el equipo debe entregar los commits aprobados que sí estén accesibles en GitHub.
+
+### Navegador sin conocimientos de la Mac del autor
+
+Herramienta externa de pruebas validada: Playwright1.62.1. Mantenerla fuera de las dependencias de ejecución de la SPA:
+
+```sh
+npm install --prefix /tmp/galenos-browser-tools --no-save playwright@1.62.1
+/tmp/galenos-browser-tools/node_modules/.bin/playwright install chromium
+```
+
+En el frontend:
+
+```sh
+PLAYWRIGHT_MODULE=/tmp/galenos-browser-tools/node_modules/playwright npm run test:browser
+PLAYWRIGHT_MODULE=/tmp/galenos-browser-tools/node_modules/playwright node test/browser/offline-shell.mjs
+```
+
+El primero arranca su propio servidor temporal, prueba los seis fixtures y publica `coverage/browser/resultado.json` y capturas. No necesita Liberty ni PostgreSQL. El segundo verifica instalación nueva y detiene realmente su servidor antes de recargar. Para un Chromium instalado externamente, indicar CHROMIUM_EXECUTABLE en el runner principal y CHROMIUM_PATH en el test offline. El comando antiguo `python3 test/browser/webcomponents_pwa.py` sigue funcionando como delegación a Node.
+
+Ejecutar después `npm run test:coverage`: genera informes temporales y distingue las fuentes de navegador cuyo hash coincide con el actual. No sumar las cifras V8 de unitarias con las del navegador. Los 19 archivos fuera de unitarias están enumerados y clasificados en el informe de auditoría; no faltan del repositorio.
+
+### Preparación mínima de datos de demostración
+
+1. Confirmar `clinica` existente con sus veinte tablas y esquema oficial, JDBC y orígenes CORS exactos. Configurar credenciales propias fuera de Git.
+2. El equipo entrega por un canal autorizado los documentos **ficticios** del paciente y responsables, clínica/rol, UUID de consulta y rango de fechas. No hay contraseñas de paciente ni roles inventados por el frontend.
+3. Para el caso ya usado de Luis, buscar15–16/11/2026 como Doctor asignado y contrastar el UUID de consulta del manual. La orden histórica es de una ejecución distinta de la actual.
+4. No ejecutar automáticamente `scripts/academic/poblar_20261116.sql`: tiene105INSERT sin control de duplicados y depende de los catálogos locales. Mantenerlo sin seguimiento hasta preparar un plan idempotente, revisado y autorizado.
+5. El residual `e0da3669-f37f-4890-ae80-41d5541d0c18` tiene dos plantillas candidatas; no completar su FK por conjetura. No bloquear ni relajar reglas para utilizarlo en la demostración. Preparar un caso válido con autorización si se necesitan datos adicionales.
+6. Antes de mostrar hoy/futuro y múltiples asignaciones, verificar que existan esos registros. La base actual no tiene personas con varias asignaciones activas de empleado y los rangos del responsable comprobado no tenían consultas hoy/futuras. La creación autorizada de esos datos queda fuera de las verificaciones automáticas de solo lectura.
+
+La instalación técnica desde clon fue verificada; la demostración clínica requiere estos datos explícitos. Esto se declara para evitar depender de archivos ignorados o de conocer el equipo del autor.
+
+## Archivo de entrega en Classroom
+
+El PDF oficial pide un archivo de texto con los nombres de los tres integrantes, identificador del commit y URL del repositorio que contiene ese commit. Completar los datos del equipo y los dos commits finales aprobados; no entregar referencias a ramas locales ni afirmar que los commits están publicados antes de subirlos con autorización.
