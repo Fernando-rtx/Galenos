@@ -1,123 +1,130 @@
-# Auditoría final GT02 — revisión de correcciones, 17/11/2026
+# Verificación estricta GT02 de los commits publicados — 17/11/2026
 
-**Antes: 8.25/10. Después: 9.25/10 conservadores.** Estimación técnica, no calificación del docente ni certificación de 10/10. Se conserva la auditoría inicial en el commit backend `582b3a2` y sus evidencias originales; los nuevos archivos `revision-*` distinguen esta comprobación de la anterior.
+## Código y fuente evaluados
 
-Se leyó el PDF oficial local `definicionSegundoParcialPPI115_gt02_2026.pdf`: confirma los 14 observables, las historias y la revisión secuencial al clonar el commit entregado. Exige pruebas significativas, sin fijar un porcentaje numérico V8. Se conservan ECMAScript nativo, Web Components, Boundary/Control/Entity, Services y transporte común; backend REST/Services/DAO/JPA sin cambios funcionales.
+- Frontend publicado: **`7c48cc528575c911a18933440df13cea044ff4ad`**, https://github.com/Fernando-rtx/GalenoSVFE.
+- Backend publicado: **`4406204f04b5020465f16f5c4a2750a58f19c573`**, https://github.com/Fernando-rtx/Galenos.
+- Ramas de este informe: `audit/gt02-verificacion-publicada`. No se modifican `main`, código de producción, dependencias, contratos, esquemas ni datos. Se incorpora únicamente un verificador de integración de lectura y este informe/evidencias.
+- Fuente oficial: `definicionSegundoParcialPPI115_gt02_2026.pdf`, cuatro páginas. Enunciados HU1–HU4 en páginas2–3; matriz en página4. SHA256 **`f980d8f95167cedd4bac562dba1eaae68f20bd27da738e9c3152f2192eee969a`**. La fuente se contrastó mediante extracción de texto; no se altera ni se redistribuye el PDF.
 
-Ramas: `audit/gt02-final-2026` en ambos repositorios. Bases publicadas FE `ebfa0c3`, BE `ce23fd3`; auditoría anterior FE `7f7df6d`, `42590fa`, BE `582b3a2`. Nuevos commits FE `6be1edc`, `2aae94e`, `a773144`, `5859e14`, `dca5798`; frontend final `7c48cc5` (código validado `dca5798`); consultar `git log` para el commit final de documentación del backend. No hubo merge/push, reset, migraciones ni escrituras clínicas. `scripts/academic/` sigue sin seguimiento.
+La rúbrica prescribe revisión secuencial: ante un observable que falle puede detenerse la evaluación. Aquí se continúa con los 14 para diagnóstico, sin afirmar que el docente otorgaría la suma si se detuviera antes.
 
-## Matriz de los 14 observables
+## Conclusión y puntuación
 
-CUMPLE significa que existe evidencia del observable en los recorridos descritos, no que se ejecutó cada combinación imaginable. PWA instalable incorpora **verificación manual comunicada por el usuario**: informó haber instalado y abierto GalenosSV. No se presenta como instalación realizada por Codex. En HU1–HU4 se estima 0.5 por historia solo para distribuir los dos puntos; el PDF no prescribe ese reparto.
+**No existe evidencia suficiente para certificar 10/10.** Orientación estricta: **8.75/10 incluyendo los 0.5 de instalación comunicada por el usuario**, o **8.25/10 sin aceptar esa confirmación como acta de demostración**. No es una calificación oficial ni una deducción basada en número de pruebas.
 
-| Observable | Máximo | Demostrado | Estado | Evidencia actual | Pendiente o límite |
-|---|---:|---:|---|---|---|
-| SPA | 0.5 | 0.5 | CUMPLE | Chromium: navegación, Atrás, logout, 401, limpieza y cancelación | Repetir Safari instalado en commit final |
-| PWA instalable | 0.5 | 0.5 | CUMPLE, informado por usuario | Instalación/apertura manual comunicada; manifest/íconos/SW y prompt sintético comprobados | Adjuntar captura, navegador, versión, URL y commit; abrir instalada con v37 |
-| PWA online/offline | 0.5 | 0.5 | CUMPLE | Cold install, control, servidor detenido y recarga; shell v37; REST fuera de caché | La primera visita requiere red; mantener origen/puerto |
-| Web Components | 1 | 1 | CUMPLE | Portales, bandeja, atención, historial y gestión en Custom Elements, eventos y Shadow DOM | Faces heredado se distingue de la SPA |
-| Modularidad | 0.5 | 0.5 | CUMPLE | Plantilla y composición separadas; relaciones de gestión en método propio; capas conservadas, sin ciclos detectados | No dividir contratos declarativos o componentes solo por longitud |
-| Componentes propios | 1 | 1 | CUMPLE | CSS/HTML/ECMAScript propios; sin dependencias de ejecución frontend | Herramientas de prueba y desarrollo se informan aparte |
-| Reactividad | 0.5 | 0.5 | CUMPLE | Fetch común, async/await, cancelación, doble envío, errores y actualización sin recarga | Persistencia real se distingue de mocks |
-| Cobertura unitaria | 0.5 | 0.25 | PARCIAL | 415 JS y 843 Java; seis pruebas nuevas para cinco módulos de lógica antes sin medir | 19 módulos de presentación/arranque fuera de V8 unitario; no atribuirles cobertura unitaria por medirlos en Chromium |
-| Calidad de pruebas | 0.5 | 0.5 | CUMPLE | Mocha TDD/Chai/Sinon; fixtures antiguos corregidos; seis fixtures de navegador pasan | Unitarias no certifican PostgreSQL; mantener separación |
-| UI atractiva | 0.5 | 0.5 | CUMPLE | Inspección de captura móvil, ambos temas, carga/éxito/error y cierre de avisos | Valoración visual del evaluador |
-| CSS propio | 1 | 1 | CUMPLE | Estilos locales; corrección mínima de bordes sin cambiar distribución | Contraste medido en pares declarados, no certificación de todo píxel |
-| Responsive | 0.5 | 0.5 | CUMPLE | 390/768/1440, ambos portales/temas, atención sintética móvil | Historiales extremos y Safari final manual |
-| HU1–HU4 | 2 | 1.75 | PARCIAL | HU1/HU2/HU3 con REST real; HU4 sintético, permisos y lectura histórica reales | Guardado/transiciones con escritura PostgreSQL y múltiples asignaciones pendientes de autorización/datos |
-| Accesibilidad | 0.5 | 0.25 | PARCIAL | Combobox, etiquetas/errores, modal y foco, avisos ARIA; texto >=4.5:1 y bordes >=3:1 | VoiceOver y recorrido completo por teclado de todos los estados pendientes |
-| TOTAL | 10 | **9.25** | **PARCIAL** | Automático + REST real + instalación comunicada por usuario | No afirmar 10/10 |
+La orientación anterior era9.25. Esta revisión detecta una excepción arquitectónica antes no reflejada: el diálogo de descarga está fuera de la raíz y no es un Custom Element. Se reserva0.5 de Web Components por la lectura estricta del requisito. No se trata de una regresión: el código publicado permanece idéntico. El docente podría aceptar el helper como parte de Boundary; aquí se registra el riesgo explícitamente, en lugar de prometer el punto completo.
 
-El aumento de 1 punto proviene de instalación comunicada (+0.5), modularidad revisada/corregida (+0.25) y pruebas obsoletas reparadas (+0.25). Las mejoras de cobertura y accesibilidad se reconocen con evidencia, sin otorgar automáticamente sus puntos pendientes.
+El usuario ya informó instalación y apertura correctas de la PWA. Esa evidencia se conserva como **manual comunicada por el usuario**. No se confunde con una instalación reproducida en esta ejecución: Chromium automatizado informa `in-incognito`; manifest, SW y prompt sintético no sustituyen la instalación real.
 
-## Defectos corregidos y simplificaciones
+## Matriz secuencial de los 14 observables
 
-1. **Fixture `componentes.html`:** buscaba `[data-dashboard]` en `index.html`, que ahora contiene solo el componente raíz. Usa el marcado real de la SPA, sin copiar un HTML desactualizado. `application-markup.js` contiene únicamente presentación estática; `galenos-application.js` conserva montaje, navegación y composición. La extracción reduce unas 289 líneas de plantilla en la clase y permite que prueba y aplicación compartan estructura.
-2. **Fixture `page_components.html`:** los componentes de gestión necesitan el contenedor de la aplicación para acceder a tarjetas y detalle. El fixture ahora los monta dentro de ese contenedor; conserva las comprobaciones de acciones y suscripciones.
-3. **Defecto real de ciclo de vida:** al retirar `ConsultaGestionModel`, `destroy()` buscaba el ancestro desde un elemento ya desconectado. Fallaba antes de liberar la suscripción. Se guardan las referencias de tarjetas/detalle al montar y se reutilizan al limpiar. El fixture falló antes y ahora comprueba la liberación de las seis suscripciones, sin errores JavaScript.
-4. **Renderizado de gestión:** `renderRelationships(state, reception)` separa las relaciones y paginación del resto del formulario dentro de la misma clase. No se crean capas ni nuevos Services. Se conservan la plantilla, contratos, eventos y reglas de autorización.
-5. **Runner PWA antiguo:** `webcomponents_pwa.py` queda como entrada breve al único runner vigente `webcomponents-pwa.mjs`; desaparece el recorrido duplicado que esperaba un dashboard anónimo, enlace Login y `<select>` de empleados. Los tres runners reales ya usan el combobox visible. `check` también valida `.mjs`, antes omitidos.
-6. **Contraste comprobado:** bordes de campos: antes 1.79:1 en oscuro y 1.59:1 en claro; ahora `--gs-control-border: #71869a` da 4.61:1 y 3.62:1 respectivamente contra el fondo de entrada. Solo cambia ese color de control, no el diseño. Texto/muted/placeholder/botón/error también se comprueban en ambos temas. Se explicita el placeholder dentro del Shadow DOM y se verifican sus estilos computados reales, porque los selectores de la hoja global no atraviesan ese límite. Se entrega caché v37 para distribuir los módulos y estilos actualizados.
-7. **Cobertura honesta:** el informe distingue V8 unitario y funciones medidas en Chromium, sin sumar porcentajes ni importar módulos solo para contarlos. Compara hashes de las fuentes con las capturadas para no validar evidencia de código anterior.
-8. **Dependencias de desarrollo:** follow-redirects 1.16.1→1.16.3. Overrides limitados al árbol de Mocha para glob 14.0.6 y minimatch 11.0.9; se revisaron sus APIs usadas por Mocha y se probaron descubrimiento TDD, transporte, cobertura y BrowserSync. Son versiones mayores transitivas, no una actualización de las herramientas principales. Mocha 12.0.3, Chai 6.3.0, Sinon 22.1.0 y BrowserSync 3.0.4 se conservan. Node se precisa como >=22.12.0, consistente con Mocha. `npm audit`: cero alertas, también sin dependencias de ejecución.
+FE/BE indican repositorio frontend/backend. CUMPLE se limita al alcance y escenarios señalados; PARCIAL puede significar un hueco de evidencia, no necesariamente una función ausente. Los puntos intermedios son estimación interna. En HU1–HU4 se reparte provisionalmente0.5 por historia; el PDF no define ese reparto.
 
-`DefaultService` continúa centralizando Fetch/validación/errores y no se copió lógica de Cafefe. `api-v2-routes.js` es un contrato declarativo; no necesita dividirse por su longitud. `galenos-academic-app.js` conserva su responsabilidad de Boundary: presentar estado/atención y delegar validación y coordinación en `AcademicCareControl`; se evitó fragmentarlo por estética. Backend: no se movieron DAO, entidades ni reglas a otras capas.
+| Orden / observable | Requisito oficial | Máximo | Orientativo | Evidencia | Estado / riesgo | Acción correctiva mínima | Procedimiento de demostración |
+|---|---|---:|---:|---|---|---|---|
+| 1. SPA | Navegación fluida, intuitiva y consistente | 0.5 | 0.5 | FE `galenos-application.js`; Chromium navega paciente→empleado→Atrás; tests de sesiones/cancelación | CUMPLE en recorridos probados; no cada ruta/estado | Conservar evidencia de logout y Atrás en el navegador del evaluador | Abrir #pacientes, pasar a #empleados, Atrás; iniciar sesión y cerrar, comprobar ausencia de contexto clínico |
+| 2. PWA instalable | Instalación y flujo de instalación correctos | 0.5 | 0.5* | Manifest válido, íconos PNG, SW activo; prompt sintético; confirmación manual del usuario | MANUAL INFORMADO; no acta independiente de instalación para estos SHA; posible primera detención | Adjuntar captura, navegador/versión, origen, commit y apertura instalada | Instalar desde perfil normal; cerrar y abrir instalada; demostrar SW v37 y ventana standalone |
+| 3. PWA online/offline | Mantener funcionalidad online/offline | 0.5 | 0.5 | `offline-shell.mjs`: servidor realmente detenido antes de recarga; navegación; lista cerrada de caché | CUMPLE para shell; REST clínico requiere red | Mostrar claramente la diferencia entre interfaz y datos clínicos | Instalar/activar en origen estable, detener servidor y recargar; luego desconectar red y observar aviso y rechazo de REST |
+| 4. Web Components | Totalidad de la arquitectura basada en Web Components | 1 | 0.5 | 15 Custom Elements; portales, tarjetas, historial y atención propios; `ticket-options.js` agrega `body > dialog` | PARCIAL bajo interpretación estricta; excepción visual fuera del componente raíz | Encapsular el diálogo de ticket en un Custom Element propio reutilizando su HTML, estilos y comportamiento; justificar el cambio antes de implementarlo | Abrir el diálogo y examinar árbol DOM: hoy su padre es BODY y no está dentro de galenos-application |
+| 5. Modularidad | Estructura modular, clara y organizada | 0.5 | 0.5 | Boundary/Control/Entity/Services, transporte común; 78 módulos, sin ciclos estáticos detectados | CUMPLE en análisis estático; no es prueba formal de ausencia de ciclos dinámicos | Ninguna refactorización estética necesaria | Seguir acción Boundary→Control→Service→DefaultService→REST y DAO/JPA en BE |
+| 6. Componentes propios | Componentes a medida sin dependencias externas de ejecución | 1 | 1 | package.json sin dependencies; CSS/HTML nativos, sin biblioteca visual/CDN; herramientas solo dev | CUMPLE en frontend; PrimeFaces pertenece al backend heredado | Mantener separación de SPA frente a JSF y herramientas | Inspeccionar package.json, Network y fuentes; no confundir Mocha/BrowserSync con componentes de ejecución |
+| 7. Reactividad | Lógica reactiva y asíncrona | 0.5 | 0.5 | Fetch común, Promises/async, cancelación, eventos, carga; fixtures HU3/HU4 y REST real | CUMPLE en escenarios cubiertos; escribir realmente requiere autorización | No sustituir prueba transaccional por mock | Retrasar respuesta en fixture, doble clic, error y cancelación; comprobar actualización sin reload |
+| 8. Cobertura unitaria | Cobertura integral mediante pruebas unitarias | 0.5 | 0.25 | 415 JS y843 Java; V8 de59 módulos,19 fuera de medición; navegador separado | PARCIAL: ramas de composición/navegación/portal tienen evidencia de navegador, no equivalencia a unitarias | Identificar ramas de coordinación sin prueba aislada y añadir solo casos con defecto detectable; no imports triviales | Ejecutar test:coverage y revisar scope.json y casos de sesión/cancelación, no solo el porcentaje |
+| 9. Calidad de pruebas | Pruebas significativas para calidad y estabilidad | 0.5 | 0.5 | TDD Mocha/Chai/Sinon; JUnit/Mockito; fixtures comprueban XSS, slots, errores, acciones y limpieza | CUMPLE en revisión; tests HTTP sintéticos no demuestran PostgreSQL | Ninguna modificación para subir cantidad/porcentajes | Revisar preparación/acción/aserciones; ejecutar unitarias, transporte e integración por separado |
+| 10. UI | Interfaz atractiva, coherente y orientada al usuario | 0.5 | 0.5 | Captura móvil inspeccionada; temas, formularios y notificaciones | CUMPLE en pantallas observadas; atractivo es juicio del evaluador | Recorrer estados largo/vacío/error con el evaluador | Mostrar portales y atención con carga, error persistente y éxito confirmado; cerrar avisos |
+| 11. CSS propio | Autoría propia, tipografía, color y espaciado | 1 | 1 | Estilos locales/globales/Shadow DOM; pares de texto y bordes comprobados | CUMPLE en fuentes examinadas; no mide todo píxel o imagen | Mantener variables de tema; no agregar CSS externo | Inspeccionar recursos cargados y estilos computados en ambos temas |
+| 12. Responsive | Experiencia uniforme en distintas pantallas | 0.5 | 0.5 | Chromium390/768/1440, ambos temas/portales; atención sintética móvil | CUMPLE en casos probados; historias extremas y zoom requieren observación | Comprobar historial largo y zoom200% sin cambiar diseño de antemano | Recorrer anchos indicados con teclado y sin desbordamiento; verificar acciones accesibles |
+| 13. HU1–HU4 | Cumplimiento cabal de los enunciados | 2 | 1.75 | REST real de citas/PDF, identidad, filtros y lectura de historial; HU4 simulado para escrituras | PARCIAL: faltan transacciones autorizadas, múltiples asignaciones y citas reales hoy/futuras; alcance de “generales” por confirmar | Preparar caso sintético autorizado y completar protocolo de persistencia; confirmar campos esperados | Ver tabla HU y manual: comparar UUID, responsables, fechas, notas y órdenes antes/después de cada acción autorizada |
+| 14. Accesibilidad | Diseño ergonómico y accesible | 0.5 | 0.25 | Combobox/modal/error/foco/ARIA; contraste de pares; Escape del diálogo real devuelve foco | PARCIAL: VoiceOver y recorrido completo por teclado no reproducidos | Realizar acta manual; corregir solo fallos observados | Cmd+F5, Tab/Shift+Tab, flechas/Enter/Escape, errores, avisos, modal y retorno del foco |
+| TOTAL | Suma orientativa, sujeta a revisión secuencial | **10** | **8.75*** | Evidencia tipificada | **NO CERTIFICADO 10/10** | Cerrar excepciones y pendientes | Repetir sobre el commit de entrega |
 
-## Pruebas ejecutadas
+*Incluye0.5 de PWA comunicado por el usuario, no demostrado por instalación independiente en esta ejecución. Sin esa evidencia la suma reproducida aquí sería8.25. El primer bloqueo posible es el acta de instalación (orden2); el siguiente hallazgo de implementación es la excepción del diálogo (orden4). No se promete que el evaluador continúe después de ellos.
 
-| Tipo | Resultado | Qué demuestra / qué no |
+## Hallazgos comprobados y ambigüedades
+
+### H1 — excepción al uso exclusivo de Web Components
+
+`FE/src/js/boundary/ticket-options.js` crea un `<dialog>` y lo agrega con `document.body.append(dialog)`. El diagnóstico Chromium ejecutó el helper real con disparador sintético, sin descargar ni escribir datos. Resultado: padre BODY, `insideApplication=false`, `customElement=false`, título “Descarga tu ticket”, Escape cancela y `focusRestored=true`.
+
+No se cuestionan los controles HTML nativos dentro de un Web Component; la observación es el diálogo autónomo montado fuera de la raíz. No se afirma que esté roto. Bajo una lectura permisiva del patrón Boundary puede aceptarse; bajo el “uso exclusivo y riguroso” es una excepción que debe resolver o aceptar explícitamente el evaluador. Propuesta mínima: un único componente de diálogo reutilizando el comportamiento actual, sin duplicar Services ni cambiar REST. **No se implementó producción**.
+
+Diagnóstico reproducible en consola de una SPA abierta: importar `/js/boundary/ticket-options.js` y llamar `offerTicketDownload()` sin esperar su Promise antes de inspeccionar; observar `document.querySelector('body > dialog.ticket-options')`, comprobar `.closest('galenos-application')` y cerrar con Escape. Es una comprobación sintética del helper, no prueba de HU1 autenticada ni PDF persistido.
+
+### H2 — datos y persistencia no demostrados por escritura
+
+El verificador real encuentra cuatro consultas asignadas al responsable el15–16/11/2026, cero hoy17/11 y cero del18/11 al17/12. Eso demuestra respuestas200/filtrado, **no una consulta futura real**. Existen cero personas con varias asignaciones activas de empleado. Es preparación insuficiente de datos para esos escenarios, no evidencia de un defecto del filtro.
+
+Sigue existiendo la ejecución `e0da3669-f37f-4890-ae80-41d5541d0c18` sin plantilla, en la consulta de desarrollo `a11b2f21-469f-40e6-adcf-6113ba9db065`. Ya había dos plantillas candidatas Inicio/Fin del mismo rol; no se puede elegir por conjetura. No se actualizó esa FK ni se modificaron permisos para atenderla. La preparación de datos debe resolverse con autorización antes de usar ese caso.
+
+`scripts/academic/` permanece local, sin seguimiento. El SQL revisado antes tiene105INSERT y no controla duplicados; no se ejecuta ni publica como inicializador seguro. No se crearon bases, respaldos, migraciones, roles ni permisos.
+
+### H3 — alcance de “generales del paciente”
+
+El DTO `AcademicCareService.Appointment` y el de atención exponen el nombre del paciente y contexto clínico/procedimiento, sin fecha de nacimiento/documento del paciente en ese DTO. El PDF no enumera cuáles “generales” exige. Se registra como **ambigüedad de aceptación**, no como defecto confirmado ni autorización para ampliar contratos. Confirmar con el docente si el nombre/contexto mostrado satisface ese punto; si requiere más campos, acordar el contrato mínimo seguro antes de cambiarlo.
+
+### H4 — documentación anterior es histórica
+
+Los SHA evaluados sí están publicados y se clonaron desde GitHub. Las frases anteriores sobre ramas aún locales se referían a la fase de auditoría previa a publicación; no deben usarse como instrucciones actuales. El contenido evaluado es el de los dos SHA completos de este informe. Las nuevas evidencias y el verificador de lectura se entregan en la rama de verificación, sin modificar main.
+
+## Ejecuciones de esta verificación
+
+| Comando / tipo | Resultado actual | Alcance real |
 |---|---|---|
-| `npm test` | **415 pasan** (antes 409) | Unitarias sintéticas; no commit PostgreSQL |
-| `npm run check` | **124 locales / 122 del clon válidos** | Incluye JS/CJS/MJS; HTML se ejecuta en Chromium |
-| `npm run test:transport` | **9 pasan** | HTTP real a servidor sintético, no al backend Java |
-| `npm run test:coverage` | **Pasa** | 59 módulos unitarios; 3970/5322 líneas (74.60 %), 973/1160 ramas (83.88 %), 318/444 funciones (71.62 %) de módulos cargados |
-| `mvn clean test` | **843 pasan** | Mockito/JUnit Jupiter; no se presentan como transacciones PostgreSQL |
-| `mvn package` | **BUILD SUCCESS**, 843 sin errores/omisiones | WAR generado y compatible con Liberty probado |
-| `npm run test:browser` | **6 fixtures pasan** + SPA/PWA/contraste/responsive | Chromium sintético y 77 fuentes medidas; cifras separadas de unitarias |
-| `node test/browser/offline-shell.mjs` | **PASS**, v37 | Instala/controla y detiene realmente su servidor antes de recargar; sin REST en caché |
-| HU2/HU3/HU4 readonly `.mjs` | **PASS**, 0 page errors | Chromium→REST→JPA→clinica; identificación/sesión, PDF, filtros, permisos y SELECT; 20 hashes iguales |
-| Probe del historial de Luis | **GET 200 autorizado**, 403 ajeno | Hemograma de RETROCEDIDO separado de orden actual; no nuevo guardado |
-| Clon local de commits corregidos sin archivos ignorados | `npm ci` y **415 pasan** | Reproducibilidad de archivos versionados; no publicación de las ramas ni provisión de datos |
+| `npm test` | 415 pasan | Unitarias Mocha/Chai/Sinon, sin PostgreSQL |
+| `npm run check` | 124 locales /122 del clon válidos | Sintaxis JS/CJS/MJS; dos configuraciones locales ignoradas no son requisito del clon |
+| `npm run test:transport` | 9 pasan | HTTP real a servidor sintético, no persistencia Java |
+| `npm run test:browser` | 6 fixtures y comprobaciones SPA/PWA pasan | Chromium sintético, responsive y contraste; no escritura real |
+| `node test/browser/offline-shell.mjs` | PASS | Primer control SW, servidor detenido realmente y recarga sin pantalla vacía |
+| `npm run test:coverage` | PASS | V8 unitario, separado del navegador |
+| `mvn clean test` | 843 pasan | JUnit/Mockito; no prueba de commit/rollback PostgreSQL |
+| `mvn package` | BUILD SUCCESS;843 sin errores/omisiones | WAR generado; backend mantiene DAO/JPA |
+| Clon FE remoto al SHA publicado | npm ci,415 tests y122 fuentes válidas | Sin archivos ignorados locales |
+| Clon BE remoto al SHA publicado | Maven package BUILD SUCCESS | Sin base nueva; bibliotecas empaquetadas a directorio temporal |
+| Liberty temporal19084 | Aplicación iniciada, JDBC readonly | localhost:5432/clinica, schema-generation=none |
+| `python3 test/integration/gt02_hu_readonly.py` | PASS;20 hashes iguales | Solo GET clínicos/SELECT; POST de identidad solo crea sesión en memoria; sin DELETE ni registro de atención |
 
-Los resúmenes nuevos están en `docs/evidencias-auditoria-20261117/revision-{browser,coverage,hu2,hu3,hu4,historial,resultados,npm-audit,datos}.json`. Capturas públicas: `revision-light-390-empleados.png`, `revision-dark-1440-pacientes.png`. Se conservaron los JSON/capturas de la auditoría inicial. Logs completos de ejecución: `/private/tmp/gt02-final-*.log` y `/private/tmp/final-*.log`, no necesarios como configuración ni subidos con credenciales.
+El primer intento de Maven del clon se lanzó desde `/private/tmp` y falló por no encontrar POM; se corrigió el directorio y el empaquetado desde el clon pasó. No se atribuye ese error de comando al producto ni se oculta como prueba aprobada.
 
-### Pruebas nuevas y eliminaciones
+## Cobertura separada
 
-Se añaden seis comportamientos en `gestion-controles.test.js` y `atencion-recepcion.test.js`: búsqueda anterior tardía, editor conservado ante 403, cancelación de opciones, padre correcto/doble envío, alta REST con cabeceras/DTO y conflicto de cita sin falso éxito. No se eliminan casos unitarios en esta revisión. La auditoría anterior ya había reducido 20 repeticiones a una (19 menos). Se elimina la duplicación del recorrido Python, conservando su comando como delegación al runner Node. Los fixtures continúan protegiendo slots, XSS por texto, fecha nula, selección, jerarquía y limpieza.
+**Unitaria V8:**59 fuentes medidas;3970/5322 líneas =74.60%,973/1160 ramas =83.88%,318/444 funciones =71.62%, de módulos cargados. No es74.66 ni100% global. Hay19 fuentes fuera de medición unitaria, principalmente Boundary, composición DOM y entrada/configuración. Enumeración y motivos en `estricta-unitaria.json`. No se importaron archivos solo para inflar la medición ni se agregaron casos triviales.
 
-### Los 23 archivos originalmente fuera de V8 unitario
+**Navegador:**77 módulos de página medidos mediante V8/Playwright, con funciones y hashes de fuente. El contador indica medición, no ejecución completa de todas las funciones. Sus porcentajes no se combinan con los de unitarias. El Service Worker se evalúa por los tests VM y offline; no se cuenta como módulo de la página. La cobertura del navegador coincide con las fuentes vigentes según hashes.
 
-Todos los nombres son relativos a `src/js/`. No estaban excluidos por una regla de cobertura: Mocha en Node solo mide módulos que carga. Los módulos DOM se prueban en navegador; configuración y entrada no justifican pruebas que solo importen archivos.
+Los seis fixtures comprueban tarjetas/slots/XSS/selección, montaje/limpieza de páginas, jerarquía/filtros/403 de HU3, acciones de HU4, avisos y accesibilidad. Se conservaron todas las pruebas de producción existentes. El nuevo verificador Python es integración real de solo lectura, no aumenta el contador de unitarias ni el porcentaje V8.
 
-| Archivo original | Responsabilidad / necesidad | Situación actual |
-|---|---|---|
-| `boundary/appearance.js` | Tema, menú y listeners | Medido en Chromium; unitario fuera de alcance DOM |
-| `boundary/components/galenos-application.js` | Composición, navegación y sesión | Chromium real/sintético; falta aislar todas las ramas unitarias |
-| `boundary/components/galenos-notifications.js` | Avisos, cierre y temporización | Fixture de navegador, además de notificaciones unitarias del emisor |
-| `boundary/dashboard.js` | Composición del dashboard | Fixture con servicios sintéticos y REST real separado |
-| `boundary/gestion.js` | Composición de pantallas de gestión | Carga medida; no se afirma ejecutar cada CRUD administrativo |
-| `boundary/modelos/BusquedaCitasModel.js` | Portal HU1 | Chromium con backend real y PDF |
-| `boundary/modelos/CatalogoModel.js` | Catálogos y ciclo de vida | Fixture DOM y limpieza |
-| `boundary/modelos/ConsultaGestionModel.js` | Formularios y relaciones | Fixture DOM; defecto de limpieza corregido |
-| `boundary/modelos/DashboardModel.js` | Filtros/tarjetas/detalle | Fixture y recorridos reales HU3 |
-| `boundary/modelos/InicioSesionModel.js` | Portal HU2 | Chromium con backend real, combobox |
-| `boundary/modelos/OrdenModel.js` | Presentación de órdenes | Fixture de montaje; no todos los flujos administrativos |
-| `boundary/modelos/PersonaModel.js` | Formulario de personas | Fixture DOM; no todos los CRUD |
-| `boundary/modelos/PortalAcademicoModel.js` | Comportamiento común del portal | HU1/HU2 y fixture teclado/ARIA |
-| `boundary/modelos/ProcedimientoModel.js` | Editor de plantillas | Fixture de montaje/limpieza; CRUD completo no certificado |
-| `boundary/modelos/RelacionModel.js` | Presentación de asociaciones | Fixture DOM; coordinación ahora tiene unitarias |
-| `boundary/portal-academico.js` | Coordinación DOM de identificación/citas | Recorridos de navegador; ramas unitarias pendientes |
-| `control/AtencionCitaService.js` | Transporte de alta de cita | **Ahora unitario**, conflicto 409 realista |
-| `control/AtencionPacienteService.js` | Transporte de alta de paciente | **Ahora unitario**, cabeceras/DTO/ruta/no-store |
-| `control/PersonaControl.js` | Búsqueda y edición con cancelación | **Ahora unitario**, respuestas tardías/error |
-| `control/ProcedimientoControl.js` | Opciones/editor de pasos | **Ahora unitario**, cancelación |
-| `control/RelacionControl.js` | Asociación al padre correcto | **Ahora unitario**, padre/doble envío |
-| `control/environment.example.js` | Configuración pública | Probada al arrancar, no prueba trivial de existencia |
-| `main.js` | Importar el componente raíz | Arranque real de la SPA, no prueba trivial |
+## Contraste de historias de usuario con el PDF
 
-Resultado: 23 originales menos 5 módulos de lógica medidos, más la nueva plantilla estática `boundary/components/application-markup.js` = **19 sin medición unitaria**. Los 19 aparecen en las 77 fuentes del navegador y sus hashes coinciden con el código actual. Eso significa medición, **no ejecución de todas sus funciones ni cobertura integral unitaria**. El Service Worker se comprueba por VM unitario y pruebas offline; no se suma al contador de módulos de la página de Chromium. Ver detalle de funciones medidas en `revision-browser.json` y de alcance en `revision-coverage.json`.
+| Historia | Implementado y comprobado | REST real ejecutado ahora | Simulado / evidencia anterior | Requiere autorización o acta |
+|---|---|---|---|---|
+| HU1 | Tipo/número, clínica propia, rango, tarjetas/procedimientos y descarga Java | Identidad paciente, GET citas y PDF válido `%PDF-`, no-store; documento/bytes solo en memoria | Formularios/componentes de navegador; recorrido Chromium real anterior conservado | Repetir recorrido visible completo ante evaluador con documento ficticio entregado por el equipo |
+| HU2 | Identidad académica, contexto/rol/clínica, rechazo de pacientes, sesión y cierre |401 sin sesión;403 paciente como empleado; identidad/asignación propia200 | Logout/revocación/expiración y combobox cubiertos por tests y ejecución real anterior | Demostrar cambio entre varias asignaciones reales cuando existan; no crear asignaciones sin permiso |
+| HU3 | Hoy, pasado/futuro, filtros, árbol por procedimiento, responsable/fecha/registro y selección | GET por fechas200:4/0/0;403 de asignaciones ajenas sin exponer historial | Jerarquía/tarjetas/selección y cancelación en fixtures; UI real anterior disponible | Consulta futura/hoy con datos reales de prueba; aclarar “generales” |
+| HU4 | Parcial, exámenes permitidos, órdenes, avance/retroceso/finalización y errores | Detalle autorizado200;3 pasos anteriores;1 orden retrocedida y1 actual separadas;403 ajeno | Acciones,409 y bloqueo de duplicados en fixture; transiciones/reglas en Mockito | Probar guardado y commit real, rollback/concurrencia y responsable siguiente con caso sintético autorizado |
 
-## Datos y flujos reales
+**Caso de Luis:** consulta `e5bd6458-4469-5543-98b0-1a5b595559a3`. REST conserva Hemograma completo en la ejecución RETROCEDIDO, separado por UUID de las órdenes actuales. La consulta se limita al fixture de documento académico ACAD. El diagnóstico no volvió a registrar ni avanzar la atención.
 
-La única base usada es localhost:5432/clinica. Liberty de prueba19084 utiliza JDBC con `default_transaction_read_only=on`. Los POST/DELETE de identidad solo crean/revocan sesiones efímeras en memoria. No se ejecutó registrar atención ni ninguna escritura clínica.
+La evidencia de filas ya existentes demuestra conservación y recuperación; no demuestra que el guardado de esta ejecución del auditor haya funcionado, porque no se ejecutó un guardado.
 
-**Luis**, consulta `e5bd6458-4469-5543-98b0-1a5b595559a3`: ingreso COMPLETADO, evaluación RETROCEDIDO con nota/orden, nuevo ingreso COMPLETADO, evaluación EN_CURSO con nota/orden. El Doctor autorizado obtiene por REST tres pasos anteriores; Hemograma completo histórico `dba100db-f74c-4028-95fe-a4654eb0d26b` permanece en RETROCEDIDO y `ordenesActuales` contiene otra orden. Las consultas del responsable: cuatro el 15–16/11/2026; cero el 17/11 y cero en el rango futuro comprobado. La cola de otro Doctor probado puede estar vacía legítimamente: no se inventaron tarjetas.
+## SPA, PWA y caché
 
-**Ejecución sin plantilla:** `e0da3669-f37f-4890-ae80-41d5541d0c18`, consulta `a11b2f21-469f-40e6-adcf-6113ba9db065`, estado EN_CURSO del procedimiento `DESARROLLO procedimiento flujo 2cb26284`. Hay dos plantillas del mismo rol: Inicio Desarrollo (`b3efc88e-e640-418d-9cbb-cc8fa162ddec`) y Fin Desarrollo (`59c9877a-40a9-4bb5-b10f-3f6a07119897`). No es posible inferir la plantilla solo por el rol. No se asignó ninguna a ciegas ni se cambió el modelo para atenderla. No elegir este residual para la demostración HU4; cualquier reparación de su FK requiere decisión sobre la ejecución correcta y autorización de escritura.
+Registro `/service-worker.js`, scope `/`, secure context; instalación precarga una lista cerrada, luego skipWaiting; activación elimina solo versiones propias y hace claim. Shell vigente `galenossv-shell-v37`. Se comprobaron dependencias de arranque, iconos y manifest, navegación hash/Atrás, actualización de caché mediante tests y recuperación offline con servidor apagado.
 
-No se encontraron siguientes pasos de las ejecuciones activas sin responsable del rol en la misma clínica en la consulta diagnóstica realizada. Hay **cero personas con múltiples asignaciones de empleado activas**. Para demostrar selección múltiple hace falta preparar una asignación adicional válida mediante un procedimiento autorizado. No se modifican roles/clínicas existentes ni se crean datos automáticamente.
+El SW no intercepta métodos distintos de GET, Authorization, otro origen ni URL fuera de la lista; excluye REST, configuración local y PDF. Los GET clínicos reales usan no-store. Cache Storage de la sesión sintética contiene solo recursos públicos; no se inspeccionó ni se afirma el estado de un perfil personal de Safari. LocalStorage del código solo conserva preferencias de tema/idioma, no tokens ni datos clínicos. Desconectado no se debe poder consultar/grabar atención; mostrar interfaz no equivale a dar datos médicos offline.
 
-`scripts/academic/poblar_20261116.sql` fue inspeccionado: 113 líneas, 105 INSERT, BEGIN/COMMIT, sin UPDATE/DELETE/ALTER/CREATE y **sin comprobaciones de duplicados**. Depende de UUID/catálogos y fechas locales. No es un inicializador seguro/reproducible de clon limpio; no se publicó ni ejecutó. Los fixtures de navegador sí son sintéticos, reproducibles y no requieren PostgreSQL; eso no los convierte en pruebas de persistencia.
+La prueba de `beforeinstallprompt` usa un evento sintético. El error `in-incognito` del entorno automatizado se conserva en la evidencia; instalar/abrir una PWA real necesita perfil normal y acta. El usuario informó instalación correcta y esa confirmación no se reetiqueta como prueba reproducida por Codex.
 
-## PWA y comprobaciones manuales pendientes
+## Accesibilidad automatizable y manual
 
-- El usuario comunica instalación y apertura correctas: se incorpora como evidencia manual de usuario. Chromium comprobó manifest/íconos, activación/control, beforeinstallprompt sintético consumido una sola vez, caché pública y arranque offline. El perfil automatizado puede reportar `in-incognito`: no se oculta ni se presenta como instalación realizada.
-- Para el evaluador: captura de aplicación instalada, URL/origen, navegador/versión y commit; abrir instalada con SW v37 después de actualizar, cerrar BrowserSync y recargar. Nunca almacenar respuestas clínicas para aparentar funcionamiento offline.
-- VoiceOver: ejecutar el recorrido del manual con controles, combobox, errores, modal, carga/éxito/conflicto; registrar resultado. Se midieron contrastes de los pares declarados y foco/ARIA de escenarios concretos, no todas las combinaciones de contenido ni cada color de imagen.
-- HU4 persistente: el manual deja preparada la secuencia de parcial/examen/avance/retroceso/final y SELECT antes/después. Requiere autorización y un caso sintético dedicado; no se ejecutó sobre clinica por esta herramienta.
+Automático: etiquetas, error asociado/aria-invalid, combobox con opción activa/flechas/Enter, modal con nombre, foco y retorno, role status/alert, avisos temporales/persistentes/cerrables, estados disabled y ausencia de desbordamiento en390/768/1440. Se calcularon ratios de pares del tema y se comprobó que placeholder/borde se aplican realmente en Shadow DOM; texto >=4.5:1 y borde >=3:1 en los pares medidos. El diálogo real conserva foco al cerrarlo con Escape. No equivale a WCAG completa ni a lector de pantalla probado.
 
-## Entrega y límites para certificar 10/10
+Procedimiento VoiceOver detallado en `manual-pruebas-finales.md`: habilitar navegación con teclado de macOS, Cmd+F5, recorrer HU1–HU4 con Tab/Shift+Tab y lector; usar flechas/Enter/Escape en combobox; provocar validación sin enviar datos clínicos; comprobar anuncio de etiqueta/error/estado, modal, foco y retorno. Registrar navegador/versión, commit, resultado y fallo exacto. Atención real y conflictos mediante escritura solo con autorización. Con zoom200% e historial largo comprobar que avisos no tapen acciones. No automatizar una confirmación de VoiceOver sin usarlo.
 
-El código versionado instala y prueba desde clon; las ramas corregidas siguen locales. Backend compila/empaqueta y despliega en Liberty. Un clon no proporciona por sí solo la base, catálogos, documentos académicos, fechas ni asignaciones. La preparación de datos autorizada y el esquema oficial son requisitos explícitos en el manual de entrega, no archivos ocultos de la Mac.
+## Reproducción y qué impide el cumplimiento total
 
-Quedan 0.75 puntos conservadoramente sin otorgar: cobertura unitaria integral de toda la presentación/coordinación, recorrido accesible completo con lector y evidencia de escritura HU4/múltiples asignaciones. No se busca cerrarlos con imports triviales, mocks que simulan PostgreSQL o asignaciones inventadas. Ejecutar las comprobaciones manuales indicadas, preparar datos con autorización y volver a calificar sobre el commit de entrega. No se certifica 10/10 mientras esas evidencias estén pendientes.
+Los clones remotos coincidieron exactamente con ambos SHA publicados. La instalación técnica no necesita configuraciones privadas del autor; sí requiere los prerrequisitos declarados y, para REST, una clinica existente con sus20 tablas, credenciales propias fuera de Git, catálogos, responsables y fixtures sintéticos. El clon por sí solo no suministra esos datos. Ver `preparacion-entrega.md` para comandos exactos.
+
+Evidencias actuales: `docs/evidencias-auditoria-20261117/estricta-{resultados,unitaria,navegador,rest,dialogo,arquitectura,datos}.json` y `estricta-empleados-390.png`. Las evidencias anteriores se conservan. `test/integration/gt02_hu_readonly.py` hace reproducible el probe sin depender de scripts privados de /tmp.
+
+Para aspirar a10/10: resolver o conseguir aceptación explícita de la excepción del diálogo, adjuntar acta de instalación del commit exacto, cubrir con casos unitarios útiles las ramas de coordinación que lo requieran, completar VoiceOver y datos/recorrido HU4 transaccional con autorización. La evaluación secuencial puede detenerse antes de llegar a los escenarios clínicos. No se propone una refactorización masiva ni cambiar contratos por estética.

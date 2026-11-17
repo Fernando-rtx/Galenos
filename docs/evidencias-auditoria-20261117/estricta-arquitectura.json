@@ -1,0 +1,23 @@
+{
+  "modules": 78,
+  "cyclesDetected": [],
+  "customElements": [
+    "busqueda-citas",
+    "galenos-academic-app",
+    "galenos-application",
+    "galenos-catalogos",
+    "galenos-consulta-gestion",
+    "galenos-dashboard",
+    "galenos-notifications",
+    "galenos-ordenes",
+    "galenos-personas",
+    "galenos-procedimientos",
+    "galenos-relaciones",
+    "historial-consulta",
+    "inicio-sesion",
+    "tarjeta-consulta",
+    "tarjeta-simple"
+  ],
+  "runtimeDependencies": {},
+  "evaluatedCommit": "7c48cc528575c911a18933440df13cea044ff4ad"
+}

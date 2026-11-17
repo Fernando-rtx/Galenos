@@ -1,0 +1,697 @@
+{
+  "generatedAt": "2026-11-17T19:39:10.980Z",
+  "scope": "Chromium sintético, sin backend ni PostgreSQL",
+  "checks": [
+    {
+      "fixture": "componentes",
+      "result": "PASS: tarjetas, slots, UTC, datos nulos y selección del dashboard"
+    },
+    {
+      "fixture": "page_components",
+      "result": "PASS: montaje, acciones y limpieza de seis componentes de página"
+    },
+    {
+      "fixture": "hu3_componentes",
+      "result": "PASS: tarjetas, jerarquía, Ver registro, HU4 sin escritura, filtros, paginación, 403 y cancelación entre clínicas (sintético)"
+    },
+    {
+      "fixture": "hu4_componentes",
+      "result": "PASS: HU4 sintético — formulario, exámenes, guardado único, avance, conflictos, desconexión y limpieza de contexto"
+    },
+    {
+      "fixture": "notificaciones",
+      "result": "PASS: carga, éxito temporal, conflicto persistente, privacidad, accesibilidad y cierre"
+    },
+    {
+      "fixture": "accesibilidad",
+      "result": "PASS: combobox con flechas/Enter, ARIA, modal, error y retorno del foco"
+    },
+    "Navegación SPA y Atrás",
+    "Responsive 390/768/1440, texto >=4.5:1 y bordes de controles >=3:1",
+    "beforeinstallprompt sintético: ofrece instalación y consume el prompt una sola vez"
+  ],
+  "manualInstallation": "No probada por este runner",
+  "contrast": [
+    {
+      "theme": "light",
+      "text": "--gs-text",
+      "bg": "--gs-surface",
+      "foreground": "#243746",
+      "background": "#fff",
+      "ratio": 12.281217248820907,
+      "minimum": 4.5
+    },
+    {
+      "theme": "light",
+      "text": "--gs-muted",
+      "bg": "--gs-surface",
+      "foreground": "#50677a",
+      "background": "#fff",
+      "ratio": 5.8951969230928905,
+      "minimum": 4.5
+    },
+    {
+      "theme": "light",
+      "text": "--gs-placeholder",
+      "bg": "--gs-input",
+      "foreground": "#556c7e",
+      "background": "#f8fbfd",
+      "ratio": 5.272861403216024,
+      "minimum": 4.5
+    },
+    {
+      "theme": "light",
+      "text": "--gs-on-blue",
+      "bg": "--gs-blue",
+      "foreground": "#fff",
+      "background": "#126b9b",
+      "ratio": 5.829917598234399,
+      "minimum": 4.5
+    },
+    {
+      "theme": "light",
+      "text": "--gs-error",
+      "bg": "--gs-error-bg",
+      "foreground": "#a32942",
+      "background": "#fbe5e9",
+      "ratio": 5.921204201319883,
+      "minimum": 4.5
+    },
+    {
+      "theme": "light",
+      "text": "--gs-control-border",
+      "bg": "--gs-input",
+      "foreground": "#71869a",
+      "background": "#f8fbfd",
+      "ratio": 3.622380152725501,
+      "minimum": 3
+    },
+    {
+      "theme": "dark",
+      "text": "--gs-text",
+      "bg": "--gs-surface",
+      "foreground": "#e5edf5",
+      "background": "#192330",
+      "ratio": 13.412431674752625,
+      "minimum": 4.5
+    },
+    {
+      "theme": "dark",
+      "text": "--gs-muted",
+      "bg": "--gs-surface",
+      "foreground": "#acbbcc",
+      "background": "#192330",
+      "ratio": 8.104776094582757,
+      "minimum": 4.5
+    },
+    {
+      "theme": "dark",
+      "text": "--gs-placeholder",
+      "bg": "--gs-input",
+      "foreground": "#93a7ba",
+      "background": "#111b27",
+      "ratio": 7.0064480874235855,
+      "minimum": 4.5
+    },
+    {
+      "theme": "dark",
+      "text": "--gs-on-blue",
+      "bg": "--gs-blue",
+      "foreground": "#fff",
+      "background": "#126b9b",
+      "ratio": 5.829917598234399,
+      "minimum": 4.5
+    },
+    {
+      "theme": "dark",
+      "text": "--gs-error",
+      "bg": "--gs-error-bg",
+      "foreground": "#ffb7be",
+      "background": "#38232c",
+      "ratio": 8.837042662272253,
+      "minimum": 4.5
+    },
+    {
+      "theme": "dark",
+      "text": "--gs-control-border",
+      "bg": "--gs-input",
+      "foreground": "#71869a",
+      "background": "#111b27",
+      "ratio": 4.610944177609551,
+      "minimum": 3
+    }
+  ],
+  "installability": {
+    "installabilityErrors": [
+      {
+        "errorId": "in-incognito",
+        "errorArguments": []
+      }
+    ]
+  },
+  "browserCoverage": {
+    "scope": "Funciones V8 de módulos del navegador; máximos por navegación, no sumar porcentajes con unitarias",
+    "files": [
+      {
+        "file": "src/js/boundary/appearance.js",
+        "sourceCharacters": 2216,
+        "sha256": "6a17d2a7267d9cf9f12a8e7a3488130050faa0ebc49b53c2b593b6a676a96e0f",
+        "functions": 9,
+        "executedFunctions": 7
+      },
+      {
+        "file": "src/js/boundary/components/application-markup.js",
+        "sourceCharacters": 12478,
+        "sha256": "d510f2042ee2e537cc05933d0fc1ad6fbeb4139f4ab7b34cec6ca9ac475844d6",
+        "functions": 1,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/boundary/components/galenos-academic-app.js",
+        "sourceCharacters": 34818,
+        "sha256": "1cd8b81d78328638f35fec5853f94c8c437d8c0224234c4b64dc809646c5ff66",
+        "functions": 92,
+        "executedFunctions": 58
+      },
+      {
+        "file": "src/js/boundary/components/galenos-application.js",
+        "sourceCharacters": 12021,
+        "sha256": "a6007eff6cca837207516d1b877062738f1822c6bc1ab074d4e838946dd9622d",
+        "functions": 29,
+        "executedFunctions": 16
+      },
+      {
+        "file": "src/js/boundary/components/galenos-notifications.js",
+        "sourceCharacters": 4115,
+        "sha256": "dd91d8fe8655f41cc49fae2d93b5027659bd8d4ba6bc6929f4398f8f94ea3d4c",
+        "functions": 9,
+        "executedFunctions": 8
+      },
+      {
+        "file": "src/js/boundary/components/historial-consulta.js",
+        "sourceCharacters": 4607,
+        "sha256": "fe0a4c593a5fa21853c3a0fa5b268910c6801e452aee7e2f5663676eca92f69e",
+        "functions": 9,
+        "executedFunctions": 8
+      },
+      {
+        "file": "src/js/boundary/components/tarjeta_consulta.js",
+        "sourceCharacters": 6230,
+        "sha256": "2eb792ae3748e597cd7610815ac73a6f825513b6c557492395ec24f224b8bdae",
+        "functions": 10,
+        "executedFunctions": 9
+      },
+      {
+        "file": "src/js/boundary/components/tarjeta_simple.js",
+        "sourceCharacters": 1372,
+        "sha256": "61dc177d58daa30dc8997a8790b9d0f1fbe32ecb26cab2c283b0f90374983dbf",
+        "functions": 4,
+        "executedFunctions": 4
+      },
+      {
+        "file": "src/js/boundary/dashboard.js",
+        "sourceCharacters": 943,
+        "sha256": "23ead09972edb1c0b0e3b4e798a9652123ebb9f2c91ac147861e3b6ff11aea21",
+        "functions": 3,
+        "executedFunctions": 3
+      },
+      {
+        "file": "src/js/boundary/gestion.js",
+        "sourceCharacters": 10271,
+        "sha256": "313c21ea20aecf9c2ff2837ef2e0db85fdb39f1f898e2edcfe60c2d1e7c7e974",
+        "functions": 3,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/boundary/language.js",
+        "sourceCharacters": 26124,
+        "sha256": "0285f47d005deb264b866a2f3eceff6de008812cf3dfed656efdb68e407612dd",
+        "functions": 18,
+        "executedFunctions": 13
+      },
+      {
+        "file": "src/js/boundary/modelos/BusquedaCitasModel.js",
+        "sourceCharacters": 257,
+        "sha256": "316aa383eeb2f150e4b3a45e5714f4486a18e000295cb70887ba46ace67a4960",
+        "functions": 2,
+        "executedFunctions": 2
+      },
+      {
+        "file": "src/js/boundary/modelos/CatalogoModel.js",
+        "sourceCharacters": 13055,
+        "sha256": "f3a0627d4192c5201899460d4eef190fd5ceacd4e0e8bf580027aa6a6e5c43e9",
+        "functions": 20,
+        "executedFunctions": 8
+      },
+      {
+        "file": "src/js/boundary/modelos/ConsultaGestionModel.js",
+        "sourceCharacters": 30508,
+        "sha256": "19396cad0ccaf49fc8ab7d292e53bb5414c4cc89f2d0ce70f9f55be0847b3579",
+        "functions": 33,
+        "executedFunctions": 10
+      },
+      {
+        "file": "src/js/boundary/modelos/dashboard-presentation.js",
+        "sourceCharacters": 2065,
+        "sha256": "b993c9ca2eb21565e7eb060416468aff97ab7c55ebd209d151359b7a3c071801",
+        "functions": 4,
+        "executedFunctions": 3
+      },
+      {
+        "file": "src/js/boundary/modelos/DashboardModel.js",
+        "sourceCharacters": 11885,
+        "sha256": "a1476e6690583b2862300bb59ec4fd9f56dbe3f823d20492bbc756a0994ee376",
+        "functions": 35,
+        "executedFunctions": 21
+      },
+      {
+        "file": "src/js/boundary/modelos/editable-record.js",
+        "sourceCharacters": 867,
+        "sha256": "35f0776cf089574880e00efec5b9ac6aff20fc3af8c3b8ba116937714f9c4d3c",
+        "functions": 3,
+        "executedFunctions": 2
+      },
+      {
+        "file": "src/js/boundary/modelos/form-validation.js",
+        "sourceCharacters": 2461,
+        "sha256": "7ec7235107bd4cb934fffab1d60f0aa2b1e6f5c7ffe4c7cb5b3c6aefcc9493ac",
+        "functions": 8,
+        "executedFunctions": 7
+      },
+      {
+        "file": "src/js/boundary/modelos/format-utc-date.js",
+        "sourceCharacters": 351,
+        "sha256": "8b8e67aa56838f77faccfb8a2339fb7166d1f14adf0e3f2233caaef2ddf65ec5",
+        "functions": 2,
+        "executedFunctions": 2
+      },
+      {
+        "file": "src/js/boundary/modelos/historial-presentacion.js",
+        "sourceCharacters": 1840,
+        "sha256": "66fa43c71850052e124165cd274af2c405acebe3f90bf2f9720086a3b2c20b55",
+        "functions": 7,
+        "executedFunctions": 6
+      },
+      {
+        "file": "src/js/boundary/modelos/InicioSesionModel.js",
+        "sourceCharacters": 254,
+        "sha256": "32c107f141e9a1d02eaead294c07a0eb5d26b43571822a3999b6769bff52abaf",
+        "functions": 2,
+        "executedFunctions": 2
+      },
+      {
+        "file": "src/js/boundary/modelos/OrdenModel.js",
+        "sourceCharacters": 6162,
+        "sha256": "ad3184c7a361028991719bc8f436fe230551184bba21bcc2fd494718cc77947c",
+        "functions": 16,
+        "executedFunctions": 11
+      },
+      {
+        "file": "src/js/boundary/modelos/PersonaModel.js",
+        "sourceCharacters": 11760,
+        "sha256": "6561daccad36d9949c060687c3399e36b303824d7bca4db8cb14be8e4e3c21a9",
+        "functions": 21,
+        "executedFunctions": 10
+      },
+      {
+        "file": "src/js/boundary/modelos/PortalAcademicoModel.js",
+        "sourceCharacters": 16316,
+        "sha256": "304389173f53c606048b75995b2172269fc02258d11f3340d12676e6af752ec4",
+        "functions": 43,
+        "executedFunctions": 23
+      },
+      {
+        "file": "src/js/boundary/modelos/ProcedimientoModel.js",
+        "sourceCharacters": 8245,
+        "sha256": "13774a3763f34da5fae400644690c298148fb20bd6d26184ffc2133a58698002",
+        "functions": 18,
+        "executedFunctions": 10
+      },
+      {
+        "file": "src/js/boundary/modelos/RelacionModel.js",
+        "sourceCharacters": 7460,
+        "sha256": "9ce5a4b954712ffc691edec4bb0c08ffca130e28179018fe0301bcb1cc48f467",
+        "functions": 17,
+        "executedFunctions": 10
+      },
+      {
+        "file": "src/js/boundary/notifications.js",
+        "sourceCharacters": 1429,
+        "sha256": "61dd8052874c976ac71670ae69fffab95eab3af8e816ba9e603d7cdee2d8ea47",
+        "functions": 4,
+        "executedFunctions": 4
+      },
+      {
+        "file": "src/js/boundary/portal-academico.js",
+        "sourceCharacters": 6907,
+        "sha256": "a64e7b6c86cf6c4eda4a0a46c535353edf5c9c3ecc751922b1892d7d9810646f",
+        "functions": 22,
+        "executedFunctions": 8
+      },
+      {
+        "file": "src/js/boundary/pwa.js",
+        "sourceCharacters": 2434,
+        "sha256": "1db4e735b14b688e49fc8208a1535313024fa57737e553ebe970a7b3d8670598",
+        "functions": 11,
+        "executedFunctions": 9
+      },
+      {
+        "file": "src/js/boundary/ticket-options.js",
+        "sourceCharacters": 2437,
+        "sha256": "2fea1dd4456ef73779717fdd8e5e30f0cff52bdbb3765b0a4704be12effa8c15",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/AcademicCareControl.js",
+        "sourceCharacters": 6146,
+        "sha256": "913f0a7ddc1e204d6f1e9ce6a97dcc2a10af18ebddea5be5e5122e2f37f8964e",
+        "functions": 19,
+        "executedFunctions": 19
+      },
+      {
+        "file": "src/js/control/AcademicCareService.js",
+        "sourceCharacters": 1744,
+        "sha256": "7140499ce2cd55faca2a8e8f9cd3ce7c2de02ead5df292c3a6c7bafbf3ec5ba0",
+        "functions": 10,
+        "executedFunctions": 2
+      },
+      {
+        "file": "src/js/control/api-config.js",
+        "sourceCharacters": 3099,
+        "sha256": "0060370daffafbd3f44cccda03309996f005846102b18b143305c33690877841",
+        "functions": 6,
+        "executedFunctions": 5
+      },
+      {
+        "file": "src/js/control/api-routes.js",
+        "sourceCharacters": 2743,
+        "sha256": "9542a086ced7f6dc1422d43f9dad08f8a75c75882de9406e7e9f412aa51f3cb5",
+        "functions": 7,
+        "executedFunctions": 7
+      },
+      {
+        "file": "src/js/control/api-v2-routes.js",
+        "sourceCharacters": 23386,
+        "sha256": "4e236e04b17227db201c5f6b66d1cd006cc4e1c3b8ac6c20fc6c0925d8ee204d",
+        "functions": 34,
+        "executedFunctions": 4
+      },
+      {
+        "file": "src/js/control/AtencionCitaService.js",
+        "sourceCharacters": 293,
+        "sha256": "f2c93cda9325ae2b1d59c18574f325f4197dcc89e2395ce631fa7318d77fd8af",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/AtencionPacienteService.js",
+        "sourceCharacters": 295,
+        "sha256": "24b4d1ffeb26f351e5bc114dba696b5e20a28c8bdb16903da21f31715ed81139",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/BusquedaCitasControl.js",
+        "sourceCharacters": 1224,
+        "sha256": "9a6da56b443ae4e59b69c557015fd161538829d99dc300f72cd1b79b4f9c948f",
+        "functions": 5,
+        "executedFunctions": 2
+      },
+      {
+        "file": "src/js/control/CatalogoControl.js",
+        "sourceCharacters": 4144,
+        "sha256": "f4ca393753ece04143f57581eb0af4bc43a4baa8213d37f9a256468c3e16e504",
+        "functions": 12,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/CitasPacienteService.js",
+        "sourceCharacters": 467,
+        "sha256": "eb6e4c770a6cf6f362ef7d46e4edb7d3ba1396244f8214997ebabf066700a753",
+        "functions": 4,
+        "executedFunctions": 2
+      },
+      {
+        "file": "src/js/control/ClinicaService.js",
+        "sourceCharacters": 293,
+        "sha256": "303c96786a5caee783019d92c0af35b7fef1074a7b3750bdd0b2cef835076014",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ConsultaGestionControl.js",
+        "sourceCharacters": 12802,
+        "sha256": "f0988bbe534de8fc4b5b362495762093a8939d9ea6fdfa498662265b6e6f020e",
+        "functions": 23,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ConsultaProcedimientoPasoService.js",
+        "sourceCharacters": 375,
+        "sha256": "521476ab14f8e08ec9e84e981cda267e2a8977195603ecb444016c77db162e77",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ConsultaProcedimientoService.js",
+        "sourceCharacters": 363,
+        "sha256": "819ff1278501dece08ef426160e0ad80863f5246776117845b8e7a451ed2ca67",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ConsultaService.js",
+        "sourceCharacters": 283,
+        "sha256": "1cd69ca219b5089db0d9077c89667f943022754672372e0fb1d4b9af20858b90",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/contexto-empleado.js",
+        "sourceCharacters": 1275,
+        "sha256": "634996d76f70dbe03a223294b1d6170f845dc424b5a72b718cfc6e9bcda64414",
+        "functions": 8,
+        "executedFunctions": 4
+      },
+      {
+        "file": "src/js/control/DashboardControl.js",
+        "sourceCharacters": 8971,
+        "sha256": "9bf2d86fc7851cd88acbdf0e21b5569a46c0ad1178375b9a208edd095cfed1b2",
+        "functions": 29,
+        "executedFunctions": 23
+      },
+      {
+        "file": "src/js/control/DefaultService.js",
+        "sourceCharacters": 19323,
+        "sha256": "1c875b03fe405926f7d9ba0951b683865b0533dd44b78d39a7b03bbb9eb368ef",
+        "functions": 41,
+        "executedFunctions": 23
+      },
+      {
+        "file": "src/js/control/DocumentoService.js",
+        "sourceCharacters": 327,
+        "sha256": "91e5a2e3036429162cb0716df5fbd40f79b0c2208d9b392aba5bee96165afa11",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/environment.example.js",
+        "sourceCharacters": 142,
+        "sha256": "dd2044a1256820e303f8ebb7e1c37e38d3a23531d767714d864367adfa6740aa",
+        "functions": 1,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ExamenResultadoService.js",
+        "sourceCharacters": 345,
+        "sha256": "aba4d16cb912bee55020d0239329fca76903379d853da487d604aecc9cd934fa",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ExamenService.js",
+        "sourceCharacters": 318,
+        "sha256": "4a5e7220ca940bf206e746d7c44417a6c8e13b36107972c2fe331781cf8bec7d",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ExamenTipoExamenService.js",
+        "sourceCharacters": 348,
+        "sha256": "58f347c9fa64f8f703d9eb76021605c1b2b60c57196f8d397b1289e084e01422",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/IdentidadAcademicaService.js",
+        "sourceCharacters": 5785,
+        "sha256": "48cf4c5228b324b525d73df683b7edc1f040f5e6358aba0ee57f4d141a1462a2",
+        "functions": 8,
+        "executedFunctions": 4
+      },
+      {
+        "file": "src/js/control/IdentificacionControl.js",
+        "sourceCharacters": 4884,
+        "sha256": "240ff616ffd516bc6c8177a4b0dfdbc93aa4c619ccf9a9d76bef48dd5253a92f",
+        "functions": 14,
+        "executedFunctions": 6
+      },
+      {
+        "file": "src/js/control/MedioContactoService.js",
+        "sourceCharacters": 339,
+        "sha256": "51a6b7913b9aee210e46965e683c12c2358d021851298c05a8f508dbc1a6c0c0",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/OrdenControl.js",
+        "sourceCharacters": 3785,
+        "sha256": "eb96eb866ca9768608c0cba8fc5601d553efe7f0e34a854d0702437745a3c1eb",
+        "functions": 12,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/OrdenExamenService.js",
+        "sourceCharacters": 333,
+        "sha256": "6e6080550eea8c8af4262ce4d430828fbb65ee673083bd7e94c2a58c10ccca4a",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/PersonaControl.js",
+        "sourceCharacters": 5487,
+        "sha256": "96582b6b8f22932596ff9716e1b7ebc64561842b5bdfcdc4284d789dea8b6171",
+        "functions": 14,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/PersonaRolService.js",
+        "sourceCharacters": 330,
+        "sha256": "47fbab8b52d6342206d7790437eff9195fcaee92e2010cc9df29e9fcd6aa96df",
+        "functions": 2,
+        "executedFunctions": 2
+      },
+      {
+        "file": "src/js/control/PersonaService.js",
+        "sourceCharacters": 321,
+        "sha256": "fe4abb02a173452917a11895f458ca690fd772f9829382b2c2369dc4656aaa80",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ProcedimientoControl.js",
+        "sourceCharacters": 3779,
+        "sha256": "583003be139d8d233e2248fc36610ecc50b05dc0a88de0caa8aae1a97ddc6ce7",
+        "functions": 11,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ProcedimientoPasoExamenService.js",
+        "sourceCharacters": 369,
+        "sha256": "8e99f5e3e014af9ec046e68184194a019c7eb23e8bb27bfb9aa929af70d1461e",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ProcedimientoPasoSecuenciaService.js",
+        "sourceCharacters": 378,
+        "sha256": "def3281e7583e6389f588d0af960b54e0c56598e9e86f59b7b5cbef08e8cccd8",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ProcedimientoPasoService.js",
+        "sourceCharacters": 351,
+        "sha256": "812d34343f3e949e5733b1199880c65a035819be863f50671731900441b5d546",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/ProcedimientoService.js",
+        "sourceCharacters": 339,
+        "sha256": "6d70debcd3d307a4e5fa136a878ff992256d457823488397bb02aff895211504",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/query-parameters.js",
+        "sourceCharacters": 1526,
+        "sha256": "c206ecfd8c591465a9d8814dbdd32172a02fe609bf595e4a2d9211b95c2a820f",
+        "functions": 4,
+        "executedFunctions": 2
+      },
+      {
+        "file": "src/js/control/RelacionControl.js",
+        "sourceCharacters": 4354,
+        "sha256": "7bdae68be24fa5d32462e433bed2890e49ddf8f4d2ffbbaa248480cf00a374d5",
+        "functions": 12,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/rest-validators.js",
+        "sourceCharacters": 2508,
+        "sha256": "759b7b90b223467ff04016d87e2caaf012ecbd4fb41cf34214e4eef5d0b5ccf7",
+        "functions": 16,
+        "executedFunctions": 10
+      },
+      {
+        "file": "src/js/control/RolService.js",
+        "sourceCharacters": 309,
+        "sha256": "9dfa3c35a29d3a2df8d654789f4a4fff546545754f175d946327b529108d8fb2",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/TipoDocumentoService.js",
+        "sourceCharacters": 308,
+        "sha256": "e724b8bb1db5d4f34869f7402631f2f8064f98b9be044babaac6b90c96388828",
+        "functions": 2,
+        "executedFunctions": 2
+      },
+      {
+        "file": "src/js/control/TipoExamenService.js",
+        "sourceCharacters": 330,
+        "sha256": "d8234a02d8dd9bcb67e2fabf1fa40b4217b4ac71d1423ccbce71a8b23fcaad7f",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/control/TipoMedioContactoService.js",
+        "sourceCharacters": 351,
+        "sha256": "8b9fd4f783d200365cb96d4d28e2efac470ff84df9f5d183408949377e3d4074",
+        "functions": 2,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/entity/DefaultError.js",
+        "sourceCharacters": 1114,
+        "sha256": "1481b939e8bea13654cd77fe6dfdbfb904b2b40559e5f114ec153e492f877619",
+        "functions": 5,
+        "executedFunctions": 3
+      },
+      {
+        "file": "src/js/entity/DefaultResponse.js",
+        "sourceCharacters": 1525,
+        "sha256": "17fad8ec3259b78f0f8d5ce847dd3389ab892c7dfac4b88a3d545d7fa9f4d119",
+        "functions": 6,
+        "executedFunctions": 5
+      },
+      {
+        "file": "src/js/index.js",
+        "sourceCharacters": 2048,
+        "sha256": "c8127a58299402f1576ad3e16ba9bfcf22c2f1b8799a8383bdc1e0f1dedc7778",
+        "functions": 1,
+        "executedFunctions": 1
+      },
+      {
+        "file": "src/js/main.js",
+        "sourceCharacters": 55,
+        "sha256": "831f39f3171f1a19d66dac42476c831f66ec4427c0d902ad5ab9c464b07daaac",
+        "functions": 1,
+        "executedFunctions": 1
+      }
+    ]
+  },
+  "status": "PASS"
+}

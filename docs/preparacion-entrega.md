@@ -1,7 +1,7 @@
 # Preparación de entrega GT02
 
 Repositorios: https://github.com/Fernando-rtx/GalenoSVFE y https://github.com/Fernando-rtx/Galenos.
-Bases auditadas: frontend `ebfa0c3220bca477dba1f0ca5967526390e97ff8`, backend `ce23fd3c14c93cb9036551a8c7ca0179d618f8f0`. Correcciones en ramas `audit/gt02-final-2026`; consultar `git log -1` para commits finales. Esta auditoría no integra ni publica main.
+Bases auditadas: frontend `ebfa0c3220bca477dba1f0ca5967526390e97ff8`, backend `ce23fd3c14c93cb9036551a8c7ca0179d618f8f0`. Correcciones en ramas `audit/gt02-final-2026`; consultar `git log -1` para commits finales. La auditoría inicial no integró main; la publicación posterior sí dejó los commits indicados más abajo accesibles en GitHub.
 
 ## Requisitos y clonación
 
@@ -93,3 +93,26 @@ La instalación técnica desde clon fue verificada; la demostración clínica re
 El PDF oficial pide un archivo de texto con los nombres de los tres integrantes, identificador del commit y URL del repositorio que contiene ese commit. Completar los datos del equipo y los dos commits finales aprobados; no entregar referencias a ramas locales ni afirmar que los commits están publicados antes de subirlos con autorización.
 
 Verificación final del clon local sin archivos ignorados: frontend código `dca5798`, 415 unitarias y122archivos de sintaxis válidos (124en el árbol local, que incluye dos configuraciones ignoradas). El commit frontend final con documentación es `7c48cc5`. Los archivos ignorados de configuración son opcionales/privados y no se requieren para instalar las dependencias ni ejecutar estas pruebas.
+
+## Verificación estricta de lo publicado
+
+Los SHA de main comprobados desde clones remotos son FE `7c48cc528575c911a18933440df13cea044ff4ad` y BE `4406204f04b5020465f16f5c4a2750a58f19c573`. Hacer checkout de esos SHA para evaluar exactamente el código del informe. Las frases sobre ramas todavía locales en apartados anteriores son históricas; la verificación nueva se entrega en `audit/gt02-verificacion-publicada`, sin actualizar main.
+
+Para repetir el probe clínico de solo lectura con el archivo de verificación disponible en esa rama, configurar primero `src/main/liberty/config/server.env` con credenciales propias, localhost:5432/clinica y los prerrequisitos de Liberty:
+
+```sh
+mvn package
+GT02_CONFIG="$PWD/src/main/liberty/config" python3 scripts/gt02_readonly_runtime.py stage
+python3 scripts/gt02_readonly_runtime.py run
+```
+
+El último comando mantiene la instancia temporal19084. En otra terminal del backend:
+
+```sh
+python3 test/integration/gt02_hu_readonly.py --consulta e5bd6458-4469-5543-98b0-1a5b595559a3
+python3 scripts/gt02_readonly_runtime.py stop
+```
+
+El helper SQL reutilizado requiere Docker y el contenedor existente `postgres_db` con clinica; no lo crea ni importa datos. No usar el comando de demo que crea otra base. El probe valida runtime readonly, tipo de consulta ACAD, sesiones de memoria y hashes de20tablas. No ejecuta DELETE ni registrar atención. Un cambio concurrente de otro usuario puede invalidar la igualdad de hashes y exige revisar la causa, no repetir escrituras. El runtime usa una instalación de Liberty existente; si está en otra ubicación indicar GT02_LIBERTY y ajustar la ruta Maven de forma coherente. No publicar server.env ni copiar datos privados para satisfacer el fixture.
+
+La reproducción automática del navegador se hace con las dependencias ya documentadas y sin backend; GET clínicos reales y escrituras simuladas se reportan por separado. Para la regla de revisión secuencial, resolver primero el acta de instalación y la excepción del diálogo antes de confiar en una suma de puntos.

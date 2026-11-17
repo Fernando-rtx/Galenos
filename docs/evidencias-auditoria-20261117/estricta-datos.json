@@ -1,0 +1,15 @@
+{
+  "missingTemplate": [
+    {
+      "ejecucion": "e0da3669-f37f-4890-ae80-41d5541d0c18",
+      "consulta": "a11b2f21-469f-40e6-adcf-6113ba9db065",
+      "responsable": "5b79ca94-1f83-46fe-b7fc-057bfa6c385e",
+      "rol": "DESARROLLO responsable 2cb26284",
+      "procedimiento": "DESARROLLO procedimiento flujo 2cb26284",
+      "estado": "EN_CURSO",
+      "fecha_inicio": "2026-10-31T00:56:00+00:00"
+    }
+  ],
+  "missingResponsible": [],
+  "multipleAssignments": 0
+}

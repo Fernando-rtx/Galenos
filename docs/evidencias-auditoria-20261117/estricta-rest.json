@@ -1,0 +1,43 @@
+{
+  "consulta": "e5bd6458-4469-5543-98b0-1a5b595559a3",
+  "scope": "REST real + SELECT, sin escrituras clínicas",
+  "checks": [
+    {
+      "HU2": "Bandeja sin sesión 401 y paciente como empleado 403"
+    },
+    {
+      "HU1": "GET citas y PDF Java",
+      "citas": 1,
+      "pdfBytes": 69119
+    },
+    {
+      "HU2": "Identidad y asignación propia recuperadas desde backend"
+    },
+    {
+      "HU4": "GET autorizado, orden histórica separada de actual",
+      "pasosHistoricos": 3,
+      "ordenesRetrocedidas": 1,
+      "ordenesActuales": 1
+    },
+    {
+      "HU3": "2026-11-15..2026-11-16",
+      "status": 200,
+      "registros": 4
+    },
+    {
+      "HU3": "2026-11-17..2026-11-17",
+      "status": 200,
+      "registros": 0
+    },
+    {
+      "HU3": "2026-11-18..2026-12-17",
+      "status": 200,
+      "registros": 0
+    }
+  ],
+  "status": "PASS",
+  "unchangedTables": 20,
+  "rejectedForeignAssignments": 2,
+  "clinicalWrites": false,
+  "sessions": "Solo memoria, expiran o se descartan al parar el runtime"
+}

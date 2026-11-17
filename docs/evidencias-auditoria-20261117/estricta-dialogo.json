@@ -1,0 +1,10 @@
+{
+  "tag": "DIALOG",
+  "parent": "BODY",
+  "insideApplication": false,
+  "customElement": false,
+  "accessibleTitle": "Descarga tu ticket",
+  "focusRestored": true,
+  "downloaded": false,
+  "scope": "Diagnóstico de DOM con helper real y disparador sintético; sin REST clínico"
+}

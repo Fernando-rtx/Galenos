@@ -1,0 +1,52 @@
+{
+  "evaluatedCommits": {
+    "frontend": "7c48cc528575c911a18933440df13cea044ff4ad",
+    "backend": "4406204f04b5020465f16f5c4a2750a58f19c573"
+  },
+  "pdfSha256": "f980d8f95167cedd4bac562dba1eaae68f20bd27da738e9c3152f2192eee969a",
+  "tests": {
+    "unitFrontend": 415,
+    "transportSynthetic": 9,
+    "unitBackend": 843,
+    "browserFixtures": 6
+  },
+  "unitCoverage": {
+    "measuredFiles": 59,
+    "outsideUnitScope": 19,
+    "lines": {
+      "covered": 3970,
+      "total": 5322
+    },
+    "branches": {
+      "covered": 973,
+      "total": 1160
+    },
+    "functions": {
+      "covered": 318,
+      "total": 444
+    }
+  },
+  "browserCoverage": {
+    "measuredFiles": 77,
+    "notCombinedWithUnit": true
+  },
+  "coldOfflineServerStopped": "PASS",
+  "remoteClones": "Exact published SHAs, npm ci/test/check and Maven package PASS",
+  "jdbc": "localhost:5432/clinica; default_transaction_read_only=on",
+  "unchangedTables": 20,
+  "clinicalWrites": false,
+  "productionChanges": false,
+  "score": {
+    "previousOrientation": 9.25,
+    "strictOrientationIncludingUserReportedInstallation": 8.75,
+    "strictWithoutUserReportedInstallation": 8.25,
+    "officialGrade": false
+  },
+  "pending": [
+    "Ticket dialog outside Web Component root",
+    "Independent installation record for exact commit",
+    "Unit branches of DOM coordination",
+    "VoiceOver full journey",
+    "Authorized HU4 writes, multiple assignments and dated fixture data"
+  ]
+}
