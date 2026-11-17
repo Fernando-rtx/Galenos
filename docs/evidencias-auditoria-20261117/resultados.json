@@ -1,0 +1,32 @@
+{
+  "fecha": "2026-11-17",
+  "frontendInicial": 428,
+  "frontendFinal": 409,
+  "transport": 9,
+  "backend": 843,
+  "backendFailures": 0,
+  "frontendSyntaxFiles": 116,
+  "clones": {
+    "frontend": "ebfa0c3",
+    "backend": "ce23fd3",
+    "npmCi": "PASS",
+    "mavenPackage": "PASS",
+    "browserSync": "PASS"
+  },
+  "libertyReadonly": "PASS",
+  "offlineServerStopped": "PASS",
+  "responsive": [
+    390,
+    768,
+    1440
+  ],
+  "installability": "in-incognito; instalación manual pendiente",
+  "oldComponentFixture": "FAIL: index.html ya no contiene data-dashboard",
+  "databaseUnchangedTables": 20,
+  "clinicalWritesExecuted": false,
+  "npmAudit": {
+    "high": 1,
+    "moderate": 3,
+    "scope": "desarrollo"
+  }
+}

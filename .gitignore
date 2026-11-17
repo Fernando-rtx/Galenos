@@ -39,3 +39,9 @@ src/main/liberty/config/dropins/
 
 # Runtime privado de verificación, sobre clinica en sólo lectura
 /.gt02/
+
+# Entregables y evidencias sanitizadas de auditoría GT02
+!/docs/auditoria-final-gt02.md
+!/docs/manual-pruebas-finales.md
+!/docs/preparacion-entrega.md
+!/docs/evidencias-auditoria-20261117/

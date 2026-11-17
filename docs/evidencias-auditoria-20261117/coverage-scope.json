@@ -1,0 +1,41 @@
+{
+  "scope": "Unitarias Mocha; V8 nativo. Porcentajes solo de scripts cargados, no toda la SPA.",
+  "measuredFiles": 54,
+  "lines": {
+    "covered": 3638,
+    "total": 4875
+  },
+  "branches": {
+    "covered": 926,
+    "total": 1078
+  },
+  "functions": {
+    "covered": 285,
+    "total": 397
+  },
+  "unmeasuredFiles": [
+    "src/js/boundary/appearance.js",
+    "src/js/boundary/components/galenos-application.js",
+    "src/js/boundary/components/galenos-notifications.js",
+    "src/js/boundary/dashboard.js",
+    "src/js/boundary/gestion.js",
+    "src/js/boundary/modelos/BusquedaCitasModel.js",
+    "src/js/boundary/modelos/CatalogoModel.js",
+    "src/js/boundary/modelos/ConsultaGestionModel.js",
+    "src/js/boundary/modelos/DashboardModel.js",
+    "src/js/boundary/modelos/InicioSesionModel.js",
+    "src/js/boundary/modelos/OrdenModel.js",
+    "src/js/boundary/modelos/PersonaModel.js",
+    "src/js/boundary/modelos/PortalAcademicoModel.js",
+    "src/js/boundary/modelos/ProcedimientoModel.js",
+    "src/js/boundary/modelos/RelacionModel.js",
+    "src/js/boundary/portal-academico.js",
+    "src/js/control/AtencionCitaService.js",
+    "src/js/control/AtencionPacienteService.js",
+    "src/js/control/PersonaControl.js",
+    "src/js/control/ProcedimientoControl.js",
+    "src/js/control/RelacionControl.js",
+    "src/js/control/environment.example.js",
+    "src/js/main.js"
+  ]
+}

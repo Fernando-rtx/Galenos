@@ -8,11 +8,10 @@ GalenosSV es una aplicación web académica Java 21/Jakarta EE 11 desplegable
 como WAR en Open Liberty. Usa Jakarta Faces y PrimeFaces para las vistas, EJB
 para los DAO, JPA para persistencia y PostgreSQL como base de datos.
 
-La interfaz implementada actualmente comprende los catálogos de tipos de
-examen, tipos de documento y tipos de medio de contacto. El repositorio también
-contiene el modelo JPA y DAO de otras áreas clínicas, pero eso no significa que
-existan todavía pantallas o flujos completos para pacientes, citas, expedientes,
-pagos o inventario.
+El frontend principal es la SPA nativa del repositorio GalenoSVFE, con HU1–HU4,
+identificación académica por documento, sesiones efímeras, bandeja por responsable
+y atención REST. Faces/PrimeFaces corresponde a la interfaz heredada del backend.
+La auditoría vigente está en [auditoría GT02](docs/auditoria-final-gt02.md).
 
 El flujo de consulta sigue el esquema real: `consulta_procedimiento_paso`
 relaciona la ejecución de un paso con `consulta_procedimiento`, el `PersonaRol`
@@ -56,11 +55,15 @@ orden en `nuevo()`; los resultados se registran en `ExamenResultado`.
 
 ## Despliegue académico local
 
-Este proyecto usa datos ficticios. El frontend y REST v2 funcionan sin iniciar sesión.
+Este proyecto usa datos ficticios. El frontend y REST v2 requieren identificación
+académica de paciente o empleado según la operación.
 Para ejecutar el backend y conectar el frontend, sigue la
 [guía de desarrollo local](docs/desarrollo-local.md).
 
 ## Comandos
+
+Para la revisión GT02 sobre `clinica`, seguir [preparación de entrega](docs/preparacion-entrega.md).
+Los comandos de demo que siguen crean un entorno distinto y no forman parte de esa revisión.
 
 Para la integración del nuevo frontend con **datos ficticios**:
 
