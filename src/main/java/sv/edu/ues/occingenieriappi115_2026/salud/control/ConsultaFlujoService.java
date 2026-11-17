@@ -54,16 +54,39 @@ public class ConsultaFlujoService {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public List<Consulta> buscarConsultas(UUID clinica, LocalDate desde, LocalDate hasta,
             ZoneId zona, UUID personaRol, int primero, int tamano) {
+        return buscarConsultas(clinica, desde, hasta, zona, personaRol, null, primero, tamano);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public List<Consulta> buscarConsultas(UUID clinica, LocalDate desde, LocalDate hasta,
+            ZoneId zona, UUID personaRol, Boolean finalizadas, int primero, int tamano) {
         validarClinica(clinica);
-        return consultaDAO.obtenerPagina(primero, tamano,
-                filtrosConsulta(clinica, desde, hasta, zona, personaRol),
+        var filtros = filtrosConsulta(clinica, desde, hasta, zona, personaRol);
+        if (finalizadas != null)
+            return consultaDAO.buscarPorEstado(clinica,
+                    desde == null ? null : Date.from(desde.atStartOfDay(zona).toInstant()),
+                    hasta == null ? null : Date.from(hasta.plusDays(1).atStartOfDay(zona).toInstant()),
+                    personaRol, finalizadas, primero, tamano);
+        return consultaDAO.obtenerPagina(primero, tamano, filtros,
                 List.of(new OrdenDAO("idConsulta", DireccionOrden.ASCENDENTE)));
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public long contarConsultas(UUID clinica, LocalDate desde, LocalDate hasta, ZoneId zona, UUID personaRol) {
+        return contarConsultas(clinica, desde, hasta, zona, personaRol, null);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public long contarConsultas(UUID clinica, LocalDate desde, LocalDate hasta, ZoneId zona, UUID personaRol,
+            Boolean finalizadas) {
         validarClinica(clinica);
-        return consultaDAO.contar(filtrosConsulta(clinica, desde, hasta, zona, personaRol));
+        var filtros = filtrosConsulta(clinica, desde, hasta, zona, personaRol);
+        if (finalizadas != null)
+            return consultaDAO.contarPorEstado(clinica,
+                    desde == null ? null : Date.from(desde.atStartOfDay(zona).toInstant()),
+                    hasta == null ? null : Date.from(hasta.plusDays(1).atStartOfDay(zona).toInstant()),
+                    personaRol, finalizadas);
+        return consultaDAO.contar(filtros);
     }
 
     /** El detalle solo puede resolverse dentro de la clínica activa recibida. */

@@ -227,3 +227,29 @@ Las fechas del ejemplo pertenecen al fixture sintético; el cliente obtiene
 clínicas por HTTP y fechas de los filtros de usuario. Reproducción y límites:
 `docs/consulta-demo.md`. Autenticación y autorización reales serán un contrato
 posterior antes de usar datos clínicos.
+
+## GET /v2/consulta — filtro de estado de atención
+
+Se añade únicamente el parámetro opcional `estadoAtencion`: `PENDIENTES` o `FINALIZADAS`.
+Omitirlo devuelve todas las consultas de la clínica autorizada. Otros valores devuelven 422.
+El DTO, los filtros de fecha/paciente y las reglas de autorización no cambian; v1 conserva su contrato.
+
+Una consulta se considera finalizada si tiene al menos un procedimiento asociado, todos tienen
+`fechaFin` y no quedan pasos `PENDIENTE` o `EN_CURSO`. El complemento son las consultas por atender
+o en curso, incluidas las que aún no tienen procedimiento. Completar uno de varios procedimientos
+no finaliza toda la consulta. No se usa `Consulta.fechaFin` como prueba de cierre clínico, porque
+puede ser una fecha programada y HU4 cierra `ConsultaProcedimiento.fechaFin`.
+
+El DAO aplica el mismo criterio antes de paginar y al calcular `Total-registros`. No se agrega
+un estado persistido, no se cambian entidades ni tablas y no se ejecutan transiciones.
+
+Verificación local: 847 pruebas Java aprobadas y WAR desplegado en Open Liberty. El comando
+`python3 test/integration/consulta_estado_readonly.py` contrastó SELECT con GET reales:
+3 consultas, 2 pendientes y 1 finalizada sin limitar fechas; también estado combinado con fecha
+y paciente, página vacía con total correcto, estado inválido 422 y acceso sin sesión 401.
+Las huellas de las 20 tablas coincidieron antes/después. El script crea únicamente una sesión
+efímera de identidad, sin escrituras clínicas; requiere ejemplos existentes de ambas categorías.
+
+El Web Component también se verificó con clics Playwright y GET reales, con los mismos
+conteos 2/1/3 para pendientes/finalizadas/todas. El bloque de filtros no desborda a 390,
+768 o 1440 px. El montaje del navegador fue aislado; no registró notas ni avanzó consultas.

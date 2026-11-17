@@ -64,6 +64,26 @@ class ConsultaFlujoServiceTest {
         when(personas.buscarResponsablesPorClinicaYRol(clinica.getIdClinica(),inicial.getIdRol().getIdRol())).thenReturn(List.of(responsable));
         when(asociaciones.guardar(any())).thenAnswer(i -> i.getArgument(0));
     }
+    @Test void filtraPendientesConFechasClinicasYLaMismaPaginacionEnDao() {
+        var day=java.time.LocalDate.of(2026,11,17);var zone=java.time.ZoneId.of("America/El_Salvador");
+        var from=Date.from(day.atStartOfDay(zone).toInstant());
+        var until=Date.from(day.plusDays(1).atStartOfDay(zone).toInstant());
+        var patient=consulta.getIdPersonaRol().getIdPersonaRol();
+        when(consultas.buscarPorEstado(clinica.getIdClinica(),from,until,patient,false,2,1)).thenReturn(List.of(consulta));
+        when(consultas.contarPorEstado(clinica.getIdClinica(),from,until,patient,false)).thenReturn(3L);
+        assertEquals(List.of(consulta),service.buscarConsultas(clinica.getIdClinica(),day,day,zone,patient,false,2,1));
+        assertEquals(3L,service.contarConsultas(clinica.getIdClinica(),day,day,zone,patient,false));
+        verify(consultas).buscarPorEstado(clinica.getIdClinica(),from,until,patient,false,2,1);
+        verify(consultas).contarPorEstado(clinica.getIdClinica(),from,until,patient,false);
+        verify(consultas,never()).obtenerPagina(anyInt(),anyInt(),anyList(),anyList());
+    }
+    @Test void filtroEstadoNoOmiteValidacionDeClinicaYFechas() {
+        var day=java.time.LocalDate.of(2026,11,17);var zone=java.time.ZoneId.of("America/El_Salvador");
+        assertThrows(FlujoConsultaException.class,()->service.buscarConsultas(clinica.getIdClinica(),day.plusDays(1),day,zone,null,true,0,10));
+        clinica.setActivo(false);
+        assertThrows(FlujoConsultaException.class,()->service.buscarConsultas(clinica.getIdClinica(),null,null,zone,null,false,0,10));
+        verifyNoInteractions(consultas);
+    }
     @Test void creaPrimerPasoConRecepcionMismaClinicaYRolExacto() {
         var datos = datos();
         assertSame(datos, service.crearProcedimiento(datos,clinica.getIdClinica()));

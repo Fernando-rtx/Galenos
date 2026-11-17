@@ -57,12 +57,17 @@ public class ConsultaGestionResource {
     @GET @Path("consulta")
     public List<ConsultaDatos> listar(@QueryParam("idClinica") String c, @QueryParam("first") String first,
             @QueryParam("max") String max, @QueryParam("fechaDesde") String desde, @QueryParam("fechaHasta") String hasta,
-            @QueryParam("idPersonaRol") String paciente) {
+            @QueryParam("idPersonaRol") String paciente, @QueryParam("estadoAtencion") String estado) {
         var clinic = clinic(c);var page = RestParameters.page(first,max,settings);
         var from = ConsultaResource.date(desde,"fechaDesde");var to = ConsultaResource.date(hasta,"fechaHasta");
         var p = paciente == null ? null : RestParameters.uuid(paciente,"idPersonaRol");
-        var rows = service.buscarConsultas(clinic, from, to, settings.getClinicZone(), p, page.first(), page.max());
-        response.setHeader("Total-registros", Long.toString(service.contarConsultas(clinic,from,to,settings.getClinicZone(),p)));
+        Boolean finalizadas = estado == null ? null : switch (estado) {
+            case "PENDIENTES" -> false;
+            case "FINALIZADAS" -> true;
+            default -> throw new ApiException(422, "estadoAtencion debe ser PENDIENTES o FINALIZADAS");
+        };
+        var rows = service.buscarConsultas(clinic, from, to, settings.getClinicZone(), p, finalizadas, page.first(), page.max());
+        response.setHeader("Total-registros", Long.toString(service.contarConsultas(clinic,from,to,settings.getClinicZone(),p,finalizadas)));
         return rows.stream().map(ConsultaDatos::from).toList();
     }
     @GET @Path("consulta/{id}")
