@@ -129,12 +129,22 @@ class ApiSettingsTest {
     }
 
     @Test
-    void academicoRequiereClinicaSinModoDemo() {
+    void academicoAceptaLaBaseConfiguradaSinHabilitarDemo() {
         var settings = new ApiSettings(Map.of("GALENOS_API_MODE", "academic", "POSTGRESQL_DB_NAME", "clinica"));
         assertTrue(settings.isManagementEnabled());
         assertDoesNotThrow(settings::requireManagement);
         assertThrows(ApiException.class, settings::requireDemo);
-        assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of("GALENOS_API_MODE", "academic", "POSTGRESQL_DB_NAME", "galenos_demo_crud")));
+        var assessment = new ApiSettings(Map.of("GALENOS_API_MODE", "academic", "POSTGRESQL_DB_NAME", "galeno_eval_2026"));
+        assertTrue(assessment.isManagementEnabled());
+        assertFalse(assessment.isDevelopment());
+        assertFalse(assessment.isCrudDemo());
+        assertThrows(ApiException.class, assessment::requireDemo);
+        for (String database : java.util.List.of("", "galenos_demo_crud", "galenos_rest_test_gt02_unit")) {
+            assertThrows(IllegalArgumentException.class, () -> new ApiSettings(
+                    Map.of("GALENOS_API_MODE", "academic", "POSTGRESQL_DB_NAME", database)));
+        }
+        assertThrows(IllegalArgumentException.class, () -> new ApiSettings(
+                Map.of("GALENOS_API_MODE", "development", "POSTGRESQL_DB_NAME", "galeno_eval_2026")));
         assertThrows(IllegalArgumentException.class, () -> new ApiSettings(Map.of("GALENOS_API_MODE", "academic", "POSTGRESQL_DB_NAME", "clinica", "GALENOS_DEMO_MODE", "true")));
     }
 

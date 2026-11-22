@@ -1,0 +1,31 @@
+<server description="GalenosSV - tercer parcial PPI115 GT02 - WAR en dropins">
+    <!-- Conservamos las features Jakarta EE/REST/JPA/JSF del proyecto. -->
+    <featureManager>
+        <feature>faces-4.1</feature>
+        <feature>enterpriseBeansLite-4.0</feature>
+        <feature>persistence-3.2</feature>
+        <feature>restfulWS-4.0</feature>
+        <feature>jsonb-3.0</feature>
+        <feature>validation-3.1</feature>
+        <feature>jdbc-4.2</feature>
+    </featureManager>
+
+    <!-- '*' es necesario para recibir conexiones publicadas por Docker. -->
+    <httpEndpoint id="defaultHttpEndpoint" host="*" httpPort="9080" httpsPort="-1"/>
+
+    <!-- SIN webApplication declarada: Liberty autodespliega dropins/galeno.war
+         como contexto /galeno. PrimeFaces se carga desde lib/global. -->
+    <library id="PostgreSQLJdbcLib">
+        <fileset dir="${server.config.dir}/jdbc" includes="postgresql-42.7.4.jar"/>
+    </library>
+    <connectionManager id="PostgreSQLConnectionManager" enableContainerAuthForDirectLookups="true"/>
+    <dataSource id="pgdb" jndiName="jdbc/pgdb"
+                connectionManagerRef="PostgreSQLConnectionManager">
+        <jdbcDriver libraryRef="PostgreSQLJdbcLib"/>
+        <properties.postgresql serverName="${env.PG_HOST}"
+                               portNumber="${env.PG_PORT}"
+                               databaseName="${env.PG_DB}"/>
+        <containerAuthData user="${env.PG_USER}"
+                           password="${env.PG_PASS}"/>
+    </dataSource>
+</server>

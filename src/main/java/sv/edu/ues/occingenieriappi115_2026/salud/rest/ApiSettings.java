@@ -60,8 +60,13 @@ public class ApiSettings {
             throw new IllegalArgumentException("El modo test sólo permite una base GT02 temporal explícita");
         academic = !mode.equals("disabled");
         development = mode.equals("development");
-        if ((academic || development) && !test && (demoMode || crudDemo || !"clinica".equals(environment.get("POSTGRESQL_DB_NAME")))) {
-            throw new IllegalArgumentException("Los modos académico y desarrollo requieren clinica y demo desactivada");
+        String database = environment.getOrDefault("POSTGRESQL_DB_NAME", "");
+        if (development && (demoMode || crudDemo || !"clinica".equals(database))) {
+            throw new IllegalArgumentException("El modo desarrollo requiere clinica y demo desactivada");
+        }
+        if (mode.equals("academic") && (demoMode || crudDemo || database.isBlank()
+                || database.startsWith("galenos_demo_") || database.startsWith("galenos_rest_test_"))) {
+            throw new IllegalArgumentException("El modo académico requiere una base configurada y demo desactivada");
         }
         Map<String, Set<java.util.UUID>> scopes = new java.util.HashMap<>();
         if (crudDemo || development) {
